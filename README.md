@@ -1,2 +1,5 @@
-# typesense-python
-Python client for Typesense: https://github.com/wreally/typesense
+# Typesense Python Client
+
+Python client for the Typesense API: https://github.com/wreally/typesense
+
+
