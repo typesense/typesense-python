@@ -6,19 +6,19 @@ class Documents(object):
 
     @staticmethod
     def create(collection_name, document):
-        ApiCall.post(Collections.documents_path_for(collection_name), document)
+        return ApiCall.post(Collections.documents_path_for(collection_name), document)
 
     @staticmethod
     def retrieve(collection_name, document_id):
-        ApiCall.get('{0}/{1}'.format(Collections.documents_path_for(collection_name), document_id), {})
+        return ApiCall.get('{0}/{1}'.format(Collections.documents_path_for(collection_name), document_id), {})
 
     @staticmethod
     def delete(collection_name, document_id):
-        ApiCall.delete('{0}/{1}'.format(Collections.documents_path_for(collection_name), document_id))
+        return ApiCall.delete('{0}/{1}'.format(Collections.documents_path_for(collection_name), document_id))
 
     @staticmethod
     def search(collection_name, search_parameters):
-        ApiCall.get('{0}/search'.format(Collections.documents_path_for(collection_name)), search_parameters)
+        return ApiCall.get('{0}/search'.format(Collections.documents_path_for(collection_name)), search_parameters)
 
     @staticmethod
     def export(collection_name):

@@ -14,7 +14,7 @@ class Collections(object):
 
     @staticmethod
     def delete(collection_name):
-        return ApiCall.get('{0}/{1}'.format(Collections.ENDPOINT_PATH, collection_name), {})
+        return ApiCall.delete('{0}/{1}'.format(Collections.ENDPOINT_PATH, collection_name))
 
     @staticmethod
     def retrieve_all():

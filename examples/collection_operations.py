@@ -37,6 +37,10 @@ print(create_response)
 retrieve_response = typesense.Collections.retrieve('books')
 print(retrieve_response)
 
+# Try retrieving all collections
+retrieve_all_response = typesense.Collections.retrieve_all()
+print(retrieve_all_response)
+
 # Add a book
 
 hunger_games_book = {
@@ -51,3 +55,24 @@ typesense.Documents.create('books', hunger_games_book)
 # Export the collection
 
 print(typesense.Documents.export('books'))
+
+# Fetch a document
+
+print(typesense.Documents.retrieve('books', '1'))
+
+# Search for documents
+
+print(typesense.Documents.search('books', {
+    'q': 'hunger',
+    'query_by': 'original_title',
+    'sort_by': 'ratings_count:desc'
+}))
+
+# Delete a document
+
+print(typesense.Documents.delete('books', '1'))
+
+# Drop the collection
+
+drop_response = typesense.Collections.delete('books')
+print(drop_response)
