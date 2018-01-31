@@ -13,20 +13,22 @@ replica1.api_key = 'abcd'
 
 typesense.read_replica_nodes.append(replica1)
 
-# res = typesense.Collections.create({
-#   "name": "goodreads_10k",
-#   "fields": [
-#     {"name": "original_title", "type": "string" },
-#     {"name": "author_names", "type": "string[]" },
-#     {"name": "authors", "type": "string[]", "facet": True },
-#     {"name": "original_publication_year", "type": "int32" },
-#     {"name": "publication_year_str", "type": "string", "facet": True },
-#     {"name": "ratings_count", "type": "int32" },
-#     {"name": "average_rating", "type": "float" },
-#     {"name": "image_url", "type": "string" }
-#   ],
-#   "token_ranking_field": "ratings_count"
-# })
+create_response = typesense.Collections.create({
+  "name": "books",
+  "fields": [
+    {"name": "original_title", "type": "string"},
+    {"name": "author_names", "type": "string[]"},
+    {"name": "authors", "type": "string[]", "facet": True},
+    {"name": "original_publication_year", "type": "int32"},
+    {"name": "publication_year_str", "type": "string", "facet": True},
+    {"name": "ratings_count", "type": "int32"},
+    {"name": "average_rating", "type": "float"},
+    {"name": "image_url", "type": "string"}
+  ],
+  "token_ranking_field": "ratings_count"
+})
 
-res = typesense.Collections.retrieve("goodreads_10k")
-print res
+print(create_response)
+
+retrieve_response = typesense.Collections.retrieve("books")
+print(retrieve_response)

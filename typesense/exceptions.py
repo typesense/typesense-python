@@ -1,4 +1,9 @@
-class TypesenseClientError:
+class TypesenseClientError(IOError):
+    def __init__(self, *args, **kwargs):
+        super(TypesenseClientError, self).__init__(*args, **kwargs)
+
+
+class ConfigError(TypesenseClientError):
     pass
 
 
