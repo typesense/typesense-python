@@ -13,6 +13,8 @@ replica1.api_key = 'abcd'
 
 typesense.read_replica_nodes.append(replica1)
 
+# Create a collection
+
 create_response = typesense.Collections.create({
   "name": "books",
   "fields": [
@@ -30,5 +32,22 @@ create_response = typesense.Collections.create({
 
 print(create_response)
 
-retrieve_response = typesense.Collections.retrieve("books")
+# Retrieve the collection we just created
+
+retrieve_response = typesense.Collections.retrieve('books')
 print(retrieve_response)
+
+# Add a book
+
+hunger_games_book = {
+  'id': '1', 'original_publication_year': 2008, 'author_names': ['Suzanne Collins'], 'average_rating': 4.34,                  
+  'publication_year_str': '2008', 'authors': ['Suzanne Collins'], 'original_title': 'The Hunger Games', 
+  'image_url': 'https://images.gr-assets.com/books/1447303603m/2767052.jpg', 
+  'ratings_count': 4780653 
+}
+
+typesense.Documents.create('books', hunger_games_book)
+
+# Export the collection
+
+print(typesense.Documents.export('books'))

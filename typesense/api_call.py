@@ -1,6 +1,6 @@
 import requests
-from . import *
 from exceptions import *
+from . import *
 
 API_KEY_HEADER_NAME = 'X-TYPESENSE-API-KEY'
 
@@ -37,18 +37,19 @@ class ApiCall(object):
                 raise ConfigError('Bad read replica node configuration.')
 
     @staticmethod
-    def get(endpoint):
+    def get(endpoint, params, as_json=True):
         ApiCall.validate_configuration()
 
         typesense_nodes = ApiCall.nodes()
         for node in typesense_nodes:
             url = node.url() + endpoint
             try:
-                r = requests.get(url, headers={API_KEY_HEADER_NAME: node.api_key}, timeout=timeout_seconds)
+                r = requests.get(url, headers={API_KEY_HEADER_NAME: node.api_key}, params=params,
+                                 timeout=timeout_seconds)
                 if r.status_code != 200:
-                    error_message = r.json().get('message', '')
+                    error_message = r.json().get('message', 'API error.')
                     raise ApiCall.get_exception(r.status_code)(error_message)
-                return r.json()
+                return r.json() if as_json else r.text
             except requests.exceptions.Timeout:
                 pass
             except requests.exceptions.ConnectionError:
@@ -64,23 +65,23 @@ class ApiCall(object):
     def post(endpoint, body):
         ApiCall.validate_configuration()
 
-        typesense_nodes = ApiCall.nodes()
-        for node in typesense_nodes:
-            url = node.url() + endpoint
-            try:
-                r = requests.post(url, json=body, headers={API_KEY_HEADER_NAME: node.api_key},
-                                  timeout=timeout_seconds)
-                if r.status_code != 201:
-                    error_message = r.json().get('message', '')
-                    raise ApiCall.get_exception(r.status_code)(error_message)
-                return r.json()
-            except requests.exceptions.Timeout:
-                pass
-            except requests.exceptions.ConnectionError:
-                pass
-            except TypesenseClientError as typesense_client_error:
-                raise typesense_client_error
-            except Exception as e:
-                raise e
+        url = master_node.url() + endpoint
+        r = requests.post(url, json=body, headers={API_KEY_HEADER_NAME: master_node.api_key},
+                          timeout=timeout_seconds)
+        if r.status_code != 201:
+            error_message = r.json().get('message', 'API error.')
+            raise ApiCall.get_exception(r.status_code)(error_message)
 
-        raise TypesenseClientError('All hosts are bad.')
+        return r.json()
+
+    @staticmethod
+    def delete(endpoint):
+        ApiCall.validate_configuration()
+
+        url = master_node.url() + endpoint
+        r = requests.delete(url, headers={API_KEY_HEADER_NAME: master_node.api_key}, timeout=timeout_seconds)
+        if r.status_code != 200:
+            error_message = r.json().get('message', 'API error.')
+            raise ApiCall.get_exception(r.status_code)(error_message)
+
+        return r.json()
