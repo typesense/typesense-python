@@ -1,17 +1,9 @@
 import typesense
 
-typesense.master_node.host = 'localhost'
-typesense.master_node.port = 8108
-typesense.master_node.protocol = 'http'
-typesense.master_node.api_key = 'abcd'
-
-replica1 = typesense.Node()
-replica1.host = 'localhost'
-replica1.port = 9108
-replica1.protocol = 'http'
-replica1.api_key = 'abcd'
-
-typesense.read_replica_nodes.append(replica1)
+typesense.master_node = typesense.Node(host='localhost', port=8108, protocol='http', api_key='abcd')
+typesense.read_replica_nodes = [
+    typesense.Node(host='localhost', port=9108, protocol='http', api_key='abcd')
+]
 
 # Create a collection
 
