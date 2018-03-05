@@ -15,6 +15,6 @@ class Node(object):
 
 master_node = Node(host=None, port=8108, protocol='http', api_key=None)
 
-read_replica_nodes = None
+read_replica_nodes = []
 
 timeout_seconds = 1
