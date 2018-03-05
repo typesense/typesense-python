@@ -7,6 +7,6 @@ coverage.xml
 build/
 *.pyc
 *.swp
-*.egg
+*.egg*
 env/
 .cache/
