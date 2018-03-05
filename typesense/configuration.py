@@ -9,8 +9,9 @@ class Node(object):
         return '{0}://{1}:{2}'.format(self.protocol, self.host, self.port)
 
     def initialized(self):
-        return self.host is not None and self.port is not None and self.protocol is not None and \
-               self.api_key is not None
+        return self.host is not None and self.port is not None and \
+               self.protocol is not None and self.api_key is not None
+
 
 master_node = Node(host=None, port=8108, protocol='http', api_key=None)
 

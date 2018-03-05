@@ -1,3 +1,12 @@
 *.xml
 *.iml
+MANIFEST
+dist
+.coverage
+coverage.xml
+build/
 *.pyc
+*.swp
+*.egg
+env/
+.cache/

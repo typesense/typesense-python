@@ -1,6 +1,10 @@
 import requests
-from exceptions import *
+
 import typesense
+from typesense.exceptions import (ConfigError, ObjectAlreadyExists,
+                                  ObjectNotFound, ObjectUnprocessable,
+                                  RequestMalformed, RequestUnauthorized,
+                                  ServerError, TypesenseClientError)
 
 API_KEY_HEADER_NAME = 'X-TYPESENSE-API-KEY'
 
@@ -44,7 +48,9 @@ class ApiCall(object):
         for node in typesense_nodes:
             url = node.url() + endpoint
             try:
-                r = requests.get(url, headers={API_KEY_HEADER_NAME: node.api_key}, params=params,
+                r = requests.get(url,
+                                 headers={API_KEY_HEADER_NAME: node.api_key},
+                                 params=params,
                                  timeout=typesense.timeout_seconds)
                 if r.status_code != 200:
                     error_message = r.json().get('message', 'API error.')
@@ -66,7 +72,10 @@ class ApiCall(object):
         ApiCall.validate_configuration()
 
         url = typesense.master_node.url() + endpoint
-        r = requests.post(url, json=body, headers={API_KEY_HEADER_NAME: typesense.master_node.api_key},
+        api_key = typesense.master_node.api_key
+
+        r = requests.post(url, json=body,
+                          headers={API_KEY_HEADER_NAME: api_key},
                           timeout=typesense.timeout_seconds)
         if r.status_code != 201:
             error_message = r.json().get('message', 'API error.')
@@ -79,7 +88,10 @@ class ApiCall(object):
         ApiCall.validate_configuration()
 
         url = typesense.master_node.url() + endpoint
-        r = requests.delete(url, headers={API_KEY_HEADER_NAME: typesense.master_node.api_key},
+        api_key = typesense.master_node.api_key
+
+        r = requests.delete(url,
+                            headers={API_KEY_HEADER_NAME: api_key},
                             timeout=typesense.timeout_seconds)
         if r.status_code != 200:
             error_message = r.json().get('message', 'API error.')
