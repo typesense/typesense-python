@@ -1,7 +1,7 @@
 import requests
 
 import typesense
-from typesense.exceptions import (ConfigError, ObjectAlreadyExists,
+from .exceptions import (ConfigError, ObjectAlreadyExists,
                                   ObjectNotFound, ObjectUnprocessable,
                                   RequestMalformed, RequestUnauthorized,
                                   ServerError, TypesenseClientError)

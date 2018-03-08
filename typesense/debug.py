@@ -1,4 +1,4 @@
-from api_call import ApiCall
+from .api_call import ApiCall
 
 
 class Debug(object):

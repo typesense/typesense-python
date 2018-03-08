@@ -1,6 +1,6 @@
-from collections import Collections
+from .collections import Collections
 
-from api_call import ApiCall
+from .api_call import ApiCall
 
 
 class Documents(object):
