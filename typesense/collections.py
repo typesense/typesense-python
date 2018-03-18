@@ -11,7 +11,7 @@ class Collections(object):
         self.collections = {}
 
     def __getitem__(self, collection_name):
-        if not collection_name in self.collections:
+        if collection_name not in self.collections:
             self.collections[collection_name] = Collection(self.config, collection_name)
 
         return self.collections.get(collection_name)

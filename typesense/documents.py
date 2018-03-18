@@ -12,7 +12,7 @@ class Documents(object):
         self.documents = {}
 
     def __getitem__(self, document_id):
-        if not document_id in self.documents:
+        if document_id not in self.documents:
             self.documents[document_id] = Document(self.config, self.collection_name, document_id)
 
         return self.documents[document_id]
