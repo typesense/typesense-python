@@ -1,13 +1,25 @@
 import typesense
 
-typesense.master_node = typesense.Node(host='localhost', port=8108, protocol='http', api_key='abcd')
-typesense.read_replica_nodes = [
-    typesense.Node(host='localhost', port=9108, protocol='http', api_key='abcd')
-]
+client = typesense.Client({
+  'master_node': {
+    'host': 'localhost',
+    'port': '8108',
+    'protocol': 'http',
+    'api_key': 'abcd'
+  },
+  'read_replica_nodes': [{
+    'host': 'localhost',
+    'port': '9108',
+    'protocol': 'http',
+    'api_key': 'abcd'
+  }],
+  'timeout_seconds': 2
+})
+
 
 # Create a collection
 
-create_response = typesense.Collections.create({
+create_response = client.collections.create({
   "name": "books",
   "fields": [
     {"name": "title", "type": "string" },
@@ -19,52 +31,57 @@ create_response = typesense.Collections.create({
     {"name": "average_rating", "type": "float" },
     {"name": "image_url", "type": "string" }
   ],
-  "token_ranking_field": "ratings_count"
+  "default_sorting_field": "ratings_count"
 })
 
 print(create_response)
 
 # Retrieve the collection we just created
 
-retrieve_response = typesense.Collections.retrieve('books')
+retrieve_response = client.collections['books'].retrieve()
 print(retrieve_response)
 
 # Try retrieving all collections
-retrieve_all_response = typesense.Collections.retrieve_all()
+retrieve_all_response = client.collections.retrieve_all()
 print(retrieve_all_response)
 
 # Add a book
 
 hunger_games_book = {
-  'id': '1', 'original_publication_year': 2008, 'author_names': ['Suzanne Collins'], 'average_rating': 4.34,                  
-  'publication_year_str': '2008', 'authors': ['Suzanne Collins'], 'original_title': 'The Hunger Games', 
+  'id': '1', 'original_publication_year': 2008, 'authors': ['Suzanne Collins'], 'average_rating': 4.34,
+  'publication_year': 2008, 'publication_year_facet': '2008', 'authors_facet': ['Suzanne Collins'],
+  'title': 'The Hunger Games',
   'image_url': 'https://images.gr-assets.com/books/1447303603m/2767052.jpg', 
   'ratings_count': 4780653 
 }
 
-typesense.Documents.create('books', hunger_games_book)
+client.collections['books'].documents.create(hunger_games_book)
 
-# Export the collection
+# Export the documents from a collection
 
-print(typesense.Documents.export('books'))
+print(client.collections['books'].documents.export())
 
-# Fetch a document
+# Fetch a document in a collection
 
-print(typesense.Documents.retrieve('books', '1'))
+print(client.collections['books'].documents['1'])
 
-# Search for documents
+# Search for documents in a collection
 
-print(typesense.Documents.search('books', {
+print(client.collections['books'].documents.search({
     'q': 'hunger',
-    'query_by': 'original_title',
+    'query_by': 'title',
     'sort_by': 'ratings_count:desc'
 }))
 
-# Delete a document
+# Remove a document from a collection
 
-print(typesense.Documents.delete('books', '1'))
+print(client.collections['books'].documents['1'].delete())
+
+# Try exporting the documents in the collection after deletion
+
+print(client.collections['books'].documents.export())
 
 # Drop the collection
 
-drop_response = typesense.Collections.delete('books')
+drop_response = client.collections['books'].delete()
 print(drop_response)

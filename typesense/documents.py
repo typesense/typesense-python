@@ -1,27 +1,35 @@
-from .collections import Collections
-
+from .document import Document
 from .api_call import ApiCall
 
 
 class Documents(object):
-    @staticmethod
-    def create(coll_name, document):
-        return ApiCall.post(Collections.documents_path_for(coll_name),
-                            document)
+    RESOURCE_PATH = 'documents'
 
-    @staticmethod
-    def retrieve(coll_name, document_id):
-        return ApiCall.get('{0}/{1}'.format(Collections.documents_path_for(coll_name), document_id), {})
+    def __init__(self, config, collection_name):
+        self.config = config
+        self.collection_name = collection_name
+        self.api_call = ApiCall(config)
+        self.documents = {}
 
-    @staticmethod
-    def delete(coll_name, document_id):
-        return ApiCall.delete('{0}/{1}'.format(Collections.documents_path_for(coll_name), document_id))
+    def __getitem__(self, document_id):
+        if not document_id in self.documents:
+            self.documents[document_id] = Document(self.config, self.collection_name, document_id)
 
-    @staticmethod
-    def search(coll_name, search_parameters):
-        return ApiCall.get('{0}/search'.format(Collections.documents_path_for(coll_name)), search_parameters)
+        return self.documents[document_id]
 
-    @staticmethod
-    def export(coll_name):
-        api_response = ApiCall.get('{0}/export'.format(Collections.documents_path_for(coll_name)), {}, as_json=False)
+    def _endpoint_path(self, action=None):
+        from .collections import Collections
+
+        action = action or ''
+        return u"{0}/{1}/{2}/{3}".format(Collections.RESOURCE_PATH, self.collection_name, Documents.RESOURCE_PATH,
+                                         action)
+
+    def create(self, document):
+        return self.api_call.post(self._endpoint_path(), document)
+
+    def export(self):
+        api_response = self.api_call.get(self._endpoint_path('export'), {}, as_json=False)
         return api_response.split('\n')
+
+    def search(self, search_parameters):
+        return self.api_call.get(self._endpoint_path('search'), search_parameters)
