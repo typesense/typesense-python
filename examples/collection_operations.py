@@ -42,7 +42,7 @@ retrieve_response = client.collections['books'].retrieve()
 print(retrieve_response)
 
 # Try retrieving all collections
-retrieve_all_response = client.collections.retrieve_all()
+retrieve_all_response = client.collections.retrieve()
 print(retrieve_all_response)
 
 # Add a book
@@ -63,7 +63,7 @@ print(client.collections['books'].documents.export())
 
 # Fetch a document in a collection
 
-print(client.collections['books'].documents['1'])
+print(client.collections['books'].documents['1'].retrieve())
 
 # Search for documents in a collection
 
@@ -76,10 +76,6 @@ print(client.collections['books'].documents.search({
 # Remove a document from a collection
 
 print(client.collections['books'].documents['1'].delete())
-
-# Try exporting the documents in the collection after deletion
-
-print(client.collections['books'].documents.export())
 
 # Drop the collection
 

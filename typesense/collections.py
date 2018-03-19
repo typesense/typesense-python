@@ -19,5 +19,5 @@ class Collections(object):
     def create(self, schema):
         return self.api_call.post(Collections.RESOURCE_PATH, schema)
 
-    def retrieve_all(self):
+    def retrieve(self):
         return self.api_call.get('{0}'.format(Collections.RESOURCE_PATH))
