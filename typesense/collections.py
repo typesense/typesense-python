@@ -1,25 +1,23 @@
 from .api_call import ApiCall
+from .collection import Collection
 
 
 class Collections(object):
-    ENDPOINT_PATH = '/collections'
+    RESOURCE_PATH = '/collections'
 
-    @staticmethod
-    def create(schema):
-        return ApiCall.post(Collections.ENDPOINT_PATH, schema)
+    def __init__(self, config):
+        self.config = config
+        self.api_call = ApiCall(config)
+        self.collections = {}
 
-    @staticmethod
-    def retrieve(collection_name):
-        return ApiCall.get('{0}/{1}'.format(Collections.ENDPOINT_PATH, collection_name), {})
+    def __getitem__(self, collection_name):
+        if collection_name not in self.collections:
+            self.collections[collection_name] = Collection(self.config, collection_name)
 
-    @staticmethod
-    def delete(collection_name):
-        return ApiCall.delete('{0}/{1}'.format(Collections.ENDPOINT_PATH, collection_name))
+        return self.collections.get(collection_name)
 
-    @staticmethod
-    def retrieve_all():
-        return ApiCall.get('{0}'.format(Collections.ENDPOINT_PATH), {})
+    def create(self, schema):
+        return self.api_call.post(Collections.RESOURCE_PATH, schema)
 
-    @staticmethod
-    def documents_path_for(collection_name):
-        return '{0}/{1}/documents'.format(Collections.ENDPOINT_PATH, collection_name)
+    def retrieve(self):
+        return self.api_call.get('{0}'.format(Collections.RESOURCE_PATH))
