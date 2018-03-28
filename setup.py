@@ -6,7 +6,7 @@ long_description = parse_from_file('README.md')
 
 setup(
     name='typesense',
-    version='0.2.9',
+    version='0.3.0',
     packages=['examples', 'typesense'],
     install_requires=['requests'],
     url='https://typesense.org',
