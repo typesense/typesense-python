@@ -14,7 +14,9 @@ You can also add `typesense` to your project's `requirements.txt`.
 
 ## Usage
 
-See the detailed [API documentation](https://typesense.org/api).
+You can find some examples [here](https://github.com/typesense/typesense-python/blob/master/examples/collection_operations.py).
+
+See detailed [API documentation](https://typesense.org/api).
 
 ## Contributing
 
@@ -22,7 +24,7 @@ Bug reports and pull requests are welcome on GitHub at [https://github.com/types
 
 ## License
 
-`typesense` is distributed under the Apache 2 license.
+`typesense-python` is distributed under the Apache 2 license.
 
 
 
