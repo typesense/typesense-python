@@ -2,18 +2,22 @@ from .exceptions import ConfigError
 
 
 class Node(object):
-    def __init__(self, host, port, protocol, api_key):
+    def __init__(self, host, port, protocol, api_key, path):
         self.host = host
         self.port = port
         self.protocol = protocol
         self.api_key = api_key
-
+        if path is not None:
+            self.path = path
+        else:
+            self.path = ''
     def url(self):
-        return '{0}://{1}:{2}'.format(self.protocol, self.host, self.port)
+        return '{0}://{1}:{2}{3}'.format(self.protocol, self.host, self.port, self.path)
 
     def initialized(self):
         return self.host is not None and self.port is not None and \
-               self.protocol is not None and self.api_key is not None
+               self.protocol is not None and self.api_key is not None and \
+               self.path is not None
 
 
 class Configuration(object):
@@ -24,13 +28,13 @@ class Configuration(object):
         replica_node_dicts = config_dict.get('read_replica_nodes', [])
 
         self.master_node = Node(master_node_dict['host'], master_node_dict['port'],
-                                master_node_dict['protocol'], master_node_dict['api_key'])
+                                master_node_dict['protocol'], master_node_dict['api_key'], master_node_dict['path'])
 
         self.read_replica_nodes = []
         for replica_node_dict in replica_node_dicts:
             self.read_replica_nodes.append(
                 Node(replica_node_dict['host'], replica_node_dict['port'],
-                     replica_node_dict['protocol'], replica_node_dict['api_key'])
+                     replica_node_dict['protocol'], replica_node_dict['api_key'], master_node_dict['path'])
             )
 
         self.timeout_seconds = config_dict.get('timeout_seconds', 1.0)
@@ -53,5 +57,5 @@ class Configuration(object):
 
     @staticmethod
     def validate_node_fields(node):
-        expected_fields = {'host', 'port', 'protocol', 'api_key'}
+        expected_fields = {'host', 'port', 'protocol', 'api_key', 'path'}
         return expected_fields.issubset(node)
