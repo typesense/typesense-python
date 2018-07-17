@@ -37,11 +37,13 @@ class ApiCall(object):
 
         for node in self.nodes():
             url = node.url() + endpoint
+            print(url)
             try:
                 r = requests.get(url,
                                  headers={ApiCall.API_KEY_HEADER_NAME: node.api_key},
                                  params=params,
                                  timeout=self.config.timeout_seconds)
+                print(r)
                 if r.status_code != 200:
                     error_message = r.json().get('message', 'API error.')
                     raise ApiCall.get_exception(r.status_code)(error_message)
