@@ -1,0 +1,78 @@
+import typesense
+
+# Aliasing is a Typesense Premium feature (see: https://typesense.org/premium)
+
+client = typesense.Client({
+  'master_node': {
+    'host': 'localhost',
+    'port': '8108',
+    'protocol': 'http',
+    'api_key': 'abcd'
+  },
+  'read_replica_nodes': [{
+    'host': 'localhost',
+    'port': '9108',
+    'protocol': 'http',
+    'api_key': 'abcd'
+  }],
+  'timeout_seconds': 2
+})
+
+# Create a collection
+
+create_response = client.collections.create({
+  "name": "books_january",
+  "fields": [
+    {"name": "title", "type": "string" },
+    {"name": "authors", "type": "string[]" },
+    {"name": "authors_facet", "type": "string[]", "facet": True },
+    {"name": "publication_year", "type": "int32" },
+    {"name": "publication_year_facet", "type": "string", "facet": True },
+    {"name": "ratings_count", "type": "int32" },
+    {"name": "average_rating", "type": "float" },
+    {"name": "image_url", "type": "string" }
+  ],
+  "default_sorting_field": "ratings_count"
+})
+
+print(create_response)
+
+# Create or update an existing alias
+
+create_alias_response = client.aliases.upsert('books', {
+    "collection_name": "books_january"
+})
+
+print(create_alias_response)
+
+# Add a book using the alias name `books`
+
+hunger_games_book = {
+  'id': '1', 'original_publication_year': 2008, 'authors': ['Suzanne Collins'], 'average_rating': 4.34,
+  'publication_year': 2008, 'publication_year_facet': '2008', 'authors_facet': ['Suzanne Collins'],
+  'title': 'The Hunger Games',
+  'image_url': 'https://images.gr-assets.com/books/1447303603m/2767052.jpg',
+  'ratings_count': 4780653
+}
+
+client.collections['books'].documents.create(hunger_games_book)
+
+# Search using the alias
+
+print(client.collections['books'].documents.search({
+    'q': 'hunger',
+    'query_by': 'title',
+    'sort_by': 'ratings_count:desc'
+}))
+
+# List all aliases
+
+print(client.aliases.retrieve())
+
+# Retrieve the configuration of a specific alias
+
+print(client.aliases['books'].retrieve())
+
+# Delete an alias
+
+print(client.aliases['books'].delete())
