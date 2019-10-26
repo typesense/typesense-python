@@ -1,3 +1,4 @@
+from .overrides import Overrides
 from .documents import Documents
 from .api_call import ApiCall
 
@@ -8,6 +9,7 @@ class Collection(object):
         self.name = name
         self.api_call = ApiCall(config)
         self.documents = Documents(config, name)
+        self.overrides = Overrides(config, name)
 
     def _endpoint_path(self):
         from .collections import Collections
