@@ -66,7 +66,20 @@ class ApiCall(object):
                           timeout=self.config.timeout_seconds)
         if r.status_code != 201:
             error_message = r.json().get('message', 'API error.')
-            print(url)
+            raise ApiCall.get_exception(r.status_code)(error_message)
+
+        return r.json()
+
+    def put(self, endpoint, body):
+        url = self.config.master_node.url() + endpoint
+        api_key = self.config.master_node.api_key
+
+        r = requests.put(url, json=body,
+                         headers={ApiCall.API_KEY_HEADER_NAME: api_key},
+                         timeout=self.config.timeout_seconds)
+
+        if r.status_code != 200:
+            error_message = r.json().get('message', 'API error.')
             raise ApiCall.get_exception(r.status_code)(error_message)
 
         return r.json()
