@@ -1,15 +1,16 @@
+import os
+import sys
+
+curr_dir = os.path.dirname(os.path.realpath(__file__))
+sys.path.insert(1, os.path.abspath(os.path.join(curr_dir, os.pardir)))
+
 import typesense
 
 client = typesense.Client({
-  'master_node': {
+  'api_key': 'abcd',
+  'nodes': [{
     'host': 'localhost',
     'port': '8108',
-    'protocol': 'http',
-    'api_key': 'abcd'
-  },
-  'read_replica_nodes': [{
-    'host': 'localhost',
-    'port': '9108',
     'protocol': 'http',
     'api_key': 'abcd'
   }],

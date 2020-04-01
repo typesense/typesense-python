@@ -2,56 +2,52 @@ from .exceptions import ConfigError
 
 
 class Node(object):
-    def __init__(self, host, port, protocol, api_key):
+    def __init__(self, host, port, path, protocol):
         self.host = host
         self.port = port
+        self.path = path
         self.protocol = protocol
-        self.api_key = api_key
+
+        # Used to skip bad hosts
+        self.healthy = True
 
     def url(self):
-        return '{0}://{1}:{2}'.format(self.protocol, self.host, self.port)
-
-    def initialized(self):
-        return self.host is not None and self.port is not None and \
-               self.protocol is not None and self.api_key is not None
+        return '{0}://{1}:{2}{3}'.format(self.protocol, self.host, self.port, self.path)
 
 
 class Configuration(object):
     def __init__(self, config_dict):
         Configuration.validate_config_dict(config_dict)
 
-        master_node_dict = config_dict.get('master_node', None)
-        replica_node_dicts = config_dict.get('read_replica_nodes', [])
+        node_dicts = config_dict.get('nodes', [])
 
-        self.master_node = Node(master_node_dict['host'], master_node_dict['port'],
-                                master_node_dict['protocol'], master_node_dict['api_key'])
-
-        self.read_replica_nodes = []
-        for replica_node_dict in replica_node_dicts:
-            self.read_replica_nodes.append(
-                Node(replica_node_dict['host'], replica_node_dict['port'],
-                     replica_node_dict['protocol'], replica_node_dict['api_key'])
+        self.nodes = []
+        for node_dict in node_dicts:
+            self.nodes.append(
+                Node(node_dict['host'], node_dict['port'], node_dict.get('path', ''), node_dict['protocol'])
             )
 
-        self.timeout_seconds = config_dict.get('timeout_seconds', 1.0)
+        self.api_key = config_dict.get('api_key', '')
+        self.timeout_seconds = config_dict.get('timeout_seconds', 3.0)
+        self.num_retries = config_dict.get('num_retries', 3)
+        self.retry_interval_seconds = config_dict.get('retry_interval_seconds', 1.0)
 
     @staticmethod
     def validate_config_dict(config_dict):
-        master_node = config_dict.get('master_node', None)
-        if not master_node:
-            raise ConfigError('`master_node` is not defined.')
+        nodes = config_dict.get('nodes', None)
+        if not nodes:
+            raise ConfigError('`nodes` is not defined.')
 
-        if not Configuration.validate_node_fields(master_node):
-            raise ConfigError('`master_node` must be a dictionary with the following required keys: '
-                              'host, port, protocol, api_key')
+        api_key = config_dict.get('api_key', None)
+        if not api_key:
+            raise ConfigError('`api_key` is not defined.')
 
-        replica_nodes = config_dict.get('read_replica_nodes', [])
-        for replica_node in replica_nodes:
-            if not Configuration.validate_node_fields(replica_node):
-                raise ConfigError('`read_replica_nodes` entry be a dictionary with the following required keys: '
-                                  'host, port, protocol, api_key')
+        for node in nodes:
+            if not Configuration.validate_node_fields(node):
+                raise ConfigError('`node` entry must be a dictionary with the following required keys: '
+                                  'host, port, protocol')
 
     @staticmethod
     def validate_node_fields(node):
-        expected_fields = {'host', 'port', 'protocol', 'api_key'}
+        expected_fields = {'host', 'port', 'protocol'}
         return expected_fields.issubset(node)

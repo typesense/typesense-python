@@ -3,15 +3,10 @@ import typesense
 # Curation is a Typesense Premium feature (see: https://typesense.org/premium)
 
 client = typesense.Client({
-  'master_node': {
+  'api_key': 'abcd',
+  'nodes': [{
     'host': 'localhost',
     'port': '8108',
-    'protocol': 'http',
-    'api_key': 'abcd'
-  },
-  'read_replica_nodes': [{
-    'host': 'localhost',
-    'port': '9108',
     'protocol': 'http',
     'api_key': 'abcd'
   }],
