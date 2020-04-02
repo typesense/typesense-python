@@ -7,8 +7,7 @@ client = typesense.Client({
   'nodes': [{
     'host': 'localhost',
     'port': '8108',
-    'protocol': 'http',
-    'api_key': 'abcd'
+    'protocol': 'http'
   }],
   'timeout_seconds': 2
 })

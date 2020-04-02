@@ -4,7 +4,7 @@ import requests
 from .exceptions import (ObjectAlreadyExists,
                          ObjectNotFound, ObjectUnprocessable,
                          RequestMalformed, RequestUnauthorized,
-                         ServerError, TypesenseClientError)
+                         ServerError, ServiceUnavailable, TypesenseClientError)
 
 
 class ApiCall(object):
@@ -15,26 +15,30 @@ class ApiCall(object):
         self.config = config
         self.nodes = self.config.nodes
         self.node_index = 0
-        self.failed_nodes = []
-        self.last_fail_check_ts = int(time.time())
+        self.last_health_check_ts = int(time.time())
 
     def _check_failed_node(self):
         current_epoch_ts = int(time.time())
-        check_failed_node = ((current_epoch_ts - self.last_fail_check_ts) > ApiCall.CHECK_FAILED_NODE_INTERVAL_S)
-        if check_failed_node:
-            self.last_fail_check_ts = current_epoch_ts
+        check_node = ((current_epoch_ts - self.last_health_check_ts) > ApiCall.CHECK_FAILED_NODE_INTERVAL_S)
+        if check_node:
+            self.last_health_check_ts = current_epoch_ts
 
-        return check_failed_node
+        return check_node
 
     # Returns a healthy host from the pool in a round-robin fashion.
     # Might return an unhealthy host periodically to check for recovery.
     def get_node(self):
-        num_times = 0
-        while num_times < 3:
-            num_times += 1
+        i = 0
+        while i < len(self.nodes):
+            i += 1
             self.node_index = (self.node_index + 1) % len(self.nodes)
             if self.nodes[self.node_index].healthy or self._check_failed_node():
                 return self.nodes[self.node_index]
+
+        # None of the nodes are marked healthy, but some of them could have become healthy since last health check.
+        # So we will just return the next node.
+        self.node_index = (self.node_index + 1) % len(self.nodes)
+        return self.nodes[self.node_index]
 
     @staticmethod
     def get_exception(http_code):
@@ -50,6 +54,8 @@ class ApiCall(object):
             return ObjectUnprocessable
         elif http_code == 500:
             return ServerError
+        elif http_code == 503:
+            return ServiceUnavailable
         else:
             return TypesenseClientError
 
@@ -59,16 +65,20 @@ class ApiCall(object):
         while num_tries < self.config.num_retries:
             num_tries += 1
             node = self.get_node()
+            node.healthy = False
 
             try:
                 url = node.url() + endpoint
-                print('URL is: ' + url)
                 r = fn(url, headers={ApiCall.API_KEY_HEADER_NAME: self.config.api_key}, **kwargs)
+
+                if 0 < r.status_code < 500:
+                    node.healthy = True
+
                 if (method != 'post' and r.status_code != 200) or (method == 'post' and r.status_code != 201):
                     error_message = r.json().get('message', 'API error.')
+                    # print('error_message: ' + error_message)
                     raise ApiCall.get_exception(r.status_code)(error_message)
 
-                node.healthy = True
                 return r.json() if as_json else r.text
             except requests.exceptions.Timeout:
                 pass
@@ -79,10 +89,10 @@ class ApiCall(object):
             except Exception as e:
                 raise e
 
-            node.healthy = False
+            # print('Failed, retrying after sleep: ' + node.port)
             time.sleep(self.config.retry_interval_seconds)
 
-        raise TypesenseClientError('All hosts are bad.')
+        raise TypesenseClientError('Retries exceeded.')
 
     def get(self, endpoint, params=None, as_json=True):
         params = params or {}

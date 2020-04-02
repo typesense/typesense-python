@@ -33,3 +33,7 @@ class ObjectUnprocessable(TypesenseClientError):
 
 class ServerError(TypesenseClientError):
     pass
+
+
+class ServiceUnavailable(TypesenseClientError):
+    pass
