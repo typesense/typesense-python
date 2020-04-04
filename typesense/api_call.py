@@ -1,3 +1,4 @@
+import json
 import time
 
 import requests
@@ -69,15 +70,19 @@ class ApiCall(object):
 
             try:
                 url = node.url() + endpoint
+                if kwargs.get('data') and not isinstance(kwargs['data'], str):
+                    kwargs['data'] = json.dumps(kwargs['data'])
+
                 r = fn(url, headers={ApiCall.API_KEY_HEADER_NAME: self.config.api_key}, **kwargs)
 
                 if 0 < r.status_code < 500:
                     node.healthy = True
 
-                if (method != 'post' and r.status_code != 200) or (method == 'post' and r.status_code != 201):
+                if (method != 'post' and r.status_code != 200) or \
+                   (method == 'post' and not (r.status_code == 200 or r.status_code == 201)):
                     error_message = r.json().get('message', 'API error.')
                     # print('error_message: ' + error_message)
-                    raise ApiCall.get_exception(r.status_code)(error_message)
+                    raise ApiCall.get_exception(r.status_code)(r.status_code, error_message)
 
                 return r.json() if as_json else r.text
             except requests.exceptions.Timeout:
@@ -102,11 +107,11 @@ class ApiCall(object):
 
     def post(self, endpoint, body):
         return self.make_request(requests.post, 'post', endpoint, True,
-                                 json=body, timeout=self.config.timeout_seconds)
+                                 data=body, timeout=self.config.timeout_seconds)
 
     def put(self, endpoint, body):
         return self.make_request(requests.put, 'put', endpoint, True,
-                                 json=body, timeout=self.config.timeout_seconds)
+                                 data=body, timeout=self.config.timeout_seconds)
 
     def delete(self, endpoint):
         return self.make_request(requests.delete, 'delete', endpoint, True,

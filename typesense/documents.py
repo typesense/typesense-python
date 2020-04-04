@@ -1,3 +1,5 @@
+import json
+
 from .document import Document
 from .api_call import ApiCall
 
@@ -26,6 +28,14 @@ class Documents(object):
 
     def create(self, document):
         return self.api_call.post(self._endpoint_path(), document)
+
+    def create_many(self, documents):
+        document_strs = []
+        for document in documents:
+            document_strs.append(json.dumps(document))
+
+        docs_import = '\n'.join(document_strs)
+        return self.api_call.post(self._endpoint_path('import'), docs_import)
 
     def export(self):
         api_response = self.api_call.get(self._endpoint_path('export'), {}, as_json=False)

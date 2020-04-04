@@ -48,7 +48,19 @@ create_response = client.collections.create(schema)
 
 print(create_response)
 
+# Let's use bulk import
+book_documents = []
 with open('/tmp/books.jsonl') as infile:
     for json_line in infile:
-        book_document = json.loads(json_line)
-        client.collections['books'].documents.create(book_document)
+        book_documents.append(json.loads(json_line))
+
+print(client.collections['books'].documents.create_many(book_documents))
+
+i = 0
+while i < 10000:
+    res = client.collections['books'].documents.search({
+        'q': 'the',
+        'query_by': 'title',
+        'sort_by': 'ratings_count:desc'
+    })
+    print(res['found'])
