@@ -33,7 +33,7 @@ print(create_response)
 
 # Create or update an existing alias
 
-create_alias_response = client.aliases.upsert('books', {
+create_alias_response = client.aliases.upsert('books_link', {
     "collection_name": "books_january"
 })
 
@@ -49,11 +49,11 @@ hunger_games_book = {
   'ratings_count': 4780653
 }
 
-client.collections['books'].documents.create(hunger_games_book)
+client.collections['books_link'].documents.create(hunger_games_book)
 
 # Search using the alias
 
-print(client.collections['books'].documents.search({
+print(client.collections['books_link'].documents.search({
     'q': 'hunger',
     'query_by': 'title',
     'sort_by': 'ratings_count:desc'
@@ -65,8 +65,8 @@ print(client.aliases.retrieve())
 
 # Retrieve the configuration of a specific alias
 
-print(client.aliases['books'].retrieve())
+print(client.aliases['books_link'].retrieve())
 
 # Delete an alias
 
-print(client.aliases['books'].delete())
+print(client.aliases['books_link'].delete())
