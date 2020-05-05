@@ -1,12 +1,9 @@
-from .api_call import ApiCall
-
-
 class Document(object):
-    def __init__(self, config, collection_name, document_id):
+    def __init__(self, config, api_call, collection_name, document_id):
         self.config = config
+        self.api_call = api_call
         self.collection_name = collection_name
         self.document_id = document_id
-        self.api_call = ApiCall(config)
 
     def _endpoint_path(self):
         from .documents import Documents

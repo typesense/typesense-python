@@ -1,18 +1,17 @@
 from typesense.alias import Alias
-from .api_call import ApiCall
 
 
 class Aliases(object):
     RESOURCE_PATH = '/aliases'
 
-    def __init__(self, config):
+    def __init__(self, config, api_call):
         self.config = config
-        self.api_call = ApiCall(config)
+        self.api_call = api_call
         self.aliases = {}
 
     def __getitem__(self, name):
         if name not in self.aliases:
-            self.aliases[name] = Alias(self.config, name)
+            self.aliases[name] = Alias(self.config, self.api_call, name)
 
         return self.aliases.get(name)
 

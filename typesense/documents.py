@@ -1,21 +1,20 @@
 import json
 
 from .document import Document
-from .api_call import ApiCall
 
 
 class Documents(object):
     RESOURCE_PATH = 'documents'
 
-    def __init__(self, config, collection_name):
+    def __init__(self, config, api_call, collection_name):
         self.config = config
+        self.api_call = api_call
         self.collection_name = collection_name
-        self.api_call = ApiCall(config)
         self.documents = {}
 
     def __getitem__(self, document_id):
         if document_id not in self.documents:
-            self.documents[document_id] = Document(self.config, self.collection_name, document_id)
+            self.documents[document_id] = Document(self.config, self.api_call, self.collection_name, document_id)
 
         return self.documents[document_id]
 

@@ -1,15 +1,14 @@
 from .overrides import Overrides
 from .documents import Documents
-from .api_call import ApiCall
 
 
 class Collection(object):
-    def __init__(self, config, name):
+    def __init__(self, config, api_call, name):
         self.config = config
         self.name = name
-        self.api_call = ApiCall(config)
-        self.documents = Documents(config, name)
-        self.overrides = Overrides(config, name)
+        self.api_call = api_call
+        self.documents = Documents(config, api_call, name)
+        self.overrides = Overrides(config, api_call, name)
 
     def _endpoint_path(self):
         from .collections import Collections

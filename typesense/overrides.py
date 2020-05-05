@@ -1,19 +1,18 @@
 from .override import Override
-from .api_call import ApiCall
 
 
 class Overrides(object):
     RESOURCE_PATH = 'overrides'
 
-    def __init__(self, config, collection_name):
+    def __init__(self, config, api_call, collection_name):
         self.config = config
-        self.api_call = ApiCall(config)
+        self.api_call = api_call
         self.collection_name = collection_name
         self.overrides = {}
 
     def __getitem__(self, override_id):
         if override_id not in self.overrides:
-            self.overrides[override_id] = Override(self.config, self.collection_name, override_id)
+            self.overrides[override_id] = Override(self.config, self.api_call, self.collection_name, override_id)
 
         return self.overrides[override_id]
 

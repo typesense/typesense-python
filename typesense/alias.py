@@ -1,12 +1,8 @@
-from .documents import Documents
-from .api_call import ApiCall
-
-
 class Alias(object):
-    def __init__(self, config, name):
+    def __init__(self, config, api_call, name):
         self.config = config
+        self.api_call = api_call
         self.name = name
-        self.api_call = ApiCall(config)
 
     def _endpoint_path(self):
         from .aliases import Aliases

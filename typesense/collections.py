@@ -1,18 +1,17 @@
-from .api_call import ApiCall
 from .collection import Collection
 
 
 class Collections(object):
     RESOURCE_PATH = '/collections'
 
-    def __init__(self, config):
+    def __init__(self, config, api_call):
         self.config = config
-        self.api_call = ApiCall(config)
+        self.api_call = api_call
         self.collections = {}
 
     def __getitem__(self, collection_name):
         if collection_name not in self.collections:
-            self.collections[collection_name] = Collection(self.config, collection_name)
+            self.collections[collection_name] = Collection(self.config, self.api_call, collection_name)
 
         return self.collections.get(collection_name)
 
