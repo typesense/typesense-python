@@ -1,11 +1,12 @@
 import os
 import sys
 import json
+import typesense
+
 
 curr_dir = os.path.dirname(os.path.realpath(__file__))
 sys.path.insert(1, os.path.abspath(os.path.join(curr_dir, os.pardir)))
 
-import typesense
 
 client = typesense.Client({
     'api_key': 'abcd',

@@ -21,7 +21,8 @@ class ApiCall(object):
         for node in self.nodes:
             node.last_health_check_ts = int(time.time())
 
-    def _check_failed_node(self, node):
+    @staticmethod
+    def check_failed_node(node):
         current_epoch_ts = int(time.time())
         check_node = ((current_epoch_ts - node.last_health_check_ts) > ApiCall.CHECK_FAILED_NODE_INTERVAL_S)
         if check_node:
@@ -37,7 +38,7 @@ class ApiCall(object):
             i += 1
             self.node_index = (self.node_index + 1) % len(self.nodes)
             node = self.nodes[self.node_index]
-            if node.healthy or self._check_failed_node(node):
+            if node.healthy or ApiCall.check_failed_node(node):
                 return node
 
         # None of the nodes are marked healthy, but some of them could have become healthy since last health check.
@@ -65,7 +66,7 @@ class ApiCall(object):
             return TypesenseClientError
 
     # Makes the actual http request, along with retries
-    def make_request(self, fn, method, endpoint, as_json, **kwargs):
+    def make_request(self, fn, endpoint, as_json, **kwargs):
         num_tries = 0
         while num_tries < self.config.num_retries:
             num_tries += 1
@@ -79,23 +80,26 @@ class ApiCall(object):
 
                 r = fn(url, headers={ApiCall.API_KEY_HEADER_NAME: self.config.api_key}, **kwargs)
 
+                # Treat any status code > 0 and < 500 to be an indication that node is healthy
+                # We exclude 0 since some clients return 0 when request fails
                 if 0 < r.status_code < 500:
                     node.healthy = True
 
-                if (method != 'post' and r.status_code != 200) or \
-                   (method == 'post' and not (r.status_code == 200 or r.status_code == 201)):
+                # We should raise a custom exception if status code is not 200 or 201
+                if r.status_code not in [200, 201]:
                     error_message = r.json().get('message', 'API error.')
                     # print('error_message: ' + error_message)
                     raise ApiCall.get_exception(r.status_code)(r.status_code, error_message)
 
                 return r.json() if as_json else r.text
-            except requests.exceptions.Timeout:
-                pass
-            except requests.exceptions.ConnectionError:
+            except requests.exceptions.Timeout, requests.exceptions.ConnectionError:
+                # Catch the exception and retry
                 pass
             except TypesenseClientError as typesense_client_error:
+                # Raise validation exception
                 raise typesense_client_error
             except Exception as e:
+                # Unknown error fallback
                 raise e
 
             # print('Failed, retrying after sleep: ' + node.port)
@@ -105,18 +109,18 @@ class ApiCall(object):
 
     def get(self, endpoint, params=None, as_json=True):
         params = params or {}
-        return self.make_request(requests.get, 'get', endpoint, as_json,
+        return self.make_request(requests.get, endpoint, as_json,
                                  params=params,
                                  timeout=self.config.timeout_seconds)
 
     def post(self, endpoint, body):
-        return self.make_request(requests.post, 'post', endpoint, True,
+        return self.make_request(requests.post, endpoint, True,
                                  data=body, timeout=self.config.timeout_seconds)
 
     def put(self, endpoint, body):
-        return self.make_request(requests.put, 'put', endpoint, True,
+        return self.make_request(requests.put, endpoint, True,
                                  data=body, timeout=self.config.timeout_seconds)
 
     def delete(self, endpoint):
-        return self.make_request(requests.delete, 'delete', endpoint, True,
+        return self.make_request(requests.delete, endpoint, True,
                                  timeout=self.config.timeout_seconds)
