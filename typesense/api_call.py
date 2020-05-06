@@ -1,3 +1,4 @@
+import copy
 import json
 import time
 
@@ -14,15 +15,17 @@ class ApiCall(object):
 
     def __init__(self, config):
         self.config = config
-        self.nodes = self.config.nodes
+        self.nodes = copy.deepcopy(self.config.nodes)
         self.node_index = 0
-        self.last_health_check_ts = int(time.time())
 
-    def _check_failed_node(self):
+        for node in self.nodes:
+            node.last_health_check_ts = int(time.time())
+
+    def _check_failed_node(self, node):
         current_epoch_ts = int(time.time())
-        check_node = ((current_epoch_ts - self.last_health_check_ts) > ApiCall.CHECK_FAILED_NODE_INTERVAL_S)
+        check_node = ((current_epoch_ts - node.last_health_check_ts) > ApiCall.CHECK_FAILED_NODE_INTERVAL_S)
         if check_node:
-            self.last_health_check_ts = current_epoch_ts
+            node.last_health_check_ts = current_epoch_ts
 
         return check_node
 
@@ -33,8 +36,9 @@ class ApiCall(object):
         while i < len(self.nodes):
             i += 1
             self.node_index = (self.node_index + 1) % len(self.nodes)
-            if self.nodes[self.node_index].healthy or self._check_failed_node():
-                return self.nodes[self.node_index]
+            node = self.nodes[self.node_index]
+            if node.healthy or self._check_failed_node(node):
+                return node
 
         # None of the nodes are marked healthy, but some of them could have become healthy since last health check.
         # So we will just return the next node.
