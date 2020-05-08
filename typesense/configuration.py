@@ -31,6 +31,7 @@ class Configuration(object):
         self.timeout_seconds = config_dict.get('timeout_seconds', 3.0)
         self.num_retries = config_dict.get('num_retries', 3)
         self.retry_interval_seconds = config_dict.get('retry_interval_seconds', 1.0)
+        self.healthcheck_interval_seconds = config_dict.get('healthcheck_interval_seconds', 60)
 
     @staticmethod
     def validate_config_dict(config_dict):

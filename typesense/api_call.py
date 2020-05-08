@@ -11,24 +11,16 @@ from .exceptions import (ObjectAlreadyExists,
 
 class ApiCall(object):
     API_KEY_HEADER_NAME = 'X-TYPESENSE-API-KEY'
-    CHECK_FAILED_NODE_INTERVAL_S = 60
 
     def __init__(self, config):
         self.config = config
         self.nodes = copy.deepcopy(self.config.nodes)
         self.node_index = 0
 
-        for node in self.nodes:
-            node.last_health_check_ts = int(time.time())
-
     @staticmethod
-    def check_failed_node(node):
+    def check_failed_node(node, healthcheck_interval):
         current_epoch_ts = int(time.time())
-        check_node = ((current_epoch_ts - node.last_health_check_ts) > ApiCall.CHECK_FAILED_NODE_INTERVAL_S)
-        if check_node:
-            node.last_health_check_ts = current_epoch_ts
-
-        return check_node
+        return ((current_epoch_ts - node.last_access_ts) > healthcheck_interval)
 
     # Returns a healthy host from the pool in a round-robin fashion.
     # Might return an unhealthy host periodically to check for recovery.
@@ -38,7 +30,9 @@ class ApiCall(object):
             i += 1
             self.node_index = (self.node_index + 1) % len(self.nodes)
             node = self.nodes[self.node_index]
-            if node.healthy or ApiCall.check_failed_node(node):
+            healthcheck_interval = self.config.healthcheck_interval_seconds
+
+            if node.healthy or ApiCall.check_failed_node(node, healthcheck_interval):
                 return node
 
         # None of the nodes are marked healthy, but some of them could have become healthy since last health check.
@@ -71,7 +65,11 @@ class ApiCall(object):
         while num_tries < self.config.num_retries:
             num_tries += 1
             node = self.get_node()
+
+            # We assume node to be unhealthy, unless proven healthy.
+            # This way, we keep things DRY and don't have to repeat setting healthy as false multiple times.
             node.healthy = False
+            node.last_access_ts = int(time.time())
 
             try:
                 url = node.url() + endpoint
@@ -92,15 +90,10 @@ class ApiCall(object):
                     raise ApiCall.get_exception(r.status_code)(r.status_code, error_message)
 
                 return r.json() if as_json else r.text
-            except requests.exceptions.Timeout, requests.exceptions.ConnectionError:
+            except (requests.exceptions.Timeout, requests.exceptions.ConnectionError, requests.exceptions.HTTPError,
+                    requests.exceptions.RequestException, requests.exceptions.SSLError):
                 # Catch the exception and retry
                 pass
-            except TypesenseClientError as typesense_client_error:
-                # Raise validation exception
-                raise typesense_client_error
-            except Exception as e:
-                # Unknown error fallback
-                raise e
 
             # print('Failed, retrying after sleep: ' + node.port)
             time.sleep(self.config.retry_interval_seconds)
