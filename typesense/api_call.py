@@ -28,8 +28,8 @@ class ApiCall(object):
         i = 0
         while i < len(self.nodes):
             i += 1
-            self.node_index = (self.node_index + 1) % len(self.nodes)
             node = self.nodes[self.node_index]
+            self.node_index = (self.node_index + 1) % len(self.nodes)
             healthcheck_interval = self.config.healthcheck_interval_seconds
 
             if node.healthy or ApiCall.check_failed_node(node, healthcheck_interval):
@@ -62,7 +62,7 @@ class ApiCall(object):
     # Makes the actual http request, along with retries
     def make_request(self, fn, endpoint, as_json, **kwargs):
         num_tries = 0
-        while num_tries < self.config.num_retries:
+        while num_tries < (self.config.num_retries + 1):
             num_tries += 1
             node = self.get_node()
 
