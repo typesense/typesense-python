@@ -37,3 +37,7 @@ class ServerError(TypesenseClientError):
 
 class ServiceUnavailable(TypesenseClientError):
     pass
+
+
+class HTTPStatus0Error(TypesenseClientError):
+    pass

@@ -3,7 +3,7 @@ import json
 import time
 
 import requests
-from .exceptions import (ObjectAlreadyExists,
+from .exceptions import (HTTPStatus0Error, ObjectAlreadyExists,
                          ObjectNotFound, ObjectUnprocessable,
                          RequestMalformed, RequestUnauthorized,
                          ServerError, ServiceUnavailable, TypesenseClientError)
@@ -17,10 +17,9 @@ class ApiCall(object):
         self.nodes = copy.deepcopy(self.config.nodes)
         self.node_index = 0
 
-    @staticmethod
-    def check_failed_node(node, healthcheck_interval):
+    def check_failed_node(self, node):
         current_epoch_ts = int(time.time())
-        return ((current_epoch_ts - node.last_access_ts) > healthcheck_interval)
+        return (current_epoch_ts - node.last_access_ts) > self.config.healthcheck_interval_seconds
 
     # Returns a healthy host from the pool in a round-robin fashion.
     # Might return an unhealthy host periodically to check for recovery.
@@ -30,19 +29,19 @@ class ApiCall(object):
             i += 1
             node = self.nodes[self.node_index]
             self.node_index = (self.node_index + 1) % len(self.nodes)
-            healthcheck_interval = self.config.healthcheck_interval_seconds
 
-            if node.healthy or ApiCall.check_failed_node(node, healthcheck_interval):
+            if node.healthy or self.check_failed_node(node):
                 return node
 
         # None of the nodes are marked healthy, but some of them could have become healthy since last health check.
         # So we will just return the next node.
-        self.node_index = (self.node_index + 1) % len(self.nodes)
         return self.nodes[self.node_index]
 
     @staticmethod
     def get_exception(http_code):
-        if http_code == 400:
+        if http_code == 0:
+            return HTTPStatus0Error
+        elif http_code == 400:
             return RequestMalformed
         elif http_code == 401:
             return RequestUnauthorized
@@ -62,6 +61,8 @@ class ApiCall(object):
     # Makes the actual http request, along with retries
     def make_request(self, fn, endpoint, as_json, **kwargs):
         num_tries = 0
+        last_exception = None
+
         while num_tries < (self.config.num_retries + 1):
             num_tries += 1
             node = self.get_node()
@@ -86,19 +87,18 @@ class ApiCall(object):
                 # We should raise a custom exception if status code is not 200 or 201
                 if r.status_code not in [200, 201]:
                     error_message = r.json().get('message', 'API error.')
-                    # print('error_message: ' + error_message)
+                    # Raised exception will be caught and retried only if it's a 50X
                     raise ApiCall.get_exception(r.status_code)(r.status_code, error_message)
 
                 return r.json() if as_json else r.text
             except (requests.exceptions.Timeout, requests.exceptions.ConnectionError, requests.exceptions.HTTPError,
-                    requests.exceptions.RequestException, requests.exceptions.SSLError):
+                    requests.exceptions.RequestException, requests.exceptions.SSLError,
+                    HTTPStatus0Error, ServerError, ServiceUnavailable) as e:
                 # Catch the exception and retry
-                pass
+                last_exception = e
+                time.sleep(self.config.retry_interval_seconds)
 
-            # print('Failed, retrying after sleep: ' + node.port)
-            time.sleep(self.config.retry_interval_seconds)
-
-        raise TypesenseClientError('Retries exceeded.')
+        raise last_exception
 
     def get(self, endpoint, params=None, as_json=True):
         params = params or {}
