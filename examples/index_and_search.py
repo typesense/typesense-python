@@ -9,25 +9,25 @@ sys.path.insert(1, os.path.abspath(os.path.join(curr_dir, os.pardir)))
 
 
 client = typesense.Client({
-    'api_key': 'abcd',
+    'api_key': 'esdSJsadjadskSAksdjsdnasw',
     'nodes': [
         {
-            'host': 'localhost',
-            'port': '8108',
-            'protocol': 'http'
+            'host': 'tempest2-1.a1.typesense.net',
+            'port': '443',
+            'protocol': 'https'
         },
         {
-            'host': 'localhost',
-            'port': '7108',
-            'protocol': 'http'
+            'host': 'tempest2-2.a1.typesense.net',
+            'port': '443',
+            'protocol': 'https'
         },
         {
-            'host': 'localhost',
-            'port': '6108',
-            'protocol': 'http'
+            'host': 'tempest2-3.a1.typesense.net',
+            'port': '443',
+            'protocol': 'https'
         }
     ],
-    'timeout_seconds': 2
+    'connection_timeout_seconds': 10
 })
 
 schema = {
@@ -55,6 +55,7 @@ with open('/tmp/books.jsonl') as infile:
     for json_line in infile:
         book_documents.append(json.loads(json_line))
 
+print('')
 print(client.collections['books'].documents.create_many(book_documents))
 
 i = 0

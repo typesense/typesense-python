@@ -15,7 +15,7 @@ client = typesense.Client({
         'port': '8108',
         'protocol': 'http'
     }],
-    'timeout_seconds': 2
+    'connection_timeout_seconds': 2
 })
 
 # Create a collection

@@ -84,8 +84,8 @@ class ApiCall(object):
                 if 0 < r.status_code < 500:
                     node.healthy = True
 
-                # We should raise a custom exception if status code is not 200 or 201
-                if r.status_code not in [200, 201]:
+                # We should raise a custom exception if status code is not 20X
+                if 200 <= r.status_code < 300:
                     error_message = r.json().get('message', 'API error.')
                     # Raised exception will be caught and retried only if it's a 50X
                     raise ApiCall.get_exception(r.status_code)(r.status_code, error_message)
@@ -104,16 +104,16 @@ class ApiCall(object):
         params = params or {}
         return self.make_request(requests.get, endpoint, as_json,
                                  params=params,
-                                 timeout=self.config.timeout_seconds)
+                                 timeout=self.config.connection_timeout_seconds)
 
     def post(self, endpoint, body):
         return self.make_request(requests.post, endpoint, True,
-                                 data=body, timeout=self.config.timeout_seconds)
+                                 data=body, timeout=self.config.connection_timeout_seconds)
 
     def put(self, endpoint, body):
         return self.make_request(requests.put, endpoint, True,
-                                 data=body, timeout=self.config.timeout_seconds)
+                                 data=body, timeout=self.config.connection_timeout_seconds)
 
     def delete(self, endpoint):
         return self.make_request(requests.delete, endpoint, True,
-                                 timeout=self.config.timeout_seconds)
+                                 timeout=self.config.connection_timeout_seconds)
