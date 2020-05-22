@@ -1,4 +1,5 @@
 import copy
+import logging
 import json
 import time
 
@@ -8,6 +9,8 @@ from .exceptions import (HTTPStatus0Error, ObjectAlreadyExists,
                          RequestMalformed, RequestUnauthorized,
                          ServerError, ServiceUnavailable, TypesenseClientError)
 
+logger = logging.getLogger(__name__)
+
 
 class ApiCall(object):
     API_KEY_HEADER_NAME = 'X-TYPESENSE-API-KEY'
@@ -16,25 +19,44 @@ class ApiCall(object):
         self.config = config
         self.nodes = copy.deepcopy(self.config.nodes)
         self.node_index = 0
+        self._initialize_nodes()
 
-    def check_failed_node(self, node):
+    def _initialize_nodes(self):
+        if self.config.nearest_node:
+            self.set_node_healthcheck(self.config.nearest_node, True)
+
+        for node in self.nodes:
+            self.set_node_healthcheck(node, True)
+
+    def node_due_for_health_check(self, node):
         current_epoch_ts = int(time.time())
-        return (current_epoch_ts - node.last_access_ts) > self.config.healthcheck_interval_seconds
+        due_for_check = (current_epoch_ts - node.last_access_ts) > self.config.healthcheck_interval_seconds
+        if due_for_check:
+            logger.debug('Node {}:{} is due for health check.'.format(node.host, node.port))
+        return due_for_check
 
     # Returns a healthy host from the pool in a round-robin fashion.
     # Might return an unhealthy host periodically to check for recovery.
     def get_node(self):
+        if self.config.nearest_node:
+            if self.config.nearest_node.healthy or self.node_due_for_health_check(self.config.nearest_node):
+                logger.debug('Using nearest node.')
+                return self.config.nearest_node
+            else:
+                logger.debug('Nearest node is unhealthy or not due for health check. Falling back to individual nodes.')
+
         i = 0
         while i < len(self.nodes):
             i += 1
             node = self.nodes[self.node_index]
             self.node_index = (self.node_index + 1) % len(self.nodes)
 
-            if node.healthy or self.check_failed_node(node):
+            if node.healthy or self.node_due_for_health_check(node):
                 return node
 
         # None of the nodes are marked healthy, but some of them could have become healthy since last health check.
         # So we will just return the next node.
+        logger.debug('No healthy nodes were found. Returning the next node.')
         return self.nodes[self.node_index]
 
     @staticmethod
@@ -63,14 +85,13 @@ class ApiCall(object):
         num_tries = 0
         last_exception = None
 
+        logger.debug('Making {} {}'.format(fn.__name__, endpoint))
+
         while num_tries < (self.config.num_retries + 1):
             num_tries += 1
             node = self.get_node()
 
-            # We assume node to be unhealthy, unless proven healthy.
-            # This way, we keep things DRY and don't have to repeat setting healthy as false multiple times.
-            node.healthy = False
-            node.last_access_ts = int(time.time())
+            logger.debug('Try {} to node {}:{} -- healthy? {}'.format(num_tries, node.host, node.port, node.healthy))
 
             try:
                 url = node.url() + endpoint
@@ -82,12 +103,13 @@ class ApiCall(object):
                 # Treat any status code > 0 and < 500 to be an indication that node is healthy
                 # We exclude 0 since some clients return 0 when request fails
                 if 0 < r.status_code < 500:
-                    node.healthy = True
+                    logger.debug('{}:{} is healthy. Status code: {}'.format(node.host, node.port, r.status_code))
+                    self.set_node_healthcheck(node, True)
 
                 # We should raise a custom exception if status code is not 20X
-                if 200 <= r.status_code < 300:
+                if not 200 <= r.status_code < 300:
                     error_message = r.json().get('message', 'API error.')
-                    # Raised exception will be caught and retried only if it's a 50X
+                    # Raised exception will be caught and retried
                     raise ApiCall.get_exception(r.status_code)(r.status_code, error_message)
 
                 return r.json() if as_json else r.text
@@ -95,10 +117,18 @@ class ApiCall(object):
                     requests.exceptions.RequestException, requests.exceptions.SSLError,
                     HTTPStatus0Error, ServerError, ServiceUnavailable) as e:
                 # Catch the exception and retry
+                self.set_node_healthcheck(node, False)
+                logger.debug('Request to {}:{} failed because of {}'.format(node.host, node.port, e))
+                logger.debug('Sleeping for {} and retrying...'.format(self.config.retry_interval_seconds))
                 last_exception = e
                 time.sleep(self.config.retry_interval_seconds)
 
+        logger.debug('No retries left. Raising last exception: {}'.format(last_exception))
         raise last_exception
+
+    def set_node_healthcheck(self, node, is_healthy):
+        node.healthy = is_healthy
+        node.last_access_ts = int(time.time())
 
     def get(self, endpoint, params=None, as_json=True):
         params = params or {}

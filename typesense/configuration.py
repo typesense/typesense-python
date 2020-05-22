@@ -27,6 +27,8 @@ class Configuration(object):
                 Node(node_dict['host'], node_dict['port'], node_dict.get('path', ''), node_dict['protocol'])
             )
 
+        self.nearest_node = config_dict.get('nearest_node', None)
+
         self.api_key = config_dict.get('api_key', '')
         self.connection_timeout_seconds = config_dict.get('connection_timeout_seconds', 3.0)
         self.num_retries = config_dict.get('num_retries', 3)
@@ -46,6 +48,11 @@ class Configuration(object):
         for node in nodes:
             if not Configuration.validate_node_fields(node):
                 raise ConfigError('`node` entry must be a dictionary with the following required keys: '
+                                  'host, port, protocol')
+
+        nearest_node = config_dict.get('nearest_node', None)
+        if nearest_node and not Configuration.validate_node_fields(nearest_node):
+            raise ConfigError('`nearest_node` entry must be a dictionary with the following required keys: '
                                   'host, port, protocol')
 
     @staticmethod
