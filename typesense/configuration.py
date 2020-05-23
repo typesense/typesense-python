@@ -1,4 +1,8 @@
+import logging
+
 from .exceptions import ConfigError
+
+logger = logging.getLogger(__name__)
 
 
 class Node(object):
@@ -17,6 +21,7 @@ class Node(object):
 
 class Configuration(object):
     def __init__(self, config_dict):
+        Configuration.show_deprecation_warnings(config_dict)
         Configuration.validate_config_dict(config_dict)
 
         node_dicts = config_dict.get('nodes', [])
@@ -59,3 +64,15 @@ class Configuration(object):
     def validate_node_fields(node):
         expected_fields = {'host', 'port', 'protocol'}
         return expected_fields.issubset(node)
+
+    @staticmethod
+    def show_deprecation_warnings(config_dict):
+        if config_dict.get('timeout_seconds'):
+            logger.warn('Deprecation warning: timeout_seconds is now renamed to connection_timeout_seconds')
+
+        if config_dict.get('master_node'):
+            logger.warn('Deprecation warning: master_node is now consolidated to nodes, starting with Typesense Server v0.12')
+
+        if config_dict.get('read_replica_nodes'):
+            logger.warn('Deprecation warning: read_replica_nodes is now consolidated to nodes, starting with Typesense Server v0.12')
+
