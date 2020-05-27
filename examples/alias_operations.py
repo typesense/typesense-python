@@ -1,7 +1,5 @@
 import typesense
 
-# Aliasing is a Typesense Premium feature (see: https://typesense.org/premium)
-
 client = typesense.Client({
   'api_key': 'abcd',
   'nodes': [{
