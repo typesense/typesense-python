@@ -10,7 +10,7 @@ class Client(object):
     def __init__(self, config_dict):
         self.config = Configuration(config_dict)
         self.api_call = ApiCall(self.config)
-        self.collections = Collections(self.config, self.api_call)
-        self.keys = Keys(self.config, self.api_call)
-        self.aliases = Aliases(self.config, self.api_call)
-        self.debug = Debug(self.config, self.api_call)
+        self.collections = Collections(self.api_call)
+        self.keys = Keys(self.api_call)
+        self.aliases = Aliases(self.api_call)
+        self.debug = Debug(self.api_call)

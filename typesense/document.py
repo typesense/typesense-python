@@ -1,6 +1,5 @@
 class Document(object):
-    def __init__(self, config, api_call, collection_name, document_id):
-        self.config = config
+    def __init__(self, api_call, collection_name, document_id):
         self.api_call = api_call
         self.collection_name = collection_name
         self.document_id = document_id

@@ -1,6 +1,5 @@
 class Alias(object):
-    def __init__(self, config, api_call, name):
-        self.config = config
+    def __init__(self, api_call, name):
         self.api_call = api_call
         self.name = name
 

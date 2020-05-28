@@ -9,14 +9,13 @@ from .key import Key
 class Keys(object):
     RESOURCE_PATH = '/keys'
 
-    def __init__(self, config, api_call):
-        self.config = config
+    def __init__(self, api_call):
         self.api_call = api_call
         self.keys = {}
 
     def __getitem__(self, key_id):
         if key_id not in self.keys:
-            self.keys[key_id] = Key(self.config, self.api_call, key_id)
+            self.keys[key_id] = Key(self.api_call, key_id)
 
         return self.keys.get(key_id)
 

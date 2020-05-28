@@ -4,14 +4,13 @@ from typesense.alias import Alias
 class Aliases(object):
     RESOURCE_PATH = '/aliases'
 
-    def __init__(self, config, api_call):
-        self.config = config
+    def __init__(self, api_call):
         self.api_call = api_call
         self.aliases = {}
 
     def __getitem__(self, name):
         if name not in self.aliases:
-            self.aliases[name] = Alias(self.config, self.api_call, name)
+            self.aliases[name] = Alias(self.api_call, name)
 
         return self.aliases.get(name)
 

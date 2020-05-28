@@ -1,6 +1,5 @@
 class Override(object):
-    def __init__(self, config, api_call, collection_name, override_id):
-        self.config = config
+    def __init__(self, api_call, collection_name, override_id):
         self.api_call = api_call
         self.collection_name = collection_name
         self.override_id = override_id

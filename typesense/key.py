@@ -1,8 +1,7 @@
 
 
 class Key(object):
-    def __init__(self, config, api_call, key_id):
-        self.config = config
+    def __init__(self, api_call, key_id):
         self.key_id = key_id
         self.api_call = api_call
 

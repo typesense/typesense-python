@@ -1,8 +1,7 @@
 class Debug(object):
     RESOURCE_PATH = '/debug'
 
-    def __init__(self, config, api_call):
-        self.config = config
+    def __init__(self,api_call):
         self.api_call = api_call
         self.collections = {}
 

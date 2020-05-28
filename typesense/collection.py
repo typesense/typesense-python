@@ -3,12 +3,11 @@ from .documents import Documents
 
 
 class Collection(object):
-    def __init__(self, config, api_call, name):
-        self.config = config
+    def __init__(self, api_call, name):
         self.name = name
         self.api_call = api_call
-        self.documents = Documents(config, api_call, name)
-        self.overrides = Overrides(config, api_call, name)
+        self.documents = Documents(api_call, name)
+        self.overrides = Overrides(api_call, name)
 
     def _endpoint_path(self):
         from .collections import Collections

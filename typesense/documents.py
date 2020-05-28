@@ -6,15 +6,14 @@ from .document import Document
 class Documents(object):
     RESOURCE_PATH = 'documents'
 
-    def __init__(self, config, api_call, collection_name):
-        self.config = config
+    def __init__(self, api_call, collection_name):
         self.api_call = api_call
         self.collection_name = collection_name
         self.documents = {}
 
     def __getitem__(self, document_id):
         if document_id not in self.documents:
-            self.documents[document_id] = Document(self.config, self.api_call, self.collection_name, document_id)
+            self.documents[document_id] = Document(self.api_call, self.collection_name, document_id)
 
         return self.documents[document_id]
 
