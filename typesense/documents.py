@@ -33,7 +33,8 @@ class Documents(object):
             document_strs.append(json.dumps(document))
 
         docs_import = '\n'.join(document_strs)
-        return self.api_call.post(self._endpoint_path('import'), docs_import)
+        api_response = self.api_call.post(self._endpoint_path('import'), docs_import, as_json=False)
+        return api_response.split('\n')
 
     def export(self):
         api_response = self.api_call.get(self._endpoint_path('export'), {}, as_json=False)

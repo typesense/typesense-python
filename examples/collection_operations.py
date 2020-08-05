@@ -18,6 +18,9 @@ client = typesense.Client({
     'connection_timeout_seconds': 2
 })
 
+# Drop pre-existing collection if any
+client.collections['books'].delete()
+
 # Create a collection
 
 create_response = client.collections.create({
@@ -84,8 +87,8 @@ docs_to_import = []
 for exported_doc_str in exported_doc_strs:
     docs_to_import.append(json.loads(exported_doc_str))
 
-import_res = client.collections['books'].documents.create_many(docs_to_import)
-print(import_res["success"])
+import_results = client.collections['books'].documents.create_many(docs_to_import)
+print(json.loads(import_results[0])["success"])
 
 # Drop the collection
 

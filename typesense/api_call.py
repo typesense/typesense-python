@@ -136,8 +136,8 @@ class ApiCall(object):
                                  params=params,
                                  timeout=self.config.connection_timeout_seconds)
 
-    def post(self, endpoint, body):
-        return self.make_request(requests.post, endpoint, True,
+    def post(self, endpoint, body, as_json=True):
+        return self.make_request(requests.post, endpoint, as_json,
                                  data=body, timeout=self.config.connection_timeout_seconds)
 
     def put(self, endpoint, body):
