@@ -19,7 +19,10 @@ client = typesense.Client({
 })
 
 # Drop pre-existing collection if any
-client.collections['books'].delete()
+try:
+    client.collections['books'].delete()
+except Exception as e:
+    pass
 
 # Create a collection
 

@@ -6,7 +6,7 @@ import time
 import requests
 from .exceptions import (HTTPStatus0Error, ObjectAlreadyExists,
                          ObjectNotFound, ObjectUnprocessable,
-                         RequestMalformed, RequestUnauthorized,
+                         RequestMalformed, RequestUnauthorized, RequestForbidden,
                          ServerError, ServiceUnavailable, TypesenseClientError)
 
 logger = logging.getLogger(__name__)
@@ -67,6 +67,8 @@ class ApiCall(object):
             return RequestMalformed
         elif http_code == 401:
             return RequestUnauthorized
+        elif http_code == 403:
+            return RequestForbidden
         elif http_code == 404:
             return ObjectNotFound
         elif http_code == 409:

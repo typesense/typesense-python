@@ -19,6 +19,10 @@ class RequestUnauthorized(TypesenseClientError):
     pass
 
 
+class RequestForbidden(TypesenseClientError):
+    pass
+
+
 class ObjectNotFound(TypesenseClientError):
     pass
 
