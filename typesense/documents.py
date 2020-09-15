@@ -36,9 +36,13 @@ class Documents(object):
         api_response = self.api_call.post(self._endpoint_path('import'), docs_import, as_json=False)
         return api_response.split('\n')
 
+    def import_jsonl(self, documents_jsonl):
+        api_response = self.api_call.post(self._endpoint_path('import'), documents_jsonl, as_json=False)
+        return api_response
+
     def export(self):
         api_response = self.api_call.get(self._endpoint_path('export'), {}, as_json=False)
-        return api_response.split('\n')
+        return api_response
 
     def search(self, search_parameters):
         return self.api_call.get(self._endpoint_path('search'), search_parameters)

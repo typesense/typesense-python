@@ -66,8 +66,8 @@ client.collections['books'].documents.create(hunger_games_book)
 
 # Export the documents from a collection
 
-exported_doc_strs = client.collections['books'].documents.export()
-print(exported_doc_strs)
+export_output = client.collections['books'].documents.export()
+print(export_output)
 
 # Fetch a document in a collection
 
@@ -87,7 +87,7 @@ print(client.collections['books'].documents['1'].delete())
 
 # Import documents into a collection
 docs_to_import = []
-for exported_doc_str in exported_doc_strs:
+for exported_doc_str in export_output.split('\n'):
     docs_to_import.append(json.loads(exported_doc_str))
 
 import_results = client.collections['books'].documents.create_many(docs_to_import)

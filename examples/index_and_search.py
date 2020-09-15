@@ -9,22 +9,22 @@ sys.path.insert(1, os.path.abspath(os.path.join(curr_dir, os.pardir)))
 
 
 client = typesense.Client({
-    'api_key': 'esdSJsadjadskSAksdjsdnasw',
+    'api_key': 'abcd',
     'nodes': [
         {
-            'host': 'tempest2-1.a1.typesense.net',
-            'port': '443',
-            'protocol': 'https'
+            'host': 'localhost',
+            'port': '8108',
+            'protocol': 'http'
         },
         {
-            'host': 'tempest2-2.a1.typesense.net',
-            'port': '443',
-            'protocol': 'https'
+            'host': 'localhost',
+            'port': '7108',
+            'protocol': 'http'
         },
         {
-            'host': 'tempest2-3.a1.typesense.net',
-            'port': '443',
-            'protocol': 'https'
+            'host': 'localhost',
+            'port': '6108',
+            'protocol': 'http'
         }
     ],
     'connection_timeout_seconds': 10
