@@ -91,7 +91,7 @@ for exported_doc_str in export_output.split('\n'):
     docs_to_import.append(json.loads(exported_doc_str))
 
 import_results = client.collections['books'].documents.create_many(docs_to_import)
-print(json.loads(import_results[0])["success"])
+print(import_results)
 
 # Drop the collection
 

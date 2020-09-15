@@ -34,7 +34,13 @@ class Documents(object):
 
         docs_import = '\n'.join(document_strs)
         api_response = self.api_call.post(self._endpoint_path('import'), docs_import, as_json=False)
-        return api_response.split('\n')
+        res_obj_strs = api_response.split('\n')
+
+        response_objs = []
+        for res_obj_str in res_obj_strs:
+            response_objs.append(json.dumps(res_obj_str))
+
+        return response_objs
 
     def import_jsonl(self, documents_jsonl):
         api_response = self.api_call.post(self._endpoint_path('import'), documents_jsonl, as_json=False)
