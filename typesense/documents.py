@@ -24,16 +24,16 @@ class Documents(object):
         return u"{0}/{1}/{2}/{3}".format(Collections.RESOURCE_PATH, self.collection_name, Documents.RESOURCE_PATH,
                                          action)
 
-    def create(self, document):
-        return self.api_call.post(self._endpoint_path(), document)
+    def create(self, document, params=None):
+        return self.api_call.post(self._endpoint_path(), document, params)
 
-    def create_many(self, documents):
+    def create_many(self, documents, params=None):
         document_strs = []
         for document in documents:
             document_strs.append(json.dumps(document))
 
         docs_import = '\n'.join(document_strs)
-        api_response = self.api_call.post(self._endpoint_path('import'), docs_import, as_json=False)
+        api_response = self.api_call.post(self._endpoint_path('import'), docs_import, params, as_json=False)
         res_obj_strs = api_response.split('\n')
 
         response_objs = []

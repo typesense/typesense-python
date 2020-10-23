@@ -64,6 +64,13 @@ hunger_games_book = {
 
 client.collections['books'].documents.create(hunger_games_book)
 
+# Upsert the same document
+print(client.collections['books'].documents.create(hunger_games_book, {'upsert': True}))
+
+# Or update it
+hunger_games_book_updated= {'id': '1', 'average_rating': 4.45}
+print(client.collections['books'].documents['1'].update(hunger_games_book_updated))
+
 # Export the documents from a collection
 
 export_output = client.collections['books'].documents.export()
@@ -91,6 +98,12 @@ for exported_doc_str in export_output.split('\n'):
     docs_to_import.append(json.loads(exported_doc_str))
 
 import_results = client.collections['books'].documents.create_many(docs_to_import)
+print(import_results)
+
+# Upserting documents
+import_results = client.collections['books'].documents.create_many(docs_to_import, {
+    'upsert': True,
+})
 print(import_results)
 
 # Drop the collection

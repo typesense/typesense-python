@@ -13,5 +13,8 @@ class Document(object):
     def retrieve(self):
         return self.api_call.get(self._endpoint_path())
 
+    def update(self, document):
+        return self.api_call.put(self._endpoint_path(), document, {'upsert': True})
+
     def delete(self):
         return self.api_call.delete(self._endpoint_path())
