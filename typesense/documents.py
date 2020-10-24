@@ -1,6 +1,9 @@
 import json
+import logging
 
 from .document import Document
+
+logger = logging.getLogger(__name__)
 
 
 class Documents(object):
@@ -24,27 +27,43 @@ class Documents(object):
         return u"{0}/{1}/{2}/{3}".format(Collections.RESOURCE_PATH, self.collection_name, Documents.RESOURCE_PATH,
                                          action)
 
-    def create(self, document, params=None):
-        return self.api_call.post(self._endpoint_path(), document, params)
+    def create(self, document):
+        return self.api_call.post(self._endpoint_path(), document, {'action': 'create'})
 
     def create_many(self, documents, params=None):
-        document_strs = []
-        for document in documents:
-            document_strs.append(json.dumps(document))
+        logger.warning('`create_many` is deprecated: please use `import_`.')
+        return self.import_(documents, params)
 
-        docs_import = '\n'.join(document_strs)
-        api_response = self.api_call.post(self._endpoint_path('import'), docs_import, params, as_json=False)
-        res_obj_strs = api_response.split('\n')
+    def upsert(self, document):
+        return self.api_call.post(self._endpoint_path(), document, {'action': 'upsert'})
 
-        response_objs = []
-        for res_obj_str in res_obj_strs:
-            response_objs.append(json.dumps(res_obj_str))
-
-        return response_objs
+    def update(self, document):
+        return self.api_call.post(self._endpoint_path(), document, {'action': 'update'})
 
     def import_jsonl(self, documents_jsonl):
-        api_response = self.api_call.post(self._endpoint_path('import'), documents_jsonl, as_json=False)
-        return api_response
+        logger.warning('`import_jsonl` is deprecated: please use `import_`.')
+        return self.import_(documents_jsonl)
+
+    # `documents` can be either a list of document objects (or)
+    #  JSONL-formatted string containing multiple documents
+    def import_(self, documents, params=None):
+        if isinstance(documents, list):
+            document_strs = []
+            for document in documents:
+                document_strs.append(json.dumps(document))
+
+            docs_import = '\n'.join(document_strs)
+            api_response = self.api_call.post(self._endpoint_path('import'), docs_import, params, as_json=False)
+            res_obj_strs = api_response.split('\n')
+
+            response_objs = []
+            for res_obj_str in res_obj_strs:
+                response_objs.append(json.dumps(res_obj_str))
+
+            return response_objs
+        else:
+            api_response = self.api_call.post(self._endpoint_path('import'), documents, as_json=False)
+            return api_response
 
     def export(self):
         api_response = self.api_call.get(self._endpoint_path('export'), {}, as_json=False)

@@ -149,6 +149,11 @@ class ApiCall(object):
                                  params=params, data=body,
                                  timeout=self.config.connection_timeout_seconds)
 
+    def patch(self, endpoint, body, params=None):
+        return self.make_request(requests.patch, endpoint, True,
+                                 params=params, data=body,
+                                 timeout=self.config.connection_timeout_seconds)
+
     def delete(self, endpoint):
         return self.make_request(requests.delete, endpoint, True,
                                  timeout=self.config.connection_timeout_seconds)
