@@ -62,7 +62,7 @@ class Documents(object):
 
             return response_objs
         else:
-            api_response = self.api_call.post(self._endpoint_path('import'), documents, as_json=False)
+            api_response = self.api_call.post(self._endpoint_path('import'), documents, params, as_json=False)
             return api_response
 
     def export(self):
