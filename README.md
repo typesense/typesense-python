@@ -18,6 +18,13 @@ You can find some examples [here](https://github.com/typesense/typesense-python/
 
 See detailed [API documentation](https://typesense.org/api).
 
+## Compatibility
+
+| Typesense Server | typesense-python |
+|------------------|----------------|
+| \>= v0.16.0 | \>= v0.8.0 |
+| \>= v0.15.0 | \>= v0.7.0 |
+
 ## Contributing
 
 Bug reports and pull requests are welcome on GitHub at [https://github.com/typesense/typesense-python].
