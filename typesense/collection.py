@@ -1,4 +1,5 @@
 from .overrides import Overrides
+from .synonyms import Synonyms
 from .documents import Documents
 
 
@@ -8,6 +9,7 @@ class Collection(object):
         self.api_call = api_call
         self.documents = Documents(api_call, name)
         self.overrides = Overrides(api_call, name)
+        self.synonyms = Synonyms(api_call, name)
 
     def _endpoint_path(self):
         from .collections import Collections
