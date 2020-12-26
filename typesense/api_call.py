@@ -154,6 +154,6 @@ class ApiCall(object):
                                  params=params, data=body,
                                  timeout=self.config.connection_timeout_seconds)
 
-    def delete(self, endpoint):
+    def delete(self, endpoint, params=None):
         return self.make_request(requests.delete, endpoint, True,
-                                 timeout=self.config.connection_timeout_seconds)
+                                 params=params, timeout=self.config.connection_timeout_seconds)

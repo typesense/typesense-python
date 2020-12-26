@@ -71,3 +71,6 @@ class Documents(object):
 
     def search(self, search_parameters):
         return self.api_call.get(self._endpoint_path('search'), search_parameters)
+
+    def delete(self, params=None):
+      return self.api_call.delete(self._endpoint_path(), params)

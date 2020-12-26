@@ -106,6 +106,9 @@ import_results = client.collections['books'].documents.import_(docs_to_import, {
 })
 print(import_results)
 
+# Deleting documents matching a filter query
+print(client.collections['books'].documents.delete({'filter_by': 'ratings_count: 4780653'}))
+
 # Drop the collection
 
 drop_response = client.collections['books'].delete()
