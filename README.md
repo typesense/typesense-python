@@ -2,8 +2,6 @@
 
 Python client for the Typesense API: https://github.com/typesense/typesense
 
-Follows the Typesense [API specification](https://github.com/typesense/typesense-api-spec).
-
 ## Installation
 
 ```
