@@ -13,7 +13,7 @@ setup(
     url='https://typesense.org',
     license='Apache 2.0',
     author='Typesense',
-    author_email='contact+typesense@wreally.com',
+    author_email='contact@typesense.org',
     description='Python client for Typesense, an open source and typo tolerant search engine.',
     long_description=long_description,
 )
