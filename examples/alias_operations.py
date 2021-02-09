@@ -16,10 +16,8 @@ create_response = client.collections.create({
   "name": "books_january",
   "fields": [
     {"name": "title", "type": "string" },
-    {"name": "authors", "type": "string[]" },
-    {"name": "authors_facet", "type": "string[]", "facet": True },
-    {"name": "publication_year", "type": "int32" },
-    {"name": "publication_year_facet", "type": "string", "facet": True },
+    {"name": "authors", "type": "string[]", "facet": True  },
+    {"name": "publication_year", "type": "int32", "facet": True  },
     {"name": "ratings_count", "type": "int32" },
     {"name": "average_rating", "type": "float" },
     {"name": "image_url", "type": "string" }
@@ -41,8 +39,7 @@ print(create_alias_response)
 
 hunger_games_book = {
   'id': '1', 'original_publication_year': 2008, 'authors': ['Suzanne Collins'], 'average_rating': 4.34,
-  'publication_year': 2008, 'publication_year_facet': '2008', 'authors_facet': ['Suzanne Collins'],
-  'title': 'The Hunger Games',
+  'publication_year': 2008, 'title': 'The Hunger Games',
   'image_url': 'https://images.gr-assets.com/books/1447303603m/2767052.jpg',
   'ratings_count': 4780653
 }

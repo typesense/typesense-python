@@ -10,7 +10,11 @@ client = typesense.Client({
   'connection_timeout_seconds': 2
 })
 
-client.collections['key_collection'].delete()
+# Drop pre-existing collection if any
+try:
+    client.collections['key_collection'].delete()
+except Exception as e:
+    pass
 
 # Create a collection with admin key
 create_response = client.collections.create({

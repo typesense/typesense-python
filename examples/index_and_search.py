@@ -30,14 +30,18 @@ client = typesense.Client({
     'connection_timeout_seconds': 10
 })
 
+# Drop pre-existing collection if any
+try:
+    client.collections['books'].delete()
+except Exception as e:
+    pass
+
 schema = {
     "name": "books",
     "fields": [
         {"name": "title", "type": "string"},
-        {"name": "authors", "type": "string[]"},
-        {"name": "authors_facet", "type": "string[]", "facet": True},
-        {"name": "publication_year", "type": "int32"},
-        {"name": "publication_year_facet", "type": "string", "facet": True},
+        {"name": "authors", "type": "string[]", "facet": True },
+        {"name": "publication_year", "type": "int32", "facet": True },
         {"name": "ratings_count", "type": "int32"},
         {"name": "average_rating", "type": "float"},
         {"name": "image_url", "type": "string"}
