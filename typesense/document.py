@@ -13,8 +13,8 @@ class Document(object):
     def retrieve(self):
         return self.api_call.get(self._endpoint_path())
 
-    def update(self, document):
-        return self.api_call.patch(self._endpoint_path(), document)
+    def update(self, document, params=None):
+        return self.api_call.patch(self._endpoint_path(), document, params)
 
     def delete(self):
         return self.api_call.delete(self._endpoint_path())

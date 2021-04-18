@@ -27,18 +27,24 @@ class Documents(object):
         return u"{0}/{1}/{2}/{3}".format(Collections.RESOURCE_PATH, self.collection_name, Documents.RESOURCE_PATH,
                                          action)
 
-    def create(self, document):
-        return self.api_call.post(self._endpoint_path(), document, {'action': 'create'})
+    def create(self, document, params=None):
+        params = params or {}
+        params['action'] = 'create'
+        return self.api_call.post(self._endpoint_path(), document, params)
 
     def create_many(self, documents, params=None):
         logger.warning('`create_many` is deprecated: please use `import_`.')
         return self.import_(documents, params)
 
-    def upsert(self, document):
-        return self.api_call.post(self._endpoint_path(), document, {'action': 'upsert'})
+    def upsert(self, document, params=None):
+        params = params or {}
+        params['action'] = 'upsert'
+        return self.api_call.post(self._endpoint_path(), document, params)
 
-    def update(self, document):
-        return self.api_call.post(self._endpoint_path(), document, {'action': 'update'})
+    def update(self, document, params=None):
+        params = params or {}
+        params['action'] = 'update'
+        return self.api_call.post(self._endpoint_path(), document, params)
 
     def import_jsonl(self, documents_jsonl):
         logger.warning('`import_jsonl` is deprecated: please use `import_`.')
