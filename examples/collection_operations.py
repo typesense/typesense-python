@@ -68,6 +68,10 @@ print(client.collections['books'].documents.upsert(hunger_games_book))
 hunger_games_book_updated= {'id': '1', 'average_rating': 4.45}
 print(client.collections['books'].documents['1'].update(hunger_games_book_updated))
 
+# Try updating with bad data (with coercion enabled)
+hunger_games_book_updated= {'id': '1', 'average_rating': '4.55'}
+print(client.collections['books'].documents['1'].update(hunger_games_book_updated, {'dirty_values': 'coerce_or_reject'}))
+
 # Export the documents from a collection
 
 export_output = client.collections['books'].documents.export()
