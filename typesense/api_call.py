@@ -97,7 +97,7 @@ class ApiCall(object):
 
             try:
                 url = node.url() + endpoint
-                if kwargs.get('data') and not isinstance(kwargs['data'], str):
+                if kwargs.get('data') and not (isinstance(kwargs['data'], str) or isinstance(kwargs['data'], bytes)):
                     kwargs['data'] = json.dumps(kwargs['data'])
 
                 r = fn(url, headers={ApiCall.API_KEY_HEADER_NAME: self.config.api_key}, **kwargs)
