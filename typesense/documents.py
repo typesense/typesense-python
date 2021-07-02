@@ -71,8 +71,8 @@ class Documents(object):
             api_response = self.api_call.post(self._endpoint_path('import'), documents, params, as_json=False)
             return api_response
 
-    def export(self):
-        api_response = self.api_call.get(self._endpoint_path('export'), {}, as_json=False)
+    def export(self, params=None):
+        api_response = self.api_call.get(self._endpoint_path('export'), params, as_json=False)
         return api_response
 
     def search(self, search_parameters):
