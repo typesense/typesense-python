@@ -20,6 +20,7 @@ See detailed [API documentation](https://typesense.org/api).
 
 | Typesense Server | typesense-python |
 |------------------|----------------|
+| \>= v0.21.0 | \>= v0.13.0 |
 | \>= v0.20.0 | \>= v0.11.0 |
 | \>= v0.19.0 | \>= v0.10.0 |
 | \>= v0.17.0 | \>= v0.9.0 |
