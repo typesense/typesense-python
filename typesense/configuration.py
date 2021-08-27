@@ -32,7 +32,11 @@ class Configuration(object):
                 Node(node_dict['host'], node_dict['port'], node_dict.get('path', ''), node_dict['protocol'])
             )
 
-        self.nearest_node = config_dict.get('nearest_node', None)
+        nearest_node = config_dict.get('nearest_node', None)
+        if nearest_node:
+            self.nearest_node = Node(nearest_node['host'], nearest_node['port'], nearest_node.get('path', ''), nearest_node['protocol'])
+        else:
+            self.nearest_node = None
 
         self.api_key = config_dict.get('api_key', '')
         self.connection_timeout_seconds = config_dict.get('connection_timeout_seconds', 3.0)
