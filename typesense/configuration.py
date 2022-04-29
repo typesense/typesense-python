@@ -1,8 +1,5 @@
-import logging
-
 from .exceptions import ConfigError
-
-logger = logging.getLogger(__name__)
+from .logger import logger
 
 
 class Node(object):
