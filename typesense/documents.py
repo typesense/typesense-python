@@ -1,9 +1,7 @@
 import json
-import logging
 
 from .document import Document
-
-logger = logging.getLogger(__name__)
+from .logger import logger
 
 
 class Documents(object):

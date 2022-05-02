@@ -1,5 +1,4 @@
 import copy
-import logging
 import json
 import time
 
@@ -8,8 +7,7 @@ from .exceptions import (HTTPStatus0Error, ObjectAlreadyExists,
                          ObjectNotFound, ObjectUnprocessable,
                          RequestMalformed, RequestUnauthorized, RequestForbidden,
                          ServerError, ServiceUnavailable, TypesenseClientError)
-
-logger = logging.getLogger(__name__)
+from .logger import logger
 
 
 class ApiCall(object):
