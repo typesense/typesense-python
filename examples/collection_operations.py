@@ -120,10 +120,17 @@ import_results = client.collections['books'].documents.import_(docs_to_import, {
 })
 print(import_results)
 
+# Schema change: add optional field
+schema_change = {"fields": [{"name": "in_stock", "optional": True, "type": "bool"}]}
+print(client.collections['books'].update(schema_change))
+
+# Drop the field
+schema_change = {"fields": [{"name": "in_stock", "drop": True}]}
+print(client.collections['books'].update(schema_change))
+
 # Deleting documents matching a filter query
 print(client.collections['books'].documents.delete({'filter_by': 'ratings_count: 4780653'}))
 
 # Drop the collection
-
 drop_response = client.collections['books'].delete()
 print(drop_response)
