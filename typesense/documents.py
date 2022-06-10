@@ -61,8 +61,9 @@ class Documents(object):
                         api_response = self.import_(batch, params)
                         response_objs.extend(api_response)
                         batch = []
-                api_response = self.import_(batch, params)
-                if batch: response_objs.extend(api_response)
+                if batch:
+                    self.import_(batch, params)
+                    response_objs.extend(api_response)
 
             else:
                 document_strs = []
