@@ -51,17 +51,20 @@ class Documents(object):
     # `documents` can be either a list of document objects (or)
     #  JSONL-formatted string containing multiple documents
     def import_(self, documents, params=None, batch_size=None):
-        if batch_size:
-            responses = []
-            batch = []
-            for document in documents:
-                batch.append(document)
-                if (len(batch) == batch_size):
-                    responses.extend(self.import_(batch, params))
-                    batch = []
-            if batch: responses.extend(self.import_(batch, params))
-        else:
-            if isinstance(documents, Iterable):
+        if isinstance(documents, Iterable):
+            if batch_size:
+                response_objs = []
+                batch = []
+                for document in documents:
+                    batch.append(document)
+                    if (len(batch) == batch_size):
+                        api_response = self.import_(batch, params)
+                        response_objs.extend(api_response)
+                        batch = []
+                api_response = self.import_(batch, params)
+                if batch: response_objs.extend(api_response)
+
+            else:
                 document_strs = []
                 for document in documents:
                     document_strs.append(json.dumps(document))
@@ -74,10 +77,10 @@ class Documents(object):
                 for res_obj_str in res_obj_strs:
                     response_objs.append(json.dumps(res_obj_str))
 
-                return response_objs
-            else:
-                api_response = self.api_call.post(self._endpoint_path('import'), documents, params, as_json=False)
-                return api_response
+            return response_objs
+        else:
+            api_response = self.api_call.post(self._endpoint_path('import'), documents, params, as_json=False)
+            return api_response
 
     def export(self, params=None):
         api_response = self.api_call.get(self._endpoint_path('export'), params, as_json=False)
