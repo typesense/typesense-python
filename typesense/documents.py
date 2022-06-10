@@ -2,7 +2,7 @@ import json
 
 from .document import Document
 from .logger import logger
-
+from collections.abc import Iterable
 
 class Documents(object):
     RESOURCE_PATH = 'documents'
@@ -51,7 +51,7 @@ class Documents(object):
     # `documents` can be either a list of document objects (or)
     #  JSONL-formatted string containing multiple documents
     def import_(self, documents, params=None):
-        if isinstance(documents, list):
+        if isinstance(documents, Iterable):
             document_strs = []
             for document in documents:
                 document_strs.append(json.dumps(document))
