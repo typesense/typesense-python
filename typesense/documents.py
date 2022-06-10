@@ -50,24 +50,34 @@ class Documents(object):
 
     # `documents` can be either a list of document objects (or)
     #  JSONL-formatted string containing multiple documents
-    def import_(self, documents, params=None):
-        if isinstance(documents, Iterable):
-            document_strs = []
+    def import_(self, documents, params=None, batch_size=None):
+        if batch_size:
+            responses = []
+            batch = []
             for document in documents:
-                document_strs.append(json.dumps(document))
-
-            docs_import = '\n'.join(document_strs)
-            api_response = self.api_call.post(self._endpoint_path('import'), docs_import, params, as_json=False)
-            res_obj_strs = api_response.split('\n')
-
-            response_objs = []
-            for res_obj_str in res_obj_strs:
-                response_objs.append(json.dumps(res_obj_str))
-
-            return response_objs
+                batch.append(document)
+                if (len(batch) == batch_size):
+                    responses.extend(self.import_(batch, params))
+                    batch = []
+            if batch: responses.extend(self.import_(batch, params))
         else:
-            api_response = self.api_call.post(self._endpoint_path('import'), documents, params, as_json=False)
-            return api_response
+            if isinstance(documents, Iterable):
+                document_strs = []
+                for document in documents:
+                    document_strs.append(json.dumps(document))
+
+                docs_import = '\n'.join(document_strs)
+                api_response = self.api_call.post(self._endpoint_path('import'), docs_import, params, as_json=False)
+                res_obj_strs = api_response.split('\n')
+
+                response_objs = []
+                for res_obj_str in res_obj_strs:
+                    response_objs.append(json.dumps(res_obj_str))
+
+                return response_objs
+            else:
+                api_response = self.api_call.post(self._endpoint_path('import'), documents, params, as_json=False)
+                return api_response
 
     def export(self, params=None):
         api_response = self.api_call.get(self._endpoint_path('export'), params, as_json=False)
