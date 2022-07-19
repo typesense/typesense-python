@@ -108,7 +108,10 @@ class ApiCall(object):
 
                 # We should raise a custom exception if status code is not 20X
                 if not 200 <= r.status_code < 300:
-                    error_message = r.json().get('message', 'API error.')
+                    if r.headers.get('Content-Type', '').startswith('application/json'):
+                        error_message = r.json().get('message', 'API error.')
+                    else:
+                        error_message = 'API error.'
                     # Raised exception will be caught and retried
                     raise ApiCall.get_exception(r.status_code)(r.status_code, error_message)
 
