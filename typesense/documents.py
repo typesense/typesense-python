@@ -62,7 +62,7 @@ class Documents(object):
 
             response_objs = []
             for res_obj_str in res_obj_strs:
-                response_objs.append(json.dumps(res_obj_str))
+                response_objs.append(json.loads(res_obj_str))
 
             return response_objs
         else:
