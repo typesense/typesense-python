@@ -1,5 +1,7 @@
 import json
 
+from typesense.exceptions import TypesenseClientError
+
 from .document import Document
 from .logger import logger
 
@@ -62,7 +64,11 @@ class Documents(object):
 
             response_objs = []
             for res_obj_str in res_obj_strs:
-                response_objs.append(json.loads(res_obj_str))
+                try:
+                    res_obj_json = json.loads(res_obj_str)
+                except json.JSONDecodeError as e:
+                    raise TypesenseClientError("Invalid response") from e
+                response_objs.append(res_obj_json)
 
             return response_objs
         else:
