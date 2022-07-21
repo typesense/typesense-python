@@ -4,7 +4,7 @@ from typesense.exceptions import TypesenseClientError
 
 from .document import Document
 from .logger import logger
-
+from collections.abc import Iterable
 
 class Documents(object):
     RESOURCE_PATH = 'documents'
@@ -52,23 +52,37 @@ class Documents(object):
 
     # `documents` can be either a list of document objects (or)
     #  JSONL-formatted string containing multiple documents
-    def import_(self, documents, params=None):
-        if isinstance(documents, list):
-            document_strs = []
-            for document in documents:
-                document_strs.append(json.dumps(document))
+    def import_(self, documents, params=None, batch_size=None):
+        if isinstance(documents, Iterable):
+            if batch_size:
+                response_objs = []
+                batch = []
+                for document in documents:
+                    batch.append(document)
+                    if (len(batch) == batch_size):
+                        api_response = self.import_(batch, params)
+                        response_objs.extend(api_response)
+                        batch = []
+                if batch:
+                    api_response = self.import_(batch, params)
+                    response_objs.extend(api_response)
 
-            docs_import = '\n'.join(document_strs)
-            api_response = self.api_call.post(self._endpoint_path('import'), docs_import, params, as_json=False)
-            res_obj_strs = api_response.split('\n')
+            else:
+                document_strs = []
+                for document in documents:
+                    document_strs.append(json.dumps(document))
 
-            response_objs = []
-            for res_obj_str in res_obj_strs:
-                try:
-                    res_obj_json = json.loads(res_obj_str)
-                except json.JSONDecodeError as e:
-                    raise TypesenseClientError("Invalid response") from e
-                response_objs.append(res_obj_json)
+                docs_import = '\n'.join(document_strs)
+                api_response = self.api_call.post(self._endpoint_path('import'), docs_import, params, as_json=False)
+                res_obj_strs = api_response.split('\n')
+
+                response_objs = []
+                for res_obj_str in res_obj_strs:
+                    try:
+                        res_obj_json = json.loads(res_obj_str)
+                    except json.JSONDecodeError as e:
+                        raise TypesenseClientError("Invalid response") from e
+                    response_objs.append(res_obj_json)
 
             return response_objs
         else:
