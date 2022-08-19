@@ -81,7 +81,7 @@ class Documents(object):
                     try:
                         res_obj_json = json.loads(res_obj_str)
                     except json.JSONDecodeError as e:
-                        raise TypesenseClientError("Invalid response") from e
+                        raise TypesenseClientError(f"Invalid response - {res_obj_str}") from e
                     response_objs.append(res_obj_json)
 
             return response_objs
