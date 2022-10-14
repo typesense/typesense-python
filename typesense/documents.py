@@ -4,6 +4,7 @@ from typesense.exceptions import TypesenseClientError
 
 from .document import Document
 from .logger import logger
+from .validation import validate_query_by
 from collections.abc import Iterable
 
 class Documents(object):
@@ -94,7 +95,8 @@ class Documents(object):
         return api_response
 
     def search(self, search_parameters):
+        validate_query_by(search_parameters)
         return self.api_call.get(self._endpoint_path('search'), search_parameters)
 
     def delete(self, params=None):
-      return self.api_call.delete(self._endpoint_path(), params)
+        return self.api_call.delete(self._endpoint_path(), params)
