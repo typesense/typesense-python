@@ -45,3 +45,7 @@ class ServiceUnavailable(TypesenseClientError):
 
 class HTTPStatus0Error(TypesenseClientError):
     pass
+
+
+class InvalidParameter(TypesenseClientError):
+    pass
