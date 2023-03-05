@@ -55,7 +55,7 @@ class Documents(object):
     # `documents` can be either a list of document objects (or)
     #  JSONL-formatted string containing multiple documents
     def import_(self, documents, params=None, batch_size=None):
-        if isinstance(documents, Iterable):
+        if isinstance(documents, Iterable) and not isinstance(documents, (str, bytes)):
             if batch_size:
                 response_objs = []
                 batch = []
