@@ -6,7 +6,7 @@ from .keys import Keys
 from .operations import Operations
 from .configuration import Configuration
 from .api_call import ApiCall
-
+from .analytics_rules import AnalyticsRules
 
 class Client(object):
     def __init__(self, config_dict):
@@ -16,5 +16,6 @@ class Client(object):
         self.multi_search = MultiSearch(self.api_call)
         self.keys = Keys(self.api_call)
         self.aliases = Aliases(self.api_call)
+        self.analytics_rules = AnalyticsRules(self.api_call)
         self.operations = Operations(self.api_call)
         self.debug = Debug(self.api_call)
