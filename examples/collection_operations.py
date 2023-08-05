@@ -117,6 +117,7 @@ print(import_results)
 # Upserting documents
 import_results = client.collections['books'].documents.import_(docs_to_import, {
     'action': 'upsert',
+    'return_id': True
 })
 print(import_results)
 

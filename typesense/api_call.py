@@ -133,6 +133,14 @@ class ApiCall(object):
         node.healthy = is_healthy
         node.last_access_ts = int(time.time())
 
+    @staticmethod
+    def normalize_params(params):
+        for key in params.keys():
+            if params[key] == True:
+                params[key] = 'true'
+            elif params[key] == False:
+                params[key] = 'false'
+
     def get(self, endpoint, params=None, as_json=True):
         params = params or {}
         return self.make_request(requests.get, endpoint, as_json,
@@ -141,6 +149,7 @@ class ApiCall(object):
 
     def post(self, endpoint, body, params=None, as_json=True):
         params = params or {}
+        ApiCall.normalize_params(params)
         return self.make_request(requests.post, endpoint, as_json,
                                  params=params, data=body,
                                  timeout=self.config.connection_timeout_seconds)
