@@ -74,6 +74,9 @@ class Documents(object):
                 for document in documents:
                     document_strs.append(json.dumps(document))
 
+                if len(document_strs) == 0:
+                    raise TypesenseClientError(f"Cannot import an empty list of documents.")
+
                 docs_import = '\n'.join(document_strs)
                 api_response = self.api_call.post(self._endpoint_path('import'), docs_import, params, as_json=False)
                 res_obj_strs = api_response.split('\n')

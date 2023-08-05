@@ -2,7 +2,7 @@ import json
 import os
 import sys
 import typesense
-
+from typesense.exceptions import TypesenseClientError
 
 curr_dir = os.path.dirname(os.path.realpath(__file__))
 sys.path.insert(1, os.path.abspath(os.path.join(curr_dir, os.pardir)))
@@ -130,6 +130,13 @@ print(client.collections['books'].update(schema_change))
 
 # Deleting documents matching a filter query
 print(client.collections['books'].documents.delete({'filter_by': 'ratings_count: 4780653'}))
+
+# Try importing empy list
+try:
+    import_results = client.collections['books'].documents.import_([], {"action": "upsert"})
+    print(import_results)
+except TypesenseClientError as e:
+    print("Detected import of empty document list.")
 
 # Drop the collection
 drop_response = client.collections['books'].delete()
