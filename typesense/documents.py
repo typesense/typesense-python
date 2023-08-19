@@ -46,7 +46,7 @@ class Documents(object):
     def update(self, document, params=None):
         params = params or {}
         params['action'] = 'update'
-        return self.api_call.post(self._endpoint_path(), document, params)
+        return self.api_call.patch(self._endpoint_path(), document, params)
 
     def import_jsonl(self, documents_jsonl):
         logger.warning('`import_jsonl` is deprecated: please use `import_`.')

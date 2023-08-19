@@ -53,7 +53,7 @@ print(retrieve_all_response)
 # Add a book
 
 hunger_games_book = {
-    'id': '1', 'original_publication_year': 2008, 'authors': ['Suzanne Collins'], 'average_rating': 4.34,
+    'id': '1', 'authors': ['Suzanne Collins'], 'average_rating': 4.34,
     'publication_year': 2008, 'title': 'The Hunger Games',
     'image_url': 'https://images.gr-assets.com/books/1447303603m/2767052.jpg',
     'ratings_count': 4780653
@@ -124,6 +124,10 @@ print(import_results)
 # Schema change: add optional field
 schema_change = {"fields": [{"name": "in_stock", "optional": True, "type": "bool"}]}
 print(client.collections['books'].update(schema_change))
+
+# Update value matching a filter
+updated_doc = {'publication_year': 2009}
+print(client.collections['books'].documents.update(updated_doc, {'filter_by': 'publication_year: 2008'}))
 
 # Drop the field
 schema_change = {"fields": [{"name": "in_stock", "drop": True}]}
