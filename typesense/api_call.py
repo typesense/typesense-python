@@ -8,7 +8,7 @@ from .exceptions import (HTTPStatus0Error, ObjectAlreadyExists,
                          RequestMalformed, RequestUnauthorized, RequestForbidden,
                          ServerError, ServiceUnavailable, TypesenseClientError)
 from .logger import logger
-
+session = requests.session()
 
 class ApiCall(object):
     API_KEY_HEADER_NAME = 'X-TYPESENSE-API-KEY'
@@ -143,27 +143,27 @@ class ApiCall(object):
 
     def get(self, endpoint, params=None, as_json=True):
         params = params or {}
-        return self.make_request(requests.get, endpoint, as_json,
+        return self.make_request(session.get, endpoint, as_json,
                                  params=params,
                                  timeout=self.config.connection_timeout_seconds)
 
     def post(self, endpoint, body, params=None, as_json=True):
         params = params or {}
         ApiCall.normalize_params(params)
-        return self.make_request(requests.post, endpoint, as_json,
+        return self.make_request(session.post, endpoint, as_json,
                                  params=params, data=body,
                                  timeout=self.config.connection_timeout_seconds)
 
     def put(self, endpoint, body, params=None):
-        return self.make_request(requests.put, endpoint, True,
+        return self.make_request(session.put, endpoint, True,
                                  params=params, data=body,
                                  timeout=self.config.connection_timeout_seconds)
 
     def patch(self, endpoint, body, params=None):
-        return self.make_request(requests.patch, endpoint, True,
+        return self.make_request(session.patch, endpoint, True,
                                  params=params, data=body,
                                  timeout=self.config.connection_timeout_seconds)
 
     def delete(self, endpoint, params=None):
-        return self.make_request(requests.delete, endpoint, True,
+        return self.make_request(session.delete, endpoint, True,
                                  params=params, timeout=self.config.connection_timeout_seconds)
