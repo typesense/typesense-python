@@ -21,5 +21,5 @@ class Collection(object):
     def update(self, schema_change):
         return self.api_call.patch(self._endpoint_path(), schema_change)
 
-    def delete(self):
-        return self.api_call.delete(self._endpoint_path())
+    def delete(self, params=None):
+        return self.api_call.delete(self._endpoint_path(), params)
