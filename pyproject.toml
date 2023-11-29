@@ -3,7 +3,7 @@ requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "typesense-alt"
+name = "typesense"
 description = "Python client for Typesense, an open source and typo tolerant search engine."
 authors = [
     {"name" = "Typesense", "email" = "contact@typesense.org"},
