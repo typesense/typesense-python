@@ -52,6 +52,7 @@ class Configuration(object):
         self.num_retries = config_dict.get('num_retries', 3)
         self.retry_interval_seconds = config_dict.get('retry_interval_seconds', 1.0)
         self.healthcheck_interval_seconds = config_dict.get('healthcheck_interval_seconds', 60)
+        self.verify = config_dict.get("verify", True)
 
     @staticmethod
     def validate_config_dict(config_dict):

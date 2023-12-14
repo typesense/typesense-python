@@ -145,25 +145,26 @@ class ApiCall(object):
         params = params or {}
         return self.make_request(session.get, endpoint, as_json,
                                  params=params,
-                                 timeout=self.config.connection_timeout_seconds)
+                                 timeout=self.config.connection_timeout_seconds, verify=self.config.verify)
 
     def post(self, endpoint, body, params=None, as_json=True):
         params = params or {}
         ApiCall.normalize_params(params)
         return self.make_request(session.post, endpoint, as_json,
                                  params=params, data=body,
-                                 timeout=self.config.connection_timeout_seconds)
+                                 timeout=self.config.connection_timeout_seconds, verify=self.config.verify)
 
     def put(self, endpoint, body, params=None):
         return self.make_request(session.put, endpoint, True,
                                  params=params, data=body,
-                                 timeout=self.config.connection_timeout_seconds)
+                                 timeout=self.config.connection_timeout_seconds, verify=self.config.verify)
 
     def patch(self, endpoint, body, params=None):
         return self.make_request(session.patch, endpoint, True,
                                  params=params, data=body,
-                                 timeout=self.config.connection_timeout_seconds)
+                                 timeout=self.config.connection_timeout_seconds, verify=self.config.verify)
 
     def delete(self, endpoint, params=None):
         return self.make_request(session.delete, endpoint, True,
-                                 params=params, timeout=self.config.connection_timeout_seconds)
+                                 params=params, timeout=self.config.connection_timeout_seconds,
+                                 verify=self.config.verify)
