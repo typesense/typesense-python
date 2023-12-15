@@ -42,7 +42,7 @@ class Configuration(object):
         nearest_node = config_dict.get('nearest_node', None)
         if not nearest_node:
             self.nearest_node = None
-        else if isinstance(nearest_node, str):
+        elif isinstance(nearest_node, str):
             self.nearest_node = Node(nearest_node)
         else:
             self.nearest_node = Node(nearest_node['host'], nearest_node['port'], nearest_node.get('path', ''), nearest_node['protocol'])
