@@ -77,7 +77,7 @@ class Configuration(object):
     @staticmethod
     def validate_node_fields(node):
         if isinstance(node, str):
-            return true
+            return True
         expected_fields = {'host', 'port', 'protocol'}
         return expected_fields.issubset(node)
 
