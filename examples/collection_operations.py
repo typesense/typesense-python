@@ -136,7 +136,7 @@ print(client.collections['books'].update(schema_change))
 # Deleting documents matching a filter query
 print(client.collections['books'].documents.delete({'filter_by': 'ratings_count: 4780653'}))
 
-# Try importing empy list
+# Try importing empty list
 try:
     import_results = client.collections['books'].documents.import_([], {"action": "upsert"})
     print(import_results)
