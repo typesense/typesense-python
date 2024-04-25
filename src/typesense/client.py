@@ -7,6 +7,7 @@ from .operations import Operations
 from .configuration import Configuration
 from .api_call import ApiCall
 from .analytics import Analytics
+from .stopwords import Stopwords
 
 class Client(object):
     def __init__(self, config_dict):
@@ -19,3 +20,4 @@ class Client(object):
         self.analytics = Analytics(self.api_call)
         self.operations = Operations(self.api_call)
         self.debug = Debug(self.api_call)
+        self.stopwords = Stopwords(self.api_call)
