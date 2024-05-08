@@ -1,4 +1,5 @@
 from .aliases import Aliases
+from .conversations_models import ConversationsModels
 from .debug import Debug
 from .collections import Collections
 from .multi_search import MultiSearch
@@ -21,3 +22,4 @@ class Client(object):
         self.operations = Operations(self.api_call)
         self.debug = Debug(self.api_call)
         self.stopwords = Stopwords(self.api_call)
+        self.conversations_models = ConversationsModels(self.api_call)
