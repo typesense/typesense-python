@@ -136,9 +136,9 @@ class ApiCall(object):
     @staticmethod
     def normalize_params(params):
         for key in params.keys():
-            if params[key] == True:
+            if isinstance(params[key], bool) and params[key]:
                 params[key] = 'true'
-            elif params[key] == False:
+            elif isinstance(params[key], bool) and not params[key]:
                 params[key] = 'false'
 
     def get(self, endpoint, params=None, as_json=True):
