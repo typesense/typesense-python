@@ -1,5 +1,10 @@
+from __future__ import annotations
+
+from typing import Any
+
+
 class TypesenseClientError(IOError):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: object, **kwargs: dict[Any, Any]) -> None:
         super(TypesenseClientError, self).__init__(*args, **kwargs)
 
 
