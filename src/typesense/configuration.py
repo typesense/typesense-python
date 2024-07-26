@@ -1,7 +1,69 @@
-from typing import Literal
+from __future__ import annotations
+
+from typing import Literal, NotRequired, TypedDict, Union
 from .exceptions import ConfigError
 from .logger import logger
 from urllib.parse import urlparse
+
+
+class NodeConfigDict(TypedDict):
+    """
+    A dictionary that represents the configuration for a node in the Typesense cluster.
+
+    Attributes:
+        host (str): The host name of the node.
+        port (int): The port number of the node.
+        path (str, optional): The path of the node.
+        protocol (Literal['http', 'https'] | str): The protocol of the node.
+    """
+
+    host: str
+    port: int
+    path: NotRequired[str]
+    protocol: Literal['http', 'https'] | str
+
+
+class ConfigDict(TypedDict):
+    """
+    A dictionary that represents the configuration for the Typesense client.
+
+    Attributes:
+        nodes (list[Union[str, NodeConfigDict]]): A list of dictionaries or URLs that
+            represent the nodes in the cluster.
+
+        nearest_node (Union[str, NodeConfigDict]): A dictionary or URL
+            that represents the nearest node to the client.
+
+        api_key (str): The API key to use for authentication.
+
+        num_retries (int): The number of retries to attempt before failing.
+
+        interval_seconds (int): The interval in seconds between retries.
+
+        healthcheck_interval_seconds (int): The interval in seconds between
+            health checks.
+
+        verify (bool): Whether to verify the SSL certificate.
+
+        timeout_seconds (int, deprecated): The connection timeout in seconds.
+
+        master_node (Union[str, NodeConfigDict], deprecated): A dictionary or
+            URL that represents the master node.
+
+        read_replica_nodes (list[Union[str, NodeConfigDict]], deprecated): A list of
+            dictionaries or URLs that represent the read replica nodes.
+    """
+
+    nodes: list[Union[str, NodeConfigDict]]
+    nearest_node: NotRequired[Union[str, NodeConfigDict]]
+    api_key: str
+    num_retries: NotRequired[int]
+    interval_seconds: NotRequired[int]
+    healthcheck_interval_seconds: NotRequired[int]
+    verify: NotRequired[bool]
+    timeout_seconds: NotRequired[int]  # deprecated
+    master_node: NotRequired[Union[str, NodeConfigDict]]  # deprecated
+    read_replica_nodes: NotRequired[list[Union[str, NodeConfigDict]]]  # deprecated
 
 
 class Node(object):
@@ -11,7 +73,7 @@ class Node(object):
         port: str | int,
         path: str,
         protocol: Literal['http', 'https'] | str,
-    ):
+    ) -> None:
         self.host = host
         self.port = port
         self.path = path
@@ -32,16 +94,16 @@ class Node(object):
 
         return cls(parsed.hostname, parsed.port, parsed.path, parsed.scheme)
 
-    def url(self):
+    def url(self) -> str:
         return '{0}://{1}:{2}{3}'.format(self.protocol, self.host, self.port, self.path)
 
 
 class Configuration(object):
-    def __init__(self, config_dict):
+    def __init__(self, config_dict: ConfigDict) -> None:
         Configuration.show_deprecation_warnings(config_dict)
         Configuration.validate_config_dict(config_dict)
 
-        self.nodes = []
+        self.nodes: list[Node] = []
         for node_config in config_dict.get('nodes', []):
             if isinstance(node_config, str):
                 node = Node.from_url(node_config)
@@ -65,7 +127,7 @@ class Configuration(object):
         self.verify = config_dict.get("verify", True)
 
     @staticmethod
-    def validate_config_dict(config_dict):
+    def validate_config_dict(config_dict: ConfigDict) -> None:
         nodes = config_dict.get('nodes', None)
         if not nodes:
             raise ConfigError('`nodes` is not defined.')
@@ -92,7 +154,7 @@ class Configuration(object):
         return expected_fields.issubset(node)
 
     @staticmethod
-    def show_deprecation_warnings(config_dict):
+    def show_deprecation_warnings(config_dict: ConfigDict) -> None:
         if config_dict.get('timeout_seconds'):
             logger.warn('Deprecation warning: timeout_seconds is now renamed to connection_timeout_seconds')
 
