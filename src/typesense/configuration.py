@@ -83,7 +83,7 @@ class ConfigDict(TypedDict):
     read_replica_nodes: NotRequired[list[Union[str, NodeConfigDict]]]  # deprecated
 
 
-class Node(object):
+class Node:
     """
     Class for representing a node in the Typesense cluster.
 
@@ -151,6 +151,8 @@ class Node(object):
         Returns:
             str: The URL of the node
         """
+
+class Configuration:
     """
     Class for managing the configuration settings for the Typesense client.
 
@@ -165,7 +167,6 @@ class Node(object):
         verify (bool): Whether to verify the SSL certificate.
     """
 
-class Configuration(object):
     def __init__(self, config_dict: ConfigDict) -> None:
         Configuration.show_deprecation_warnings(config_dict)
         Configuration.validate_config_dict(config_dict)
