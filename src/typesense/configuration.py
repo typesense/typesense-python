@@ -168,9 +168,12 @@ class Configuration:
         verify (bool): Whether to verify the SSL certificate.
     """
 
-    def __init__(self, config_dict: ConfigDict) -> None:
         Configuration.show_deprecation_warnings(config_dict)
         Configuration.validate_config_dict(config_dict)
+    def __init__(
+        self,
+        config_dict: ConfigDict,
+    ) -> None:
         """
         Initialize a Configuration object with the specified configuration settings.
 
@@ -184,12 +187,18 @@ class Configuration:
 
         nearest_node = config_dict.get('nearest_node', None)
 
-        self.api_key = config_dict.get('api_key', '')
-        self.connection_timeout_seconds = config_dict.get('connection_timeout_seconds', 3.0)
         self.nearest_node = self._handle_nearest_node(nearest_node)
+        self.api_key = config_dict.get('api_key', ' ')
+        self.connection_timeout_seconds = config_dict.get(
+            'connection_timeout_seconds',
+            3.0,
+        )
         self.num_retries = config_dict.get('num_retries', 3)
         self.retry_interval_seconds = config_dict.get('retry_interval_seconds', 1.0)
-        self.healthcheck_interval_seconds = config_dict.get('healthcheck_interval_seconds', 60)
+        self.healthcheck_interval_seconds = config_dict.get(
+            'healthcheck_interval_seconds',
+            60,
+        )
         self.verify = config_dict.get("verify", True)
 
     def _handle_nearest_node(
@@ -243,14 +252,28 @@ class Configuration:
             raise ConfigError('`api_key` is not defined.')
 
         for node in nodes:
-            if not Configuration.validate_node_fields(node):
-                raise ConfigError('`node` entry must be a URL string or a dictionary with the following required keys: '
-                                  'host, port, protocol')
+            if not ConfigurationValidations.validate_node_fields(node):
+                raise ConfigError(
+                    ' '.join(
+                        [
+                            '`node` entry must be a URL string or a',
+                            'dictionary with the following required keys:',
+                            'host, port, protocol',
+                        ],
+                    ),
+                )
 
         nearest_node = config_dict.get('nearest_node', None)
         if nearest_node and not Configuration.validate_node_fields(nearest_node):
-            raise ConfigError('`nearest_node` entry must be a URL string or a dictionary with the following required keys: '
-                                  'host, port, protocol')
+            raise ConfigError(
+                ' '.join(
+                    [
+                        '`nearest_node` entry must be a URL string or a dictionary',
+                        'with the following required keys:',
+                        'host, port, protocol',
+                    ],
+                ),
+            )
 
     @staticmethod
     def validate_node_fields(node: str | NodeConfigDict) -> bool:
@@ -278,10 +301,31 @@ class Configuration:
                 to check for deprecated fields.
         """
         if config_dict.get('timeout_seconds'):
-            logger.warn('Deprecation warning: timeout_seconds is now renamed to connection_timeout_seconds')
+            logger.warn(
+                ' '.join(
+                    [
+                        'Deprecation warning: timeout_seconds is now renamed',
+                        'to connection_timeout_seconds',
+                    ],
+                ),
+            )
 
         if config_dict.get('master_node'):
-            logger.warn('Deprecation warning: master_node is now consolidated to nodes, starting with Typesense Server v0.12')
+            logger.warn(
+                ' '.join(
+                    [
+                        'Deprecation warning: master_node is now consolidated',
+                        'to nodes,starting with Typesense Server v0.12',
+                    ],
+                ),
+            )
 
         if config_dict.get('read_replica_nodes'):
-            logger.warn('Deprecation warning: read_replica_nodes is now consolidated to nodes, starting with Typesense Server v0.12')
+            logger.warn(
+                ' '.join(
+                    [
+                        'Deprecation warning: read_replica_nodes is now',
+                        'consolidated to nodes, starting with Typesense Server v0.12',
+                    ],
+                ),
+            )
