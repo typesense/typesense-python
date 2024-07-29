@@ -220,7 +220,7 @@ class Configuration(object):
                                   'host, port, protocol')
 
     @staticmethod
-    def validate_node_fields(node):
+    def validate_node_fields(node: str | NodeConfigDict) -> bool:
         """
         Validate the fields of a node in the configuration dictionary.
 
