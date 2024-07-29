@@ -168,8 +168,6 @@ class Configuration:
         verify (bool): Whether to verify the SSL certificate.
     """
 
-        Configuration.show_deprecation_warnings(config_dict)
-        Configuration.validate_config_dict(config_dict)
     def __init__(
         self,
         config_dict: ConfigDict,
@@ -180,6 +178,9 @@ class Configuration:
         Args:
             config_dict (ConfigDict): A dictionary containing the configuration settings.
         """
+        self.validations = ConfigurationValidations
+        self.validations.show_deprecation_warnings(config_dict)
+        self.validations.validate_config_dict(config_dict)
 
         self.nodes: list[Node] = [
             self._initialize_nodes(node) for node in config_dict['nodes']
@@ -241,16 +242,56 @@ class Configuration:
             node['protocol'],
         )
 
+
+class ConfigurationValidations:
+    """Class for validating the configuration dictionary."""
+
     @staticmethod
     def validate_config_dict(config_dict: ConfigDict) -> None:
-        nodes = config_dict.get('nodes', None)
-        if not nodes:
+        """
+        Validate the configuration dictionary to ensure it contains the required fields.
+
+        Args:
+            config_dict (ConfigDict): The configuration dictionary to validate.
+
+        Raises:
+            ConfigError: If the configuration dictionary is missing required fields.
+        """
+        ConfigurationValidations.validate_required_config_fields(config_dict)
+        ConfigurationValidations.validate_nodes(config_dict['nodes'])
+
+        nearest_node = config_dict.get('nearest_node', None)
+        if nearest_node:
+            ConfigurationValidations.validate_nearest_node(nearest_node)
+
+    @staticmethod
+    def validate_required_config_fields(config_dict: ConfigDict) -> None:
+        """
+        Validate the presence of required fields in the configuration dictionary.
+
+        Args:
+            config_dict (ConfigDict): The configuration dictionary to validate.
+
+        Raises:
+            ConfigError: If the configuration dictionary is missing required fields.
+        """
+        if not config_dict.get('nodes'):
             raise ConfigError('`nodes` is not defined.')
 
-        api_key = config_dict.get('api_key', None)
-        if not api_key:
+        if not config_dict.get('api_key'):
             raise ConfigError('`api_key` is not defined.')
 
+    @staticmethod
+    def validate_nodes(nodes: list[Union[str, NodeConfigDict]]) -> None:
+        """
+        Validate the nodes in the configuration dictionary.
+
+        Args:
+            nodes (list): The list of nodes to validate.
+
+        Raises:
+            ConfigError: If any node is invalid.
+        """
         for node in nodes:
             if not ConfigurationValidations.validate_node_fields(node):
                 raise ConfigError(
@@ -263,8 +304,18 @@ class Configuration:
                     ),
                 )
 
-        nearest_node = config_dict.get('nearest_node', None)
-        if nearest_node and not Configuration.validate_node_fields(nearest_node):
+    @staticmethod
+    def validate_nearest_node(nearest_node: Union[str, NodeConfigDict]) -> None:
+        """
+        Validate the nearest node in the configuration dictionary.
+
+        Args:
+            nearest_node (dict): The nearest node to validate.
+
+        Raises:
+            ConfigError: If the nearest node is invalid.
+        """
+        if not ConfigurationValidations.validate_node_fields(nearest_node):
             raise ConfigError(
                 ' '.join(
                     [
