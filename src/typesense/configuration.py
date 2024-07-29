@@ -144,13 +144,14 @@ class Node:
         return cls(parsed.hostname, parsed.port, parsed.path, parsed.scheme)
 
     def url(self) -> str:
-        return '{0}://{1}:{2}{3}'.format(self.protocol, self.host, self.port, self.path)
         """
         Generate the URL of the node.
 
         Returns:
             str: The URL of the node
         """
+        return f'{self.protocol}://{self.host}:{self.port}{self.path}'
+
 
 class Configuration:
     """
