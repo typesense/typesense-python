@@ -1,83 +1,184 @@
+"""Tests for the Configuration class."""
+
+import types
+
 import pytest
 
-from src.typesense.configuration import ConfigDict, Configuration
+from tests.utils.object_assertions import (
+    assert_match_object,
+    assert_object_lists_match,
+    assert_to_contain_object,
+)
+from typesense.configuration import ConfigDict, Configuration, Node
+from typesense.exceptions import ConfigError
+
+DEFAULT_NODE = types.MappingProxyType(
+    {"host": "localhost", "port": 8108, "protocol": "http"},
+)
 
 
-def test_validate_node_fields_with_url() -> None:
-    """Test validate_node_fields with a URL string."""
-    assert Configuration.validate_node_fields("http://localhost:8108/path")
-
-
-def test_validate_node_fields_with_valid_dict() -> None:
-    """Test validate_node_fields with a valid dictionary."""
-    assert Configuration.validate_node_fields(
-        {"host": "localhost", "port": 8108, "protocol": "http"}
-    )
-
-
-def test_validate_node_fields_with_invalid_dict() -> None:
-    """Test validate_node_fields with an invalid dictionary."""
-    assert not Configuration.validate_node_fields(
-        {  # type: ignore[arg-type]
-            "host": "localhost",
-            "port": 8108,
-        }
-    )
-
-
-def test_deprecation_warning_timeout_seconds(caplog: pytest.LogCaptureFixture) -> None:
-    """
-    Test that a deprecation warning is issued for the 'timeout_seconds' field.
-    """
-    config_dict: ConfigDict = {
-        "nodes": [{"host": "localhost", "port": 8108, "protocol": "http"}],
-        "nearest_node": "http://localhost:8108",
+def test_configuration_defaults() -> None:
+    """Test the Configuration constructor defaults."""
+    config: ConfigDict = {
+        "nodes": [
+            {
+                "host": "localhost",
+                "port": 8108,
+                "protocol": "http",
+                "path": "3",
+            },
+            DEFAULT_NODE,
+        ],
+        "nearest_node": DEFAULT_NODE,
         "api_key": "xyz",
-        "timeout_seconds": 10,
     }
-    Configuration.show_deprecation_warnings(config_dict)
-    assert (
-        ' '.join(
-            [
-                "Deprecation warning: timeout_seconds is now renamed",
-                "to connection_timeout_seconds",
-            ]
-        )
-        in caplog.text
-    )
 
+    configuration = Configuration(config)
 
-def test_deprecation_warning_master_node(caplog: pytest.LogCaptureFixture) -> None:
-    """
-    Test that a deprecation warning is issued for the 'master_node' field.
-    """
-    config_dict: ConfigDict = {
-        "nodes": [{"host": "localhost", "port": 8108, "protocol": "http"}],
-        "nearest_node": "http://localhost:8108",
+    nodes = [
+        Node(host="localhost", port=8108, protocol="http", path=" "),
+        Node(host="localhost", port=8108, protocol="http", path="3"),
+    ]
+    nearest_node = Node(host="localhost", port=8108, protocol="http", path=" ")
+
+    assert_object_lists_match(configuration.nodes, nodes)
+
+    assert_match_object(configuration.nearest_node, nearest_node)
+
+    expected = {
         "api_key": "xyz",
-        "master_node": "http://localhost:8108",
+        "connection_timeout_seconds": 3.0,
+        "num_retries": 3,
+        "retry_interval_seconds": 1.0,
+        "verify": True,
     }
-    Configuration.show_deprecation_warnings(config_dict)
-    assert (
-        "Deprecation warning: master_node is now consolidated to nodes" in caplog.text
-    )
+
+    assert_to_contain_object(configuration, expected)
 
 
-@pytest.mark.filterwarnings("ignore:Deprecation warning")
-def test_deprecation_warning_read_replica_nodes(
-    caplog: pytest.LogCaptureFixture,
-) -> None:
-    """
-    Test that a deprecation warning is issued for the 'read_replica_nodes' field.
-    """
-    config_dict: ConfigDict = {
-        "nodes": [{"host": "localhost", "port": 8108, "protocol": "http"}],
-        "nearest_node": "http://localhost:8108",
+def test_configuration_explicit() -> None:
+    """Test the Configuration constructor with explicit values."""
+    config: ConfigDict = {
+        "nodes": [DEFAULT_NODE],
+        "nearest_node": DEFAULT_NODE,
         "api_key": "xyz",
-        "read_replica_nodes": ["http://localhost:8109"],
+        "connection_timeout_seconds": 5.0,
+        "num_retries": 5,
+        "retry_interval_seconds": 2.0,
+        "verify": False,
     }
-    Configuration.show_deprecation_warnings(config_dict)
-    assert (
-        "Deprecation warning: read_replica_nodes is now consolidated to nodes"
-        in caplog.text
-    )
+
+    configuration = Configuration(config)
+
+    nodes = [Node(host="localhost", port=8108, protocol="http", path=" ")]
+    nearest_node = Node(host="localhost", port=8108, protocol="http", path=" ")
+
+    assert_object_lists_match(configuration.nodes, nodes)
+    assert_match_object(configuration.nearest_node, nearest_node)
+
+    expected = {
+        "api_key": "xyz",
+        "connection_timeout_seconds": 5.0,
+        "num_retries": 5,
+        "retry_interval_seconds": 2.0,
+        "verify": False,
+    }
+
+    assert_to_contain_object(configuration, expected)
+
+
+def test_configuration_no_nearest_node() -> None:
+    """Test the Configuration constructor with no nearest node."""
+    config: ConfigDict = {
+        "nodes": [DEFAULT_NODE],
+        "api_key": "xyz",
+    }
+
+    configuration = Configuration(config)
+
+    nodes = Node(host="localhost", port=8108, protocol="http", path=" ")
+
+    for node in configuration.nodes:
+        assert_match_object(node, nodes)
+
+    expected = {
+        "api_key": "xyz",
+        "connection_timeout_seconds": 3.0,
+        "num_retries": 3,
+        "retry_interval_seconds": 1.0,
+        "verify": True,
+        "nearest_node": None,
+    }
+    assert_to_contain_object(configuration, expected)
+
+
+def test_configuration_empty_nodes() -> None:
+    """Test the Configuration constructor with empty nodes."""
+    config: ConfigDict = {
+        "nodes": [],
+        "api_key": "xyz",
+    }
+
+    with pytest.raises(
+        ConfigError,
+        match="`nodes` is not defined.",  # noqa: B950
+    ):
+        Configuration(config)
+
+
+def test_configuration_invalid_node() -> None:
+    """Test the Configuration constructor with an invalid node."""
+    config: ConfigDict = {
+        "nodes": [{"host": "localhost"}],
+        "api_key": "xyz",
+    }
+
+    with pytest.raises(
+        ConfigError,
+        match="`node` entry must be a URL string or a dictionary with the following required keys: host, port, protocol",  # noqa: B950
+    ):
+        Configuration(config)
+
+
+def test_configuration_invalid_node_url() -> None:
+    """Test the Configuration constructor with an invalid node as a url."""
+    config: ConfigDict = {
+        "nodes": ["http://localhost"],
+        "api_key": "xyz",
+    }
+
+    with pytest.raises(
+        ConfigError,
+        match="Node URL does not contain the port.",
+    ):
+        Configuration(config)
+
+
+def test_configuration_invalid_nearest_node() -> None:
+    """Test the Configuration constructor with an invalid nearest node."""
+    config: ConfigDict = {
+        "nodes": [DEFAULT_NODE],
+        "nearest_node": {"host": "localhost"},
+        "api_key": "xyz",
+    }
+
+    with pytest.raises(
+        ConfigError,
+        match="`nearest_node` entry must be a URL string or a dictionary with the following required keys: host, port, protocol",  # noqa: B950
+    ):
+        Configuration(config)
+
+
+def test_configuration_invalid_nearest_node_url() -> None:
+    """Test the Configuration constructor with an invalid nearest node as a url."""
+    config: ConfigDict = {
+        "nodes": [DEFAULT_NODE],
+        "nearest_node": "http://localhost",
+        "api_key": "xyz",
+    }
+
+    with pytest.raises(
+        ConfigError,
+        match="Node URL does not contain the port.",
+    ):
+        Configuration(config)
