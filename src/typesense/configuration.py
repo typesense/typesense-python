@@ -177,28 +177,59 @@ class Configuration:
             config_dict (ConfigDict): A dictionary containing the configuration settings.
         """
 
-        self.nodes: list[Node] = []
-        for node_config in config_dict.get('nodes', []):
-            if isinstance(node_config, str):
-                node = Node.from_url(node_config)
-            else:
-                node = Node(node_config['host'], node_config['port'], node_config.get('path', ''), node_config['protocol'])
-            self.nodes.append(node)
+        self.nodes: list[Node] = [
+            self._initialize_nodes(node) for node in config_dict['nodes']
+        ]
 
         nearest_node = config_dict.get('nearest_node', None)
-        if not nearest_node:
-            self.nearest_node = None
-        elif isinstance(nearest_node, str):
-            self.nearest_node = Node.from_url(nearest_node)
-        else:
-            self.nearest_node = Node(nearest_node['host'], nearest_node['port'], nearest_node.get('path', ''), nearest_node['protocol'])
 
         self.api_key = config_dict.get('api_key', '')
         self.connection_timeout_seconds = config_dict.get('connection_timeout_seconds', 3.0)
+        self.nearest_node = self._handle_nearest_node(nearest_node)
         self.num_retries = config_dict.get('num_retries', 3)
         self.retry_interval_seconds = config_dict.get('retry_interval_seconds', 1.0)
         self.healthcheck_interval_seconds = config_dict.get('healthcheck_interval_seconds', 60)
         self.verify = config_dict.get("verify", True)
+
+    def _handle_nearest_node(
+        self,
+        nearest_node: Union[str, NodeConfigDict, None],
+    ) -> Union[Node, None]:
+        """
+        Handle the nearest node configuration.
+
+        Args:
+            nearest_node (str | NodeConfigDict): The nearest node configuration.
+
+        Returns:
+            Node | None: The nearest node object if it exists, None otherwise.
+        """
+        if nearest_node is None:
+            return None
+        return self._initialize_nodes(nearest_node)
+
+    def _initialize_nodes(
+        self,
+        node: Union[str, NodeConfigDict],
+    ) -> Node:
+        """
+        Handle the initialization of a node.
+
+        Args:
+            node (Node): The node to initialize.
+
+        Returns:
+            Node: The initialized node.
+        """
+        if isinstance(node, str):
+            return Node.from_url(node)
+
+        return Node(
+            node['host'],
+            node['port'],
+            node.get('path', ' '),
+            node['protocol'],
+        )
 
     @staticmethod
     def validate_config_dict(config_dict: ConfigDict) -> None:
