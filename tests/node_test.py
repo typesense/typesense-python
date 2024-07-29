@@ -1,10 +1,13 @@
+"""Tests for the Node class."""
+
 import pytest
 
-from src.typesense.configuration import Node
-from src.typesense.exceptions import ConfigError
+from typesense.configuration import Node
+from typesense.exceptions import ConfigError
 
 
 def test_node_initialization() -> None:
+    """Test the initialization of the Node class using an object."""
     node = Node(host="localhost", port=8108, path="/path", protocol="http")
     assert node.host == "localhost"
     assert node.port == 8108
@@ -14,6 +17,7 @@ def test_node_initialization() -> None:
 
 
 def test_node_from_url() -> None:
+    """Test the initialization of the Node class using a URL."""
     node = Node.from_url("http://localhost:8108/path")
     assert node.host == "localhost"
     assert node.port == 8108
@@ -22,20 +26,24 @@ def test_node_from_url() -> None:
 
 
 def test_node_from_url_missing_hostname() -> None:
+    """Test the initialization of the Node class using a URL without a host name."""
     with pytest.raises(ConfigError, match="Node URL does not contain the host name."):
         Node.from_url("http://:8108/path")
 
 
 def test_node_from_url_missing_port() -> None:
+    """Test the initialization of the Node class using a URL without a port."""
     with pytest.raises(ConfigError, match="Node URL does not contain the port."):
         Node.from_url("http://localhost:/path")
 
 
 def test_node_from_url_missing_scheme() -> None:
+    """Test the initialization of the Node class using a URL without a scheme."""
     with pytest.raises(ConfigError, match="Node URL does not contain the protocol."):
         Node.from_url("//localhost:8108/path")
 
 
 def test_node_url() -> None:
+    """Test the URL method of the Node class."""
     node = Node(host="localhost", port=8108, path="/path", protocol="http")
     assert node.url() == "http://localhost:8108/path"
