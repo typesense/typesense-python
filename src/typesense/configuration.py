@@ -1,9 +1,26 @@
+"""
+This module provides configuration management for the Typesense Instance.
+
+Classes:
+    - Config: Handles loading and accessing configuration settings.
+    - Node: Represents a node in the Typesense cluster.
+
+Functions:
+    - load_config: Loads configuration from a file.
+    - get_setting: Retrieves a specific setting from the configuration.
+    - set_setting: Updates a specific setting in the configuration.
+
+Exceptions:
+    - ConfigError: Custom exception for configuration-related errors.
+"""
+
 from __future__ import annotations
 
 from typing import Literal, NotRequired, TypedDict, Union
-from .exceptions import ConfigError
-from .logger import logger
 from urllib.parse import urlparse
+
+from typesense.exceptions import ConfigError
+from typesense.logger import logger
 
 
 class NodeConfigDict(TypedDict):
@@ -67,6 +84,17 @@ class ConfigDict(TypedDict):
 
 
 class Node(object):
+    """
+    Class for representing a node in the Typesense cluster.
+
+    Attributes:
+        host (str): The host name of the node.
+        port (str | int): The port number of the node.
+        path (str): The path of the node.
+        protocol (Literal['http', 'https'] | str): The protocol of the node.
+        healthy (bool): Whether the node is healthy or not.
+    """
+
     def __init__(
         self,
         host: str,
@@ -74,6 +102,15 @@ class Node(object):
         path: str,
         protocol: Literal['http', 'https'] | str,
     ) -> None:
+        """
+        Initialize a Node object with the specified host, port, path, and protocol.
+
+        Args:
+            host (str): The host name of the node.
+            port (str | int): The port number of the node.
+            path (str): The path of the node.
+            protocol (Literal['http', 'https'] | str): The protocol of the node.
+        """
         self.host = host
         self.port = port
         self.path = path
@@ -84,6 +121,18 @@ class Node(object):
 
     @classmethod
     def from_url(cls, url: str) -> 'Node':
+        """
+        Initialize a Node object from a URL string.
+
+        Args:
+            url (str): The URL string to parse.
+
+        Returns:
+            Node: The Node object created from the URL string.
+
+        Raises:
+            ConfigError: If the URL does not contain the host name, port number, or protocol.
+        """
         parsed = urlparse(url)
         if not parsed.hostname:
             raise ConfigError('Node URL does not contain the host name.')
@@ -96,12 +145,36 @@ class Node(object):
 
     def url(self) -> str:
         return '{0}://{1}:{2}{3}'.format(self.protocol, self.host, self.port, self.path)
+        """
+        Generate the URL of the node.
 
+        Returns:
+            str: The URL of the node
+        """
+    """
+    Class for managing the configuration settings for the Typesense client.
+
+    Attributes:
+        nodes (list[Node]): A list of Node objects representing the nodes in the cluster.
+        nearest_node (Node | None): The nearest node to the client.
+        api_key (str): The API key to use for authentication.
+        connection_timeout_seconds (float): The connection timeout in seconds.
+        num_retries (int): The number of retries to attempt before failing.
+        retry_interval_seconds (float): The interval in seconds between retries.
+        healthcheck_interval_seconds (int): The interval in seconds between health checks.
+        verify (bool): Whether to verify the SSL certificate.
+    """
 
 class Configuration(object):
     def __init__(self, config_dict: ConfigDict) -> None:
         Configuration.show_deprecation_warnings(config_dict)
         Configuration.validate_config_dict(config_dict)
+        """
+        Initialize a Configuration object with the specified configuration settings.
+
+        Args:
+            config_dict (ConfigDict): A dictionary containing the configuration settings.
+        """
 
         self.nodes: list[Node] = []
         for node_config in config_dict.get('nodes', []):
@@ -148,6 +221,15 @@ class Configuration(object):
 
     @staticmethod
     def validate_node_fields(node):
+        """
+        Validate the fields of a node in the configuration dictionary.
+
+        Args:
+            node (str | NodeConfigDict): The node to validate.
+
+        Returns:
+            bool: True if the node is valid, False otherwise.
+        """
         if isinstance(node, str):
             return True
         expected_fields = {'host', 'port', 'protocol'}
@@ -155,6 +237,13 @@ class Configuration(object):
 
     @staticmethod
     def show_deprecation_warnings(config_dict: ConfigDict) -> None:
+        """
+        Show deprecation warnings for deprecated configuration fields.
+
+        Args:
+            config_dict (ConfigDict): The configuration dictionary
+                to check for deprecated fields.
+        """
         if config_dict.get('timeout_seconds'):
             logger.warn('Deprecation warning: timeout_seconds is now renamed to connection_timeout_seconds')
 
