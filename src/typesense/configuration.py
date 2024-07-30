@@ -16,6 +16,7 @@ Exceptions:
 
 from __future__ import annotations
 
+import time
 from typing import Literal, NotRequired, TypedDict, Union
 from urllib.parse import urlparse
 
@@ -118,6 +119,9 @@ class Node:
 
         # Used to skip bad hosts
         self.healthy = True
+
+        # Used to track the last time this node was accessed
+        self.last_access_ts: int = int(time.time())
 
     @classmethod
     def from_url(cls, url: str) -> 'Node':
