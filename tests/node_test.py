@@ -2,6 +2,7 @@
 
 import pytest
 
+from tests.utils.object_assertions import assert_match_object, assert_to_contain_object
 from typesense.configuration import Node
 from typesense.exceptions import ConfigError
 
@@ -9,20 +10,29 @@ from typesense.exceptions import ConfigError
 def test_node_initialization() -> None:
     """Test the initialization of the Node class using an object."""
     node = Node(host="localhost", port=8108, path="/path", protocol="http")
-    assert node.host == "localhost"
-    assert node.port == 8108
-    assert node.path == "/path"
-    assert node.protocol == "http"
-    assert node.healthy is True
+
+    expected = {
+        "host": "localhost",
+        "port": 8108,
+        "path": "/path",
+        "protocol": "http",
+        "healthy": True,
+    }
+    assert_match_object(node, expected)
 
 
 def test_node_from_url() -> None:
     """Test the initialization of the Node class using a URL."""
     node = Node.from_url("http://localhost:8108/path")
-    assert node.host == "localhost"
-    assert node.port == 8108
-    assert node.path == "/path"
-    assert node.protocol == "http"
+
+    expected = {
+        "host": "localhost",
+        "port": 8108,
+        "path": "/path",
+        "protocol": "http",
+        "healthy": True,
+    }
+    assert_match_object(node, expected)
 
 
 def test_node_from_url_missing_hostname() -> None:
