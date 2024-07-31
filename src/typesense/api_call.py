@@ -188,24 +188,6 @@ class ApiCall(Generic[TEntityDict, TParams, TBody]):
             elif isinstance(params[key], bool) and not params[key]:
                 params[key] = 'false'
 
-        params = params or {}
-        return self.make_request(session.get, endpoint, as_json,
-                                 params=params,
-                                 timeout=self.config.connection_timeout_seconds, verify=self.config.verify)
-        params = params or {}
-        ApiCall.normalize_params(params)
-        return self.make_request(session.post, endpoint, as_json,
-                                 params=params, data=body,
-                                 timeout=self.config.connection_timeout_seconds, verify=self.config.verify)
-        return self.make_request(session.put, endpoint, True,
-                                 params=params, data=body,
-                                 timeout=self.config.connection_timeout_seconds, verify=self.config.verify)
-        return self.make_request(session.patch, endpoint, True,
-                                 params=params, data=body,
-                                 timeout=self.config.connection_timeout_seconds, verify=self.config.verify)
-        return self.make_request(session.delete, endpoint, True,
-                                 params=params, timeout=self.config.connection_timeout_seconds,
-                                 verify=self.config.verify)
     @overload
     def get(
         self, endpoint: str, as_json: Literal[False], params: TParams | None = None
@@ -222,6 +204,15 @@ class ApiCall(Generic[TEntityDict, TParams, TBody]):
         as_json: Literal[True] | Literal[False] = True,
         params: TParams | None = None,
     ) -> TEntityDict | str:
+        return self.make_request(
+            session.get,
+            endpoint,
+            as_json=as_json,
+            params=params,
+            timeout=self.config.connection_timeout_seconds,
+            verify=self.config.verify,
+        )
+
     @overload
     def post(
         self,
@@ -247,6 +238,17 @@ class ApiCall(Generic[TEntityDict, TParams, TBody]):
         as_json: Literal[True, False],
         params: TParams | None = None,
     ) -> str | TEntityDict:
+        if params:
+            ApiCall.normalize_params(params)
+        return self.make_request(
+            session.post,
+            endpoint,
+            as_json=as_json,
+            params=params,
+            data=body,
+            timeout=self.config.connection_timeout_seconds,
+            verify=self.config.verify,
+        )
 
     def put(
         self,
@@ -254,6 +256,15 @@ class ApiCall(Generic[TEntityDict, TParams, TBody]):
         body: TBody,
         params: TParams | None = None,
     ) -> TEntityDict:
+        return self.make_request(
+            session.put,
+            endpoint,
+            True,
+            params=params,
+            data=body,
+            timeout=self.config.connection_timeout_seconds,
+            verify=self.config.verify,
+        )
 
     def patch(
         self,
@@ -261,5 +272,23 @@ class ApiCall(Generic[TEntityDict, TParams, TBody]):
         body: TBody,
         params: TParams | None = None,
     ) -> TEntityDict:
+        return self.make_request(
+            session.patch,
+            endpoint,
+            True,
+            params=params,
+            data=body,
+            timeout=self.config.connection_timeout_seconds,
+            verify=self.config.verify,
+        )
 
     def delete(self, endpoint: str, params: TParams | None = None) -> TEntityDict:
+
+        return self.make_request(
+            session.delete,
+            endpoint,
+            True,
+            params=params,
+            timeout=self.config.connection_timeout_seconds,
+            verify=self.config.verify,
+        )
