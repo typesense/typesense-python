@@ -1,6 +1,17 @@
 import copy
 import json
 import time
+from typing import (
+    Any,
+    Callable,
+    Generic,
+    Literal,
+    NotRequired,
+    TypedDict,
+    TypeVar,
+    Unpack,
+    overload,
+)
 
 import requests
 from .exceptions import (HTTPStatus0Error, ObjectAlreadyExists,
@@ -10,8 +21,19 @@ from .exceptions import (HTTPStatus0Error, ObjectAlreadyExists,
 from typesense.configuration import Configuration, Node
 from .logger import logger
 session = requests.session()
+TParams = TypeVar('TParams', bound=dict[str, Any])
+TBody = TypeVar('TBody', bound=dict[str, Any])
+TEntityDict = TypeVar('TEntityDict')
 
-class ApiCall(object):
+
+class SessionFunctionKwargs(Generic[TParams, TBody], TypedDict):
+    params: NotRequired[TParams | None]
+    data: NotRequired[TBody | str]
+    timeout: float
+    verify: bool
+
+
+class ApiCall(Generic[TEntityDict, TParams, TBody]):
     API_KEY_HEADER_NAME = 'X-TYPESENSE-API-KEY'
 
     def __init__(self, config: Configuration):
@@ -81,8 +103,32 @@ class ApiCall(object):
         else:
             return TypesenseClientError
 
+    @overload
+    def make_request(
+        self,
+        fn: Callable[..., requests.models.Response],
+        endpoint: str,
+        as_json: Literal[True],
+        **kwargs: Unpack[SessionFunctionKwargs[TParams, TBody]],
+    ) -> TEntityDict: ...
+
+    @overload
+    def make_request(
+        self,
+        fn: Callable[..., requests.models.Response],
+        endpoint: str,
+        as_json: Literal[False],
+        **kwargs: Unpack[SessionFunctionKwargs[TParams, TBody]],
+    ) -> str: ...
+
     # Makes the actual http request, along with retries
-    def make_request(self, fn, endpoint, as_json, **kwargs):
+    def make_request(
+        self,
+        fn: Callable[..., requests.models.Response],
+        endpoint: str,
+        as_json: bool,
+        **kwargs: Unpack[SessionFunctionKwargs[TParams, TBody]],
+    ) -> TEntityDict | str:
         num_tries = 0
         last_exception = None
 
@@ -135,36 +181,85 @@ class ApiCall(object):
         node.last_access_ts = int(time.time())
 
     @staticmethod
-    def normalize_params(params):
+    def normalize_params(params: TParams) -> None:
         for key in params.keys():
             if isinstance(params[key], bool) and params[key]:
                 params[key] = 'true'
             elif isinstance(params[key], bool) and not params[key]:
                 params[key] = 'false'
 
-    def get(self, endpoint, params=None, as_json=True):
         params = params or {}
         return self.make_request(session.get, endpoint, as_json,
                                  params=params,
                                  timeout=self.config.connection_timeout_seconds, verify=self.config.verify)
-
-    def post(self, endpoint, body, params=None, as_json=True):
         params = params or {}
         ApiCall.normalize_params(params)
         return self.make_request(session.post, endpoint, as_json,
                                  params=params, data=body,
                                  timeout=self.config.connection_timeout_seconds, verify=self.config.verify)
-    def put(self, endpoint, body, params=None):
         return self.make_request(session.put, endpoint, True,
                                  params=params, data=body,
                                  timeout=self.config.connection_timeout_seconds, verify=self.config.verify)
-
-    def patch(self, endpoint, body, params=None):
         return self.make_request(session.patch, endpoint, True,
                                  params=params, data=body,
                                  timeout=self.config.connection_timeout_seconds, verify=self.config.verify)
-
-    def delete(self, endpoint, params=None):
         return self.make_request(session.delete, endpoint, True,
                                  params=params, timeout=self.config.connection_timeout_seconds,
                                  verify=self.config.verify)
+    @overload
+    def get(
+        self, endpoint: str, as_json: Literal[False], params: TParams | None = None
+    ) -> str: ...
+
+    @overload
+    def get(
+        self, endpoint: str, as_json: Literal[True], params: TParams | None = None
+    ) -> TEntityDict: ...
+
+    def get(
+        self,
+        endpoint: str,
+        as_json: Literal[True] | Literal[False] = True,
+        params: TParams | None = None,
+    ) -> TEntityDict | str:
+    @overload
+    def post(
+        self,
+        endpoint: str,
+        body: TBody,
+        as_json: Literal[False],
+        params: TParams | None = None,
+    ) -> str: ...
+
+    @overload
+    def post(
+        self,
+        endpoint: str,
+        body: TBody,
+        as_json: Literal[True],
+        params: TParams | None = None,
+    ) -> TEntityDict: ...
+
+    def post(
+        self,
+        endpoint: str,
+        body: TBody,
+        as_json: Literal[True, False],
+        params: TParams | None = None,
+    ) -> str | TEntityDict:
+
+    def put(
+        self,
+        endpoint: str,
+        body: TBody,
+        params: TParams | None = None,
+    ) -> TEntityDict:
+
+    def patch(
+        self,
+        endpoint: str,
+        body: TBody,
+        params: TParams | None = None,
+    ) -> TEntityDict:
+
+    def delete(self, endpoint: str, params: TParams | None = None) -> TEntityDict:
