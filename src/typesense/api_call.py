@@ -130,7 +130,7 @@ class ApiCall(Generic[TEntityDict, TParams, TBody]):
         **kwargs: Unpack[SessionFunctionKwargs[TParams, TBody]],
     ) -> TEntityDict | str:
         num_tries = 0
-        last_exception = None
+        last_exception: BaseException
 
         logger.debug('Making {} {}'.format(fn.__name__, endpoint))
 
