@@ -242,7 +242,7 @@ class Configuration:
         return Node(
             node['host'],
             node['port'],
-            node.get('path', ' '),
+            node.get('path', ''),
             node['protocol'],
         )
 

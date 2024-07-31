@@ -36,10 +36,10 @@ def test_configuration_defaults() -> None:
     configuration = Configuration(config)
 
     nodes = [
-        Node(host="localhost", port=8108, protocol="http", path=" "),
+        Node(host="localhost", port=8108, protocol="http", path=""),
         Node(host="localhost", port=8108, protocol="http", path="3"),
     ]
-    nearest_node = Node(host="localhost", port=8108, protocol="http", path=" ")
+    nearest_node = Node(host="localhost", port=8108, protocol="http", path="")
 
     assert_object_lists_match(configuration.nodes, nodes)
 
@@ -70,8 +70,8 @@ def test_configuration_explicit() -> None:
 
     configuration = Configuration(config)
 
-    nodes = [Node(host="localhost", port=8108, protocol="http", path=" ")]
-    nearest_node = Node(host="localhost", port=8108, protocol="http", path=" ")
+    nodes = [Node(host="localhost", port=8108, protocol="http", path="")]
+    nearest_node = Node(host="localhost", port=8108, protocol="http", path="")
 
     assert_object_lists_match(configuration.nodes, nodes)
     assert_match_object(configuration.nearest_node, nearest_node)
@@ -96,7 +96,7 @@ def test_configuration_no_nearest_node() -> None:
 
     configuration = Configuration(config)
 
-    nodes = Node(host="localhost", port=8108, protocol="http", path=" ")
+    nodes = Node(host="localhost", port=8108, protocol="http", path="")
 
     for node in configuration.nodes:
         assert_match_object(node, nodes)
