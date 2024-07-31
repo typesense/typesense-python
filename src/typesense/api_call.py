@@ -7,35 +7,36 @@ from .exceptions import (HTTPStatus0Error, ObjectAlreadyExists,
                          ObjectNotFound, ObjectUnprocessable,
                          RequestMalformed, RequestUnauthorized, RequestForbidden,
                          ServerError, ServiceUnavailable, TypesenseClientError)
+from typesense.configuration import Configuration, Node
 from .logger import logger
 session = requests.session()
 
 class ApiCall(object):
     API_KEY_HEADER_NAME = 'X-TYPESENSE-API-KEY'
 
-    def __init__(self, config):
+    def __init__(self, config: Configuration):
         self.config = config
         self.nodes = copy.deepcopy(self.config.nodes)
         self.node_index = 0
         self._initialize_nodes()
 
-    def _initialize_nodes(self):
+    def _initialize_nodes(self) -> None:
         if self.config.nearest_node:
             self.set_node_healthcheck(self.config.nearest_node, True)
 
         for node in self.nodes:
             self.set_node_healthcheck(node, True)
 
-    def node_due_for_health_check(self, node):
+    def node_due_for_health_check(self, node: Node) -> bool:
         current_epoch_ts = int(time.time())
-        due_for_check = (current_epoch_ts - node.last_access_ts) > self.config.healthcheck_interval_seconds
+        due_for_check: bool = (current_epoch_ts - node.last_access_ts) > self.config.healthcheck_interval_seconds
         if due_for_check:
             logger.debug('Node {}:{} is due for health check.'.format(node.host, node.port))
         return due_for_check
 
     # Returns a healthy host from the pool in a round-robin fashion.
     # Might return an unhealthy host periodically to check for recovery.
-    def get_node(self):
+    def get_node(self) -> Node:
         if self.config.nearest_node:
             if self.config.nearest_node.healthy or self.node_due_for_health_check(self.config.nearest_node):
                 logger.debug('Using nearest node.')
@@ -58,7 +59,7 @@ class ApiCall(object):
         return self.nodes[self.node_index]
 
     @staticmethod
-    def get_exception(http_code):
+    def get_exception(http_code: int) -> type[TypesenseClientError]:
         if http_code == 0:
             return HTTPStatus0Error
         elif http_code == 400:
@@ -129,7 +130,7 @@ class ApiCall(object):
         logger.debug('No retries left. Raising last exception: {}'.format(last_exception))
         raise last_exception
 
-    def set_node_healthcheck(self, node, is_healthy):
+    def set_node_healthcheck(self, node: Node, is_healthy: bool) -> None:
         node.healthy = is_healthy
         node.last_access_ts = int(time.time())
 
@@ -153,7 +154,6 @@ class ApiCall(object):
         return self.make_request(session.post, endpoint, as_json,
                                  params=params, data=body,
                                  timeout=self.config.connection_timeout_seconds, verify=self.config.verify)
-
     def put(self, endpoint, body, params=None):
         return self.make_request(session.put, endpoint, True,
                                  params=params, data=body,
