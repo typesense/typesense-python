@@ -328,7 +328,11 @@ class ApiCall(typing.Generic[TEntityDict, TParams, TBody]):
                 if kwargs.get("data") and not isinstance(kwargs["data"], (str, bytes)):
                     kwargs["data"] = json.dumps(kwargs["data"])
 
-                r = fn(url, headers={ApiCall.API_KEY_HEADER_NAME: self.config.api_key}, **kwargs)
+                response = fn(
+                    url,
+                    headers={ApiCall.API_KEY_HEADER_NAME: self.config.api_key},
+                    **kwargs,
+                )
 
                 # Treat any status code > 0 and < 500 to be an indication that node is healthy
                 # We exclude 0 since some clients return 0 when request fails
@@ -344,15 +348,18 @@ class ApiCall(typing.Generic[TEntityDict, TParams, TBody]):
                     )
 
                 # We should raise a custom exception if status code is not 20X
-                if r.status_code < 200 or r.status_code >= 300:
-                    content_type = r.headers.get("Content-Type", "")
+                if response.status_code < 200 or response.status_code >= 300:
+                    content_type = response.headers.get("Content-Type", "")
                     error_message = (
-                        r.json().get("message", "API error.")
+                        response.json().get("message", "API error.")
                         if content_type.startswith("application/json")
                         else "API error."
                     )
                     # Raised exception will be caught and retried
-                    raise ApiCall.get_exception(r.status_code)(r.status_code, error_message)
+                    raise ApiCall.get_exception(response.status_code)(
+                        response.status_code,
+                        error_message,
+                    )
 
                 if as_json:
                     # Have to use type hinting to avoid returning any
