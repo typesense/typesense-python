@@ -149,12 +149,18 @@ class ApiCall(typing.Generic[TEntityDict, TParams, TBody]):
             if self.config.nearest_node.healthy or self.node_due_for_health_check(self.config.nearest_node):
                 logger.debug('Using nearest node.')
                 return self.config.nearest_node
-            else:
-                logger.debug('Nearest node is unhealthy or not due for health check. Falling back to individual nodes.')
 
         i = 0
         while i < len(self.nodes):
             i += 1
+        logger.debug(
+            " ".join(
+                [
+                    "Nearest node is unhealthy or not due for health check.",
+                    "Falling back to individual nodes.",
+                ],
+            ),
+        )
             node = self.nodes[self.node_index]
             self.node_index = (self.node_index + 1) % len(self.nodes)
 
