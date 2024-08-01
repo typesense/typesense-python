@@ -42,7 +42,6 @@ import time
 import requests
 from typesense.configuration import Configuration, Node
 from .logger import logger
-session = requests.session()
 
 if sys.version_info >= (3, 11):
     import typing
@@ -50,6 +49,7 @@ else:
     import typing_extensions as typing
 
 import typesense.exceptions as exceptions
+session = requests.sessions.Session()
 TParams = typing.TypeVar("TParams", bound=typing.Dict[str, typing.Any])
 TBody = typing.TypeVar("TBody", bound=typing.Dict[str, typing.Any])
 TEntityDict = typing.TypeVar("TEntityDict")
