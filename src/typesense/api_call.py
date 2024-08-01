@@ -116,7 +116,9 @@ class ApiCall(typing.Generic[TEntityDict, TParams, TBody]):
         current_epoch_ts = int(time.time())
         due_for_check: bool = (current_epoch_ts - node.last_access_ts) > self.config.healthcheck_interval_seconds
         if due_for_check:
-            logger.debug('Node {}:{} is due for health check.'.format(node.host, node.port))
+            logger.debug(
+                f"Node {node.host}:{node.port} is due for health check.",
+            )
         return due_for_check
 
     # Returns a healthy host from the pool in a round-robin fashion.
@@ -311,13 +313,15 @@ class ApiCall(typing.Generic[TEntityDict, TParams, TBody]):
         num_tries = 0
         last_exception: BaseException
 
-        logger.debug('Making {} {}'.format(fn.__name__, endpoint))
+        logger.debug(f"Making {fn.__name__} {endpoint}")
 
         while num_tries < (self.config.num_retries + 1):
             num_tries += 1
             node = self.get_node()
 
-            logger.debug('Try {} to node {}:{} -- healthy? {}'.format(num_tries, node.host, node.port, node.healthy))
+            logger.debug(
+                f"Try {num_tries} to node {node.host}:{node.port} -- healthy? {node.healthy}",
+            )
 
             try:
                 url = node.url() + endpoint
@@ -328,9 +332,16 @@ class ApiCall(typing.Generic[TEntityDict, TParams, TBody]):
 
                 # Treat any status code > 0 and < 500 to be an indication that node is healthy
                 # We exclude 0 since some clients return 0 when request fails
-                if 0 < r.status_code < 500:
-                    logger.debug('{}:{} is healthy. Status code: {}'.format(node.host, node.port, r.status_code))
                     self.set_node_healthcheck(node, True)
+                if 0 < response.status_code < 500:
+                    logger.debug(
+                        "".join(
+                            [
+                                f"{node.host}:{node.port} is healthy.",
+                                f"Status code: {response.status_code}",
+                            ],
+                        ),
+                    )
 
                 # We should raise a custom exception if status code is not 20X
                 if not 200 <= r.status_code < 300:
@@ -354,12 +365,22 @@ class ApiCall(typing.Generic[TEntityDict, TParams, TBody]):
             ) as e:
                 # Catch the exception and retry
                 self.set_node_healthcheck(node, False)
-                logger.debug('Request to {}:{} failed because of {}'.format(node.host, node.port, e))
-                logger.debug('Sleeping for {} and retrying...'.format(self.config.retry_interval_seconds))
+                self.set_node_healthcheck(node, is_healthy=False)
+                logger.debug(
+                    " ".join(
+                        [
+                            f"Request to {node.host}:{node.port} failed",
+                            "because of {connection_error}",
+                        ],
+                    ),
+                )
+                logger.debug(
+                    f"Sleeping for {self.config.retry_interval_seconds} and retrying...",
+                )
                 last_exception = e
                 time.sleep(self.config.retry_interval_seconds)
 
-        logger.debug('No retries left. Raising last exception: {}'.format(last_exception))
+        logger.debug(f"No retries left. Raising last exception: {last_exception}")
         raise last_exception
 
     def set_node_healthcheck(self, node: Node, is_healthy: bool) -> None:
