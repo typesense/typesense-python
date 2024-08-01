@@ -344,11 +344,13 @@ class ApiCall(typing.Generic[TEntityDict, TParams, TBody]):
                     )
 
                 # We should raise a custom exception if status code is not 20X
-                if not 200 <= r.status_code < 300:
-                    if r.headers.get('Content-Type', '').startswith('application/json'):
-                        error_message = r.json().get('message', 'API error.')
-                    else:
-                        error_message = 'API error.'
+                if r.status_code < 200 or r.status_code >= 300:
+                    content_type = r.headers.get("Content-Type", "")
+                    error_message = (
+                        r.json().get("message", "API error.")
+                        if content_type.startswith("application/json")
+                        else "API error."
+                    )
                     # Raised exception will be caught and retried
                     raise ApiCall.get_exception(r.status_code)(r.status_code, error_message)
 
