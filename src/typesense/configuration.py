@@ -132,7 +132,7 @@ class Node:
         self.last_access_ts: int = int(time.time())
 
     @classmethod
-    def from_url(cls, url: str) -> 'Node':
+    def from_url(cls, url: str) -> "Node":
         """
         Initialize a Node object from a URL string.
 
@@ -147,11 +147,11 @@ class Node:
         """
         parsed = urlparse(url)
         if not parsed.hostname:
-            raise ConfigError('Node URL does not contain the host name.')
+            raise ConfigError("Node URL does not contain the host name.")
         if not parsed.port:
-            raise ConfigError('Node URL does not contain the port.')
+            raise ConfigError("Node URL does not contain the port.")
         if not parsed.scheme:
-            raise ConfigError('Node URL does not contain the protocol.')
+            raise ConfigError("Node URL does not contain the protocol.")
 
         return cls(parsed.hostname, parsed.port, parsed.path, parsed.scheme)
 
@@ -162,7 +162,7 @@ class Node:
         Returns:
             str: The URL of the node
         """
-        return f'{self.protocol}://{self.host}:{self.port}{self.path}'
+        return f"{self.protocol}://{self.host}:{self.port}{self.path}"
 
 
 class Configuration:
@@ -195,21 +195,21 @@ class Configuration:
         self.validations.validate_config_dict(config_dict)
 
         self.nodes: list[Node] = [
-            self._initialize_nodes(node) for node in config_dict['nodes']
+            self._initialize_nodes(node) for node in config_dict["nodes"]
         ]
 
-        nearest_node = config_dict.get('nearest_node', None)
+        nearest_node = config_dict.get("nearest_node", None)
 
         self.nearest_node = self._handle_nearest_node(nearest_node)
-        self.api_key = config_dict.get('api_key', ' ')
+        self.api_key = config_dict.get("api_key", " ")
         self.connection_timeout_seconds = config_dict.get(
-            'connection_timeout_seconds',
+            "connection_timeout_seconds",
             3.0,
         )
-        self.num_retries = config_dict.get('num_retries', 3)
-        self.retry_interval_seconds = config_dict.get('retry_interval_seconds', 1.0)
+        self.num_retries = config_dict.get("num_retries", 3)
+        self.retry_interval_seconds = config_dict.get("retry_interval_seconds", 1.0)
         self.healthcheck_interval_seconds = config_dict.get(
-            'healthcheck_interval_seconds',
+            "healthcheck_interval_seconds",
             60,
         )
         self.verify = config_dict.get("verify", True)
@@ -248,10 +248,10 @@ class Configuration:
             return Node.from_url(node)
 
         return Node(
-            node['host'],
-            node['port'],
-            node.get('path', ''),
-            node['protocol'],
+            node["host"],
+            node["port"],
+            node.get("path", ""),
+            node["protocol"],
         )
 
 
@@ -270,9 +270,9 @@ class ConfigurationValidations:
             ConfigError: If the configuration dictionary is missing required fields.
         """
         ConfigurationValidations.validate_required_config_fields(config_dict)
-        ConfigurationValidations.validate_nodes(config_dict['nodes'])
+        ConfigurationValidations.validate_nodes(config_dict["nodes"])
 
-        nearest_node = config_dict.get('nearest_node', None)
+        nearest_node = config_dict.get("nearest_node", None)
         if nearest_node:
             ConfigurationValidations.validate_nearest_node(nearest_node)
 
@@ -287,11 +287,11 @@ class ConfigurationValidations:
         Raises:
             ConfigError: If the configuration dictionary is missing required fields.
         """
-        if not config_dict.get('nodes'):
-            raise ConfigError('`nodes` is not defined.')
+        if not config_dict.get("nodes"):
+            raise ConfigError("`nodes` is not defined.")
 
-        if not config_dict.get('api_key'):
-            raise ConfigError('`api_key` is not defined.')
+        if not config_dict.get("api_key"):
+            raise ConfigError("`api_key` is not defined.")
 
     @staticmethod
     def validate_nodes(nodes: list[typing.Union[str, NodeConfigDict]]) -> None:
@@ -307,11 +307,11 @@ class ConfigurationValidations:
         for node in nodes:
             if not ConfigurationValidations.validate_node_fields(node):
                 raise ConfigError(
-                    ' '.join(
+                    " ".join(
                         [
-                            '`node` entry must be a URL string or a',
-                            'dictionary with the following required keys:',
-                            'host, port, protocol',
+                            "`node` entry must be a URL string or a",
+                            "dictionary with the following required keys:",
+                            "host, port, protocol",
                         ],
                     ),
                 )
@@ -329,11 +329,11 @@ class ConfigurationValidations:
         """
         if not ConfigurationValidations.validate_node_fields(nearest_node):
             raise ConfigError(
-                ' '.join(
+                " ".join(
                     [
-                        '`nearest_node` entry must be a URL string or a dictionary',
-                        'with the following required keys:',
-                        'host, port, protocol',
+                        "`nearest_node` entry must be a URL string or a dictionary",
+                        "with the following required keys:",
+                        "host, port, protocol",
                     ],
                 ),
             )
@@ -351,7 +351,7 @@ class ConfigurationValidations:
         """
         if isinstance(node, str):
             return True
-        expected_fields = {'host', 'port', 'protocol'}
+        expected_fields = {"host", "port", "protocol"}
         return expected_fields.issubset(node)
 
     @staticmethod
@@ -363,32 +363,32 @@ class ConfigurationValidations:
             config_dict (ConfigDict): The configuration dictionary
                 to check for deprecated fields.
         """
-        if config_dict.get('timeout_seconds'):
+        if config_dict.get("timeout_seconds"):
             logger.warn(
-                ' '.join(
+                " ".join(
                     [
-                        'Deprecation warning: timeout_seconds is now renamed',
-                        'to connection_timeout_seconds',
+                        "Deprecation warning: timeout_seconds is now renamed",
+                        "to connection_timeout_seconds",
                     ],
                 ),
             )
 
-        if config_dict.get('master_node'):
+        if config_dict.get("master_node"):
             logger.warn(
-                ' '.join(
+                " ".join(
                     [
-                        'Deprecation warning: master_node is now consolidated',
-                        'to nodes,starting with Typesense Server v0.12',
+                        "Deprecation warning: master_node is now consolidated",
+                        "to nodes,starting with Typesense Server v0.12",
                     ],
                 ),
             )
 
-        if config_dict.get('read_replica_nodes'):
+        if config_dict.get("read_replica_nodes"):
             logger.warn(
-                ' '.join(
+                " ".join(
                     [
-                        'Deprecation warning: read_replica_nodes is now',
-                        'consolidated to nodes, starting with Typesense Server v0.12',
+                        "Deprecation warning: read_replica_nodes is now",
+                        "consolidated to nodes, starting with Typesense Server v0.12",
                     ],
                 ),
             )
