@@ -354,7 +354,11 @@ class ApiCall(typing.Generic[TEntityDict, TParams, TBody]):
                     # Raised exception will be caught and retried
                     raise ApiCall.get_exception(r.status_code)(r.status_code, error_message)
 
-                return r.json() if as_json else r.text
+                if as_json:
+                    # Have to use type hinting to avoid returning any
+                    resposne_json: TEntityDict = response.json()
+                    return resposne_json  # noqa: WPS331
+                return response.text
             except (
                 requests.exceptions.Timeout,
                 requests.exceptions.ConnectionError,
