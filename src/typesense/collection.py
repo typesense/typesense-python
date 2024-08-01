@@ -1,6 +1,17 @@
+from __future__ import annotations
+
+import sys
+from typesense.types.collection import CollectionSchema, CollectionUpdateSchema
+
+if sys.version_info >= (3, 11):
+    import typing
+else:
+    import typing_extensions as typing
+
 from .overrides import Overrides
 from .synonyms import Synonyms
 from .documents import Documents
+
 
 
 class Collection(object):
