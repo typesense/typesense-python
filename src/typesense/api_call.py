@@ -1,17 +1,10 @@
+
+from __future__ import annotations
+
 import copy
 import json
+import sys
 import time
-from typing import (
-    Any,
-    Callable,
-    Generic,
-    Literal,
-    NotRequired,
-    TypedDict,
-    TypeVar,
-    Unpack,
-    overload,
-)
 
 import requests
 from .exceptions import (HTTPStatus0Error, ObjectAlreadyExists,
@@ -21,20 +14,34 @@ from .exceptions import (HTTPStatus0Error, ObjectAlreadyExists,
 from typesense.configuration import Configuration, Node
 from .logger import logger
 session = requests.session()
-TParams = TypeVar('TParams', bound=dict[str, Any])
-TBody = TypeVar('TBody', bound=dict[str, Any])
-TEntityDict = TypeVar('TEntityDict')
 
+if sys.version_info >= (3, 11):
+    import typing
+else:
+    import typing_extensions as typing
 
-class SessionFunctionKwargs(Generic[TParams, TBody], TypedDict):
-    params: NotRequired[TParams | None]
-    data: NotRequired[TBody | str]
+TParams = typing.TypeVar("TParams", bound=typing.Dict[str, typing.Any])
+TBody = typing.TypeVar("TBody", bound=typing.Dict[str, typing.Any])
+TEntityDict = typing.TypeVar("TEntityDict")
+class SessionFunctionKwargs(typing.Generic[TParams, TBody], typing.TypedDict):
+    """
+    Dictionary of keyword arguments for the session function.
+
+    Attributes:
+        params (TParams | None): The request parameters.
+        data (TBody | str): The request body.
+        timeout (float): The timeout for the request.
+        verify (bool): Whether to verify
+    """
+
+    params: typing.NotRequired[TParams | None]
+    data: typing.NotRequired[TBody | str]
     timeout: float
     verify: bool
 
 
-class ApiCall(Generic[TEntityDict, TParams, TBody]):
     API_KEY_HEADER_NAME = 'X-TYPESENSE-API-KEY'
+class ApiCall(typing.Generic[TEntityDict, TParams, TBody]):
 
     def __init__(self, config: Configuration):
         self.config = config
@@ -103,31 +110,31 @@ class ApiCall(Generic[TEntityDict, TParams, TBody]):
         else:
             return TypesenseClientError
 
-    @overload
+    @typing.overload
     def make_request(
         self,
-        fn: Callable[..., requests.models.Response],
+        fn: typing.Callable[..., requests.models.Response],
         endpoint: str,
-        as_json: Literal[True],
-        **kwargs: Unpack[SessionFunctionKwargs[TParams, TBody]],
-    ) -> TEntityDict: ...
+        as_json: typing.Literal[True],
+        **kwargs: typing.Unpack[SessionFunctionKwargs[TParams, TBody]],
+    ) -> TEntityDict:
 
-    @overload
+    @typing.overload
     def make_request(
         self,
-        fn: Callable[..., requests.models.Response],
+        fn: typing.Callable[..., requests.models.Response],
         endpoint: str,
-        as_json: Literal[False],
-        **kwargs: Unpack[SessionFunctionKwargs[TParams, TBody]],
-    ) -> str: ...
+        as_json: typing.Literal[False],
+        **kwargs: typing.Unpack[SessionFunctionKwargs[TParams, TBody]],
+    ) -> str:
 
     # Makes the actual http request, along with retries
     def make_request(
         self,
-        fn: Callable[..., requests.models.Response],
+        fn: typing.Callable[..., requests.models.Response],
         endpoint: str,
         as_json: bool,
-        **kwargs: Unpack[SessionFunctionKwargs[TParams, TBody]],
+        **kwargs: typing.Unpack[SessionFunctionKwargs[TParams, TBody]],
     ) -> TEntityDict | str:
         num_tries = 0
         last_exception: BaseException
@@ -188,20 +195,26 @@ class ApiCall(Generic[TEntityDict, TParams, TBody]):
             elif isinstance(params[key], bool) and not params[key]:
                 params[key] = 'false'
 
-    @overload
+    @typing.overload
     def get(
-        self, endpoint: str, as_json: Literal[False], params: TParams | None = None
-    ) -> str: ...
+        self,
+        endpoint: str,
+        as_json: typing.Literal[False],
+        params: TParams | None = None,
+    ) -> str:
 
-    @overload
+    @typing.overload
     def get(
-        self, endpoint: str, as_json: Literal[True], params: TParams | None = None
-    ) -> TEntityDict: ...
+        self,
+        endpoint: str,
+        as_json: typing.Literal[True],
+        params: TParams | None = None,
+    ) -> TEntityDict:
 
     def get(
         self,
         endpoint: str,
-        as_json: Literal[True] | Literal[False] = True,
+        as_json: typing.Literal[True] | typing.Literal[False] = True,
         params: TParams | None = None,
     ) -> TEntityDict | str:
         return self.make_request(
@@ -213,29 +226,29 @@ class ApiCall(Generic[TEntityDict, TParams, TBody]):
             verify=self.config.verify,
         )
 
-    @overload
+    @typing.overload
     def post(
         self,
         endpoint: str,
         body: TBody,
-        as_json: Literal[False],
+        as_json: typing.Literal[False],
         params: TParams | None = None,
-    ) -> str: ...
+    ) -> str:
 
-    @overload
+    @typing.overload
     def post(
         self,
         endpoint: str,
         body: TBody,
-        as_json: Literal[True],
+        as_json: typing.Literal[True],
         params: TParams | None = None,
-    ) -> TEntityDict: ...
+    ) -> TEntityDict:
 
     def post(
         self,
         endpoint: str,
         body: TBody,
-        as_json: Literal[True, False],
+        as_json: typing.Literal[True, False],
         params: TParams | None = None,
     ) -> str | TEntityDict:
         if params:

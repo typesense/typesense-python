@@ -16,15 +16,21 @@ Exceptions:
 
 from __future__ import annotations
 
+import sys
 import time
-from typing import Literal, NotRequired, TypedDict, Union
+
+if sys.version_info >= (3, 11):
+    import typing
+else:
+    import typing_extensions as typing
+
 from urllib.parse import urlparse
 
 from typesense.exceptions import ConfigError
 from typesense.logger import logger
 
 
-class NodeConfigDict(TypedDict):
+class NodeConfigDict(typing.TypedDict):
     """
     A dictionary that represents the configuration for a node in the Typesense cluster.
 
@@ -32,24 +38,24 @@ class NodeConfigDict(TypedDict):
         host (str): The host name of the node.
         port (int): The port number of the node.
         path (str, optional): The path of the node.
-        protocol (Literal['http', 'https'] | str): The protocol of the node.
+        protocol (typing.Literal['http', 'https'] | str): The protocol of the node.
     """
 
     host: str
     port: int
-    path: NotRequired[str]
-    protocol: Literal['http', 'https'] | str
+    path: typing.NotRequired[str]
+    protocol: typing.Literal["http", "https"] | str
 
 
-class ConfigDict(TypedDict):
+class ConfigDict(typing.TypedDict):
     """
     A dictionary that represents the configuration for the Typesense client.
 
     Attributes:
-        nodes (list[Union[str, NodeConfigDict]]): A list of dictionaries or URLs that
+        nodes (list[typing.Union[str, NodeConfigDict]]): A list of dictionaries or URLs that
             represent the nodes in the cluster.
 
-        nearest_node (Union[str, NodeConfigDict]): A dictionary or URL
+        nearest_node (typing.Union[str, NodeConfigDict]): A dictionary or URL
             that represents the nearest node to the client.
 
         api_key (str): The API key to use for authentication.
@@ -65,23 +71,25 @@ class ConfigDict(TypedDict):
 
         timeout_seconds (int, deprecated): The connection timeout in seconds.
 
-        master_node (Union[str, NodeConfigDict], deprecated): A dictionary or
+        master_node (typing.Union[str, NodeConfigDict], deprecated): A dictionary or
             URL that represents the master node.
 
-        read_replica_nodes (list[Union[str, NodeConfigDict]], deprecated): A list of
+        read_replica_nodes (list[typing.Union[str, NodeConfigDict]], deprecated): A list of
             dictionaries or URLs that represent the read replica nodes.
     """
 
-    nodes: list[Union[str, NodeConfigDict]]
-    nearest_node: NotRequired[Union[str, NodeConfigDict]]
+    nodes: list[typing.Union[str, NodeConfigDict]]
+    nearest_node: typing.NotRequired[typing.Union[str, NodeConfigDict]]
     api_key: str
-    num_retries: NotRequired[int]
-    interval_seconds: NotRequired[int]
-    healthcheck_interval_seconds: NotRequired[int]
-    verify: NotRequired[bool]
-    timeout_seconds: NotRequired[int]  # deprecated
-    master_node: NotRequired[Union[str, NodeConfigDict]]  # deprecated
-    read_replica_nodes: NotRequired[list[Union[str, NodeConfigDict]]]  # deprecated
+    num_retries: typing.NotRequired[int]
+    interval_seconds: typing.NotRequired[int]
+    healthcheck_interval_seconds: typing.NotRequired[int]
+    verify: typing.NotRequired[bool]
+    timeout_seconds: typing.NotRequired[int]  # deprecated
+    master_node: typing.NotRequired[typing.Union[str, NodeConfigDict]]  # deprecated
+    read_replica_nodes: typing.NotRequired[
+        list[typing.Union[str, NodeConfigDict]]
+    ]  # deprecated
 
 
 class Node:
@@ -92,7 +100,7 @@ class Node:
         host (str): The host name of the node.
         port (str | int): The port number of the node.
         path (str): The path of the node.
-        protocol (Literal['http', 'https'] | str): The protocol of the node.
+        protocol (typing.Literal['http', 'https'] | str): The protocol of the node.
         healthy (bool): Whether the node is healthy or not.
     """
 
@@ -101,7 +109,7 @@ class Node:
         host: str,
         port: str | int,
         path: str,
-        protocol: Literal['http', 'https'] | str,
+        protocol: typing.Literal["http", "https"] | str,
     ) -> None:
         """
         Initialize a Node object with the specified host, port, path, and protocol.
@@ -110,7 +118,7 @@ class Node:
             host (str): The host name of the node.
             port (str | int): The port number of the node.
             path (str): The path of the node.
-            protocol (Literal['http', 'https'] | str): The protocol of the node.
+            protocol (typing.Literal['http', 'https'] | str): The protocol of the node.
         """
         self.host = host
         self.port = port
@@ -208,8 +216,8 @@ class Configuration:
 
     def _handle_nearest_node(
         self,
-        nearest_node: Union[str, NodeConfigDict, None],
-    ) -> Union[Node, None]:
+        nearest_node: typing.Union[str, NodeConfigDict, None],
+    ) -> typing.Union[Node, None]:
         """
         Handle the nearest node configuration.
 
@@ -225,7 +233,7 @@ class Configuration:
 
     def _initialize_nodes(
         self,
-        node: Union[str, NodeConfigDict],
+        node: typing.Union[str, NodeConfigDict],
     ) -> Node:
         """
         Handle the initialization of a node.
@@ -286,7 +294,7 @@ class ConfigurationValidations:
             raise ConfigError('`api_key` is not defined.')
 
     @staticmethod
-    def validate_nodes(nodes: list[Union[str, NodeConfigDict]]) -> None:
+    def validate_nodes(nodes: list[typing.Union[str, NodeConfigDict]]) -> None:
         """
         Validate the nodes in the configuration dictionary.
 
@@ -309,7 +317,7 @@ class ConfigurationValidations:
                 )
 
     @staticmethod
-    def validate_nearest_node(nearest_node: Union[str, NodeConfigDict]) -> None:
+    def validate_nearest_node(nearest_node: typing.Union[str, NodeConfigDict]) -> None:
         """
         Validate the nearest node in the configuration dictionary.
 

@@ -1,6 +1,9 @@
 """Unit Tests for the ApiCall class."""
 
+from __future__ import annotations
+
 import time
+from typing import Dict
 
 import pytest
 import requests
@@ -53,13 +56,13 @@ def config_fixture() -> Configuration:
 @pytest.fixture(scope="function", name="api_call")
 def api_call_fixture(
     config: Configuration,
-) -> ApiCall[dict[str, str], dict[str, str], dict[str, str]]:
+) -> ApiCall[Dict[str, str], Dict[str, str], Dict[str, str]]:
     """Return an ApiCall object with test values."""
-    return ApiCall[dict[str, str], dict[str, str], dict[str, str]](config)
+    return ApiCall[Dict[str, str], Dict[str, str], Dict[str, str]](config)
 
 
 def test_initialization(
-    api_call: ApiCall[dict[str, str], dict[str, str], dict[str, str]],
+    api_call: ApiCall[Dict[str, str], Dict[str, str], Dict[str, str]],
     config: Configuration,
 ) -> None:
     """Test the initialization of the ApiCall object."""
@@ -69,7 +72,7 @@ def test_initialization(
 
 
 def test_node_due_for_health_check(
-    api_call: ApiCall[dict[str, str], dict[str, str], dict[str, str]],
+    api_call: ApiCall[Dict[str, str], Dict[str, str], Dict[str, str]],
 ) -> None:
     """Test that it correctly identifies if a node is due for health check."""
     node = Node(host="localhost", port=8108, protocol="http", path=" ")
@@ -78,7 +81,7 @@ def test_node_due_for_health_check(
 
 
 def test_get_node_nearest_healthy(
-    api_call: ApiCall[dict[str, str], dict[str, str], dict[str, str]],
+    api_call: ApiCall[Dict[str, str], Dict[str, str], Dict[str, str]],
 ) -> None:
     """Test that it correctly selects the nearest node if it is healthy."""
     node = api_call.get_node()
@@ -86,7 +89,7 @@ def test_get_node_nearest_healthy(
 
 
 def test_get_node_nearest_not_healthy(
-    api_call: ApiCall[dict[str, str], dict[str, str], dict[str, str]],
+    api_call: ApiCall[Dict[str, str], Dict[str, str], Dict[str, str]],
 ) -> None:
     """Test that it selects the next available node if the nearest node is not healthy."""
     api_call.config.nearest_node.healthy = False
@@ -95,7 +98,7 @@ def test_get_node_nearest_not_healthy(
 
 
 def test_get_node_round_robin_selection(
-    api_call: ApiCall[dict[str, str], dict[str, str], dict[str, str]],
+    api_call: ApiCall[Dict[str, str], Dict[str, str], Dict[str, str]],
     mocker: MockerFixture,
 ) -> None:
     """Test that it selects the next available node in a round-robin fashion."""
@@ -128,7 +131,7 @@ def test_get_exception() -> None:
 
 def test_normalize_params_with_booleans() -> None:
     """Test that it correctly normalizes boolean values to strings."""
-    parameter_dict: dict[str, str | bool] = {"key1": True, "key2": False}
+    parameter_dict: Dict[str, str | bool] = {"key1": True, "key2": False}
     ApiCall.normalize_params(parameter_dict)
 
     assert parameter_dict == {"key1": "true", "key2": "false"}
@@ -148,7 +151,7 @@ def test_normalize_params_with_mixed_types() -> None:
 
 def test_normalize_params_with_empty_dict() -> None:
     """Test that it correctly normalizes an empty dictionary."""
-    parameter_dict: dict[str, str] = {}
+    parameter_dict: Dict[str, str] = {}
     ApiCall.normalize_params(parameter_dict)
     assert not parameter_dict
 
@@ -191,7 +194,7 @@ def test_make_request_as_text(api_call: ApiCall) -> None:
 
 
 def test_get_as_json(
-    api_call: ApiCall[dict[str, str], dict[str, str], dict[str, str]],
+    api_call: ApiCall[Dict[str, str], Dict[str, str], Dict[str, str]],
 ) -> None:
     """Test the GET method with JSON response."""
     with requests_mock.mock() as request_mocker:
@@ -204,7 +207,7 @@ def test_get_as_json(
 
 
 def test_get_as_text(
-    api_call: ApiCall[dict[str, str], dict[str, str], dict[str, str]],
+    api_call: ApiCall[Dict[str, str], Dict[str, str], Dict[str, str]],
 ) -> None:
     """Test the GET method with text response."""
     with requests_mock.mock() as request_mocker:
@@ -217,7 +220,7 @@ def test_get_as_text(
 
 
 def test_post_as_json(
-    api_call: ApiCall[dict[str, str], dict[str, str], dict[str, str]],
+    api_call: ApiCall[Dict[str, str], Dict[str, str], Dict[str, str]],
 ) -> None:
     """Test the POST method with JSON response."""
     with requests_mock.mock() as request_mocker:
@@ -232,7 +235,7 @@ def test_post_as_json(
 
 
 def test_post_with_params(
-    api_call: ApiCall[dict[str, str], dict[str, str], dict[str, str]],
+    api_call: ApiCall[Dict[str, str], Dict[str, str], Dict[str, str]],
 ) -> None:
     """Test that the parameters are correctly passed to the request."""
     with requests_mock.Mocker() as request_mocker:
@@ -264,7 +267,7 @@ def test_post_with_params(
 
 
 def test_post_as_text(
-    api_call: ApiCall[dict[str, str], dict[str, str], dict[str, str]],
+    api_call: ApiCall[Dict[str, str], Dict[str, str], Dict[str, str]],
 ) -> None:
     """Test the POST method with text response."""
     with requests_mock.mock() as request_mocker:
@@ -278,7 +281,7 @@ def test_post_as_text(
 
 
 def test_put_as_json(
-    api_call: ApiCall[dict[str, str], dict[str, str], dict[str, str]],
+    api_call: ApiCall[Dict[str, str], Dict[str, str], Dict[str, str]],
 ) -> None:
     """Test the PUT method with JSON response."""
     with requests_mock.mock() as request_mocker:
@@ -291,7 +294,7 @@ def test_put_as_json(
 
 
 def test_patch_as_json(
-    api_call: ApiCall[dict[str, str], dict[str, str], dict[str, str]],
+    api_call: ApiCall[Dict[str, str], Dict[str, str], Dict[str, str]],
 ) -> None:
     """Test the PATCH method with JSON response."""
     with requests_mock.mock() as request_mocker:
@@ -304,7 +307,7 @@ def test_patch_as_json(
 
 
 def test_delete_as_json(
-    api_call: ApiCall[dict[str, str], dict[str, str], dict[str, str]],
+    api_call: ApiCall[Dict[str, str], Dict[str, str], Dict[str, str]],
 ) -> None:
     """Test the DELETE method with JSON response."""
     with requests_mock.mock() as request_mocker:
@@ -319,7 +322,7 @@ def test_delete_as_json(
 
 
 def test_raise_custom_exception_with_header(
-    api_call: ApiCall[dict[str, str], dict[str, str], dict[str, str]],
+    api_call: ApiCall[Dict[str, str], Dict[str, str], Dict[str, str]],
 ) -> None:
     """Test that it raises a custom exception with the error message."""
     with requests_mock.mock() as request_mocker:
@@ -336,7 +339,7 @@ def test_raise_custom_exception_with_header(
 
 
 def test_raise_custom_exception_without_header(
-    api_call: ApiCall[dict[str, str], dict[str, str], dict[str, str]],
+    api_call: ApiCall[Dict[str, str], Dict[str, str], Dict[str, str]],
 ) -> None:
     """Test that it raises a custom exception with the error message."""
     with requests_mock.mock() as request_mocker:
@@ -352,7 +355,7 @@ def test_raise_custom_exception_without_header(
 
 
 def test_selects_next_available_node_on_timeout(
-    api_call: ApiCall[dict[str, str], dict[str, str], dict[str, str]],
+    api_call: ApiCall[Dict[str, str], Dict[str, str], Dict[str, str]],
 ) -> None:
     """Test that it selects the next available node if the request times out."""
     with requests_mock.mock() as request_mocker:
@@ -381,7 +384,7 @@ def test_selects_next_available_node_on_timeout(
 
 
 def test_raises_if_no_nodes_are_healthy_with_the_last_exception(
-    api_call: ApiCall[dict[str, str], dict[str, str], dict[str, str]],
+    api_call: ApiCall[Dict[str, str], Dict[str, str], Dict[str, str]],
 ) -> None:
     """Test that it raises the last exception if no nodes are healthy."""
     with requests_mock.mock() as request_mocker:
@@ -399,7 +402,7 @@ def test_raises_if_no_nodes_are_healthy_with_the_last_exception(
 
 def test_uses_nearest_node_if_present_and_healthy(
     mocker: MockerFixture,
-    api_call: ApiCall[dict[str, str], dict[str, str], dict[str, str]],
+    api_call: ApiCall[Dict[str, str], Dict[str, str], Dict[str, str]],
 ) -> None:
     """Test that it uses the nearest node if it is present and healthy."""
     with requests_mock.Mocker() as request_mocker:
