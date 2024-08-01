@@ -83,7 +83,6 @@ class SessionFunctionKwargs(typing.Generic[TParams, TBody], typing.TypedDict):
     verify: bool
 
 
-    API_KEY_HEADER_NAME = 'X-TYPESENSE-API-KEY'
 class ApiCall(typing.Generic[TEntityDict, TParams, TBody]):
     """Handles API calls to Typesense with retry and node selection logic.
 
@@ -107,6 +106,8 @@ class ApiCall(typing.Generic[TEntityDict, TParams, TBody]):
         delete: Performs a DELETE request.
     """
 
+    API_KEY_HEADER_NAME = "X-TYPESENSE-API-KEY"
+
     def __init__(self, config: Configuration):
         """Initializes the ApiCall instance with the given configuration.
 
@@ -118,16 +119,11 @@ class ApiCall(typing.Generic[TEntityDict, TParams, TBody]):
         self.node_index = 0
         self._initialize_nodes()
 
-    def _initialize_nodes(self) -> None:
-        if self.config.nearest_node:
-            self.set_node_healthcheck(self.config.nearest_node, True)
-
-        for node in self.nodes:
-            self.set_node_healthcheck(node, True)
-
     def node_due_for_health_check(self, node: Node) -> bool:
         current_epoch_ts = int(time.time())
-        due_for_check: bool = (current_epoch_ts - node.last_access_ts) > self.config.healthcheck_interval_seconds
+        due_for_check: bool = (
+            current_epoch_ts - node.last_access_ts
+        ) > self.config.healthcheck_interval_seconds
         if due_for_check:
             logger.debug(
                 f"Node {node.host}:{node.port} is due for health check.",
@@ -146,8 +142,10 @@ class ApiCall(typing.Generic[TEntityDict, TParams, TBody]):
             Node: The healthy host from the pool in a round-robin fashion.
         """
         if self.config.nearest_node:
-            if self.config.nearest_node.healthy or self.node_due_for_health_check(self.config.nearest_node):
-                logger.debug('Using nearest node.')
+            if self.config.nearest_node.healthy or self.node_due_for_health_check(
+                self.config.nearest_node,
+            ):
+                logger.debug("Using nearest node.")
                 return self.config.nearest_node
 
         logger.debug(
@@ -168,9 +166,10 @@ class ApiCall(typing.Generic[TEntityDict, TParams, TBody]):
             if node.healthy or self.node_due_for_health_check(node):
                 return node
 
-        # None of the nodes are marked healthy, but some of them could have become healthy since last health check.
+        # None of the nodes are marked healthy,
+        # but some of them could have become healthy since last health check.
         # So we will just return the next node.
-        logger.debug('No healthy nodes were found. Returning the next node.')
+        logger.debug("No healthy nodes were found. Returning the next node.")
         return self.nodes[self.node_index]
 
     @staticmethod
@@ -436,9 +435,9 @@ class ApiCall(typing.Generic[TEntityDict, TParams, TBody]):
         """
         for key in params.keys():
             if isinstance(params[key], bool) and params[key]:
-                params[key] = 'true'
+                params[key] = "true"
             elif isinstance(params[key], bool) and not params[key]:
-                params[key] = 'false'
+                params[key] = "false"
 
     @typing.overload
     def get(
@@ -839,3 +838,10 @@ class ApiCall(typing.Generic[TEntityDict, TParams, TBody]):
             timeout=self.config.connection_timeout_seconds,
             verify=self.config.verify,
         )
+
+    def _initialize_nodes(self) -> None:
+        if self.config.nearest_node:
+            self.set_node_healthcheck(self.config.nearest_node, is_healthy=True)
+
+        for node in self.nodes:
+            self.set_node_healthcheck(node, is_healthy=True)
