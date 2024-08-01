@@ -336,7 +336,6 @@ class ApiCall(typing.Generic[TEntityDict, TParams, TBody]):
 
                 # Treat any status code > 0 and < 500 to be an indication that node is healthy
                 # We exclude 0 since some clients return 0 when request fails
-                    self.set_node_healthcheck(node, True)
                 if 0 < response.status_code < 500:
                     logger.debug(
                         "".join(
@@ -346,6 +345,7 @@ class ApiCall(typing.Generic[TEntityDict, TParams, TBody]):
                             ],
                         ),
                     )
+                    self.set_node_healthcheck(node, is_healthy=True)
 
                 # We should raise a custom exception if status code is not 20X
                 if response.status_code < 200 or response.status_code >= 300:
@@ -377,7 +377,6 @@ class ApiCall(typing.Generic[TEntityDict, TParams, TBody]):
                 exceptions.ServiceUnavailable,
             ) as e:
                 # Catch the exception and retry
-                self.set_node_healthcheck(node, False)
                 self.set_node_healthcheck(node, is_healthy=False)
                 logger.debug(
                     " ".join(
@@ -725,7 +724,7 @@ class ApiCall(typing.Generic[TEntityDict, TParams, TBody]):
         return self.make_request(
             session.put,
             endpoint,
-            True,
+            as_json=True,
             params=params,
             data=body,
             timeout=self.config.connection_timeout_seconds,
@@ -773,7 +772,7 @@ class ApiCall(typing.Generic[TEntityDict, TParams, TBody]):
         return self.make_request(
             session.patch,
             endpoint,
-            True,
+            as_json=True,
             params=params,
             data=body,
             timeout=self.config.connection_timeout_seconds,
@@ -815,7 +814,7 @@ class ApiCall(typing.Generic[TEntityDict, TParams, TBody]):
         return self.make_request(
             session.delete,
             endpoint,
-            True,
+            as_json=True,
             params=params,
             timeout=self.config.connection_timeout_seconds,
             verify=self.config.verify,
