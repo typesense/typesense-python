@@ -40,10 +40,6 @@ import sys
 import time
 
 import requests
-from .exceptions import (HTTPStatus0Error, ObjectAlreadyExists,
-                         ObjectNotFound, ObjectUnprocessable,
-                         RequestMalformed, RequestUnauthorized, RequestForbidden,
-                         ServerError, ServiceUnavailable, TypesenseClientError)
 from typesense.configuration import Configuration, Node
 from .logger import logger
 session = requests.session()
@@ -53,6 +49,7 @@ if sys.version_info >= (3, 11):
 else:
     import typing_extensions as typing
 
+import typesense.exceptions as exceptions
 TParams = typing.TypeVar("TParams", bound=typing.Dict[str, typing.Any])
 TBody = typing.TypeVar("TBody", bound=typing.Dict[str, typing.Any])
 TEntityDict = typing.TypeVar("TEntityDict")
@@ -155,7 +152,7 @@ class ApiCall(typing.Generic[TEntityDict, TParams, TBody]):
         return self.nodes[self.node_index]
 
     @staticmethod
-    def get_exception(http_code: int) -> type[TypesenseClientError]:
+    def get_exception(http_code: int) -> type[exceptions.TypesenseClientError]:
         """
         Return the exception class for a given HTTP status code.
 
@@ -166,25 +163,25 @@ class ApiCall(typing.Generic[TEntityDict, TParams, TBody]):
             Type[TypesenseClientError]: The exception class for the given HTTP status code.
         """
         if http_code == 0:
-            return HTTPStatus0Error
+            return exceptions.HTTPStatus0Error
         elif http_code == 400:
-            return RequestMalformed
+            return exceptions.RequestMalformed
         elif http_code == 401:
-            return RequestUnauthorized
+            return exceptions.RequestUnauthorized
         elif http_code == 403:
-            return RequestForbidden
+            return exceptions.RequestForbidden
         elif http_code == 404:
-            return ObjectNotFound
+            return exceptions.ObjectNotFound
         elif http_code == 409:
-            return ObjectAlreadyExists
+            return exceptions.ObjectAlreadyExists
         elif http_code == 422:
-            return ObjectUnprocessable
+            return exceptions.ObjectUnprocessable
         elif http_code == 500:
-            return ServerError
+            return exceptions.ServerError
         elif http_code == 503:
-            return ServiceUnavailable
+            return exceptions.ServiceUnavailable
         else:
-            return TypesenseClientError
+            return exceptions.TypesenseClientError
 
     @typing.overload
     def make_request(
@@ -345,9 +342,16 @@ class ApiCall(typing.Generic[TEntityDict, TParams, TBody]):
                     raise ApiCall.get_exception(r.status_code)(r.status_code, error_message)
 
                 return r.json() if as_json else r.text
-            except (requests.exceptions.Timeout, requests.exceptions.ConnectionError, requests.exceptions.HTTPError,
-                    requests.exceptions.RequestException, requests.exceptions.SSLError,
-                    HTTPStatus0Error, ServerError, ServiceUnavailable) as e:
+            except (
+                requests.exceptions.Timeout,
+                requests.exceptions.ConnectionError,
+                requests.exceptions.HTTPError,
+                requests.exceptions.RequestException,
+                requests.exceptions.SSLError,
+                exceptions.HTTPStatus0Error,
+                exceptions.ServerError,
+                exceptions.ServiceUnavailable,
+            ) as e:
                 # Catch the exception and retry
                 self.set_node_healthcheck(node, False)
                 logger.debug('Request to {}:{} failed because of {}'.format(node.host, node.port, e))
