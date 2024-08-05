@@ -8,6 +8,7 @@ if sys.version_info >= (3, 11):
 else:
     import typing_extensions as typing
 
+from typesense.api_call import ApiCall
 from .overrides import Overrides
 from .synonyms import Synonyms
 from .documents import Documents
@@ -15,22 +16,35 @@ from .documents import Documents
 
 
 class Collection(object):
-    def __init__(self, api_call, name):
+    def __init__(self, api_call: ApiCall, name: str):
         self.name = name
         self.api_call = api_call
         self.documents = Documents(api_call, name)
         self.overrides = Overrides(api_call, name)
         self.synonyms = Synonyms(api_call, name)
 
-    def _endpoint_path(self):
-        from .collections import Collections
-        return u"{0}/{1}".format(Collections.RESOURCE_PATH, self.name)
+    @property
+    def _endpoint_path(self) -> str:
+        from typesense.collections import Collections
 
-    def retrieve(self):
-        return self.api_call.get(self._endpoint_path())
+        return f"{Collections.RESOURCE_PATH}/{self.name}"
 
-    def update(self, schema_change):
-        return self.api_call.patch(self._endpoint_path(), schema_change)
+    def retrieve(self) -> CollectionSchema:
+        response: CollectionSchema = self.api_call.get(
+            endpoint=self._endpoint_path, entity_type=CollectionSchema, as_json=True
+        )
+        return response
 
-    def delete(self, params=None):
-        return self.api_call.delete(self._endpoint_path(), params)
+    def update(self, schema_change: CollectionUpdateSchema) -> CollectionUpdateSchema:
+        response: CollectionUpdateSchema = self.api_call.patch(
+            endpoint=self._endpoint_path,
+            body=schema_change,
+            entity_type=CollectionUpdateSchema,
+        )
+        return response
+
+    # There's currently no parameters passed to Collection deletions, but ensuring future compatibility
+    def delete(self, params: dict[str, str | bool] | None = None) -> CollectionSchema:
+        return self.api_call.delete(
+            self._endpoint_path, entity_type=CollectionSchema, params=params
+        )
