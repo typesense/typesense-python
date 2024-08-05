@@ -1,17 +1,30 @@
+from typesense.api_call import ApiCall
+from typesense.types.synonym import SynonymDeleteSchema, SynonymSchema
+
+
 class Synonym(object):
-    def __init__(self, api_call, collection_name, synonym_id):
+    def __init__(
+        self, api_call: ApiCall, collection_name: str, synonym_id: str
+    ) -> None:
         self.api_call = api_call
         self.collection_name = collection_name
         self.synonym_id = synonym_id
 
-    def _endpoint_path(self):
-        from .synonyms import Synonyms
+    def _endpoint_path(self) -> str:
         from .collections import Collections
-        return u"{0}/{1}/{2}/{3}".format(Collections.RESOURCE_PATH, self.collection_name, Synonyms.RESOURCE_PATH,
-                                         self.synonym_id)
+        from .synonyms import Synonyms
 
-    def retrieve(self):
-        return self.api_call.get(self._endpoint_path())
+        return "{0}/{1}/{2}/{3}".format(
+            Collections.RESOURCE_PATH,
+            self.collection_name,
+            Synonyms.RESOURCE_PATH,
+            self.synonym_id,
+        )
 
-    def delete(self):
-        return self.api_call.delete(self._endpoint_path())
+    def retrieve(self) -> SynonymSchema:
+        return self.api_call.get(self._endpoint_path(), entity_type=SynonymSchema)
+
+    def delete(self) -> SynonymDeleteSchema:
+        return self.api_call.delete(
+            self._endpoint_path(), entity_type=SynonymDeleteSchema
+        )
