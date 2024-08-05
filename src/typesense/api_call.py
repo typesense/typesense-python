@@ -66,6 +66,8 @@ session = requests.sessions.Session()
 TParams = typing.TypeVar("TParams", bound=typing.Dict[str, typing.Any])
 TBody = typing.TypeVar("TBody", bound=typing.Dict[str, typing.Any])
 TEntityDict = typing.TypeVar("TEntityDict")
+
+
 class SessionFunctionKwargs(typing.Generic[TParams, TBody], typing.TypedDict):
     """
     Dictionary of keyword arguments for the session function.
@@ -83,7 +85,7 @@ class SessionFunctionKwargs(typing.Generic[TParams, TBody], typing.TypedDict):
     verify: bool
 
 
-class ApiCall(typing.Generic[TEntityDict, TParams, TBody]):
+class ApiCall:
     """Handles API calls to Typesense with retry and node selection logic.
 
     This class manages API requests to Typesense, including node selection,
@@ -209,6 +211,7 @@ class ApiCall(typing.Generic[TEntityDict, TParams, TBody]):
         self,
         fn: typing.Callable[..., requests.models.Response],
         endpoint: str,
+        entity_type: type[TEntityDict],
         as_json: typing.Literal[True],
         **kwargs: typing.Unpack[SessionFunctionKwargs[TParams, TBody]],
     ) -> TEntityDict:
@@ -251,6 +254,7 @@ class ApiCall(typing.Generic[TEntityDict, TParams, TBody]):
         self,
         fn: typing.Callable[..., requests.models.Response],
         endpoint: str,
+        entity_type: type[TEntityDict],
         as_json: typing.Literal[False],
         **kwargs: typing.Unpack[SessionFunctionKwargs[TParams, TBody]],
     ) -> str:
@@ -293,6 +297,7 @@ class ApiCall(typing.Generic[TEntityDict, TParams, TBody]):
         self,
         fn: typing.Callable[..., requests.models.Response],
         endpoint: str,
+        entity_type: type[TEntityDict],
         as_json: bool,
         **kwargs: typing.Unpack[SessionFunctionKwargs[TParams, TBody]],
     ) -> TEntityDict | str:
@@ -443,6 +448,7 @@ class ApiCall(typing.Generic[TEntityDict, TParams, TBody]):
     def get(
         self,
         endpoint: str,
+        entity_type: type[TEntityDict],
         as_json: typing.Literal[False],
         params: TParams | None = None,
     ) -> str:
@@ -483,6 +489,7 @@ class ApiCall(typing.Generic[TEntityDict, TParams, TBody]):
     def get(
         self,
         endpoint: str,
+        entity_type: type[TEntityDict],
         as_json: typing.Literal[True],
         params: TParams | None = None,
     ) -> TEntityDict:
@@ -522,6 +529,7 @@ class ApiCall(typing.Generic[TEntityDict, TParams, TBody]):
     def get(
         self,
         endpoint: str,
+        entity_type: type[TEntityDict],
         as_json: typing.Literal[True] | typing.Literal[False] = True,
         params: TParams | None = None,
     ) -> TEntityDict | str:
@@ -560,6 +568,7 @@ class ApiCall(typing.Generic[TEntityDict, TParams, TBody]):
         return self.make_request(
             session.get,
             endpoint,
+            entity_type,
             as_json=as_json,
             params=params,
             timeout=self.config.connection_timeout_seconds,
@@ -570,6 +579,7 @@ class ApiCall(typing.Generic[TEntityDict, TParams, TBody]):
     def post(
         self,
         endpoint: str,
+        entity_type: type[TEntityDict],
         body: TBody,
         as_json: typing.Literal[False],
         params: TParams | None = None,
@@ -612,6 +622,7 @@ class ApiCall(typing.Generic[TEntityDict, TParams, TBody]):
     def post(
         self,
         endpoint: str,
+        entity_type: type[TEntityDict],
         body: TBody,
         as_json: typing.Literal[True],
         params: TParams | None = None,
@@ -653,6 +664,7 @@ class ApiCall(typing.Generic[TEntityDict, TParams, TBody]):
     def post(
         self,
         endpoint: str,
+        entity_type: type[TEntityDict],
         body: TBody,
         as_json: typing.Literal[True, False],
         params: TParams | None = None,
@@ -695,6 +707,7 @@ class ApiCall(typing.Generic[TEntityDict, TParams, TBody]):
         return self.make_request(
             session.post,
             endpoint,
+            entity_type,
             as_json=as_json,
             params=params,
             data=body,
@@ -705,6 +718,7 @@ class ApiCall(typing.Generic[TEntityDict, TParams, TBody]):
     def put(
         self,
         endpoint: str,
+        entity_type: type[TEntityDict],
         body: TBody,
         params: TParams | None = None,
     ) -> TEntityDict:
@@ -743,6 +757,7 @@ class ApiCall(typing.Generic[TEntityDict, TParams, TBody]):
         return self.make_request(
             session.put,
             endpoint,
+            entity_type,
             as_json=True,
             params=params,
             data=body,
@@ -753,6 +768,7 @@ class ApiCall(typing.Generic[TEntityDict, TParams, TBody]):
     def patch(
         self,
         endpoint: str,
+        entity_type: type[TEntityDict],
         body: TBody,
         params: TParams | None = None,
     ) -> TEntityDict:
@@ -791,6 +807,7 @@ class ApiCall(typing.Generic[TEntityDict, TParams, TBody]):
         return self.make_request(
             session.patch,
             endpoint,
+            entity_type,
             as_json=True,
             params=params,
             data=body,
@@ -798,7 +815,12 @@ class ApiCall(typing.Generic[TEntityDict, TParams, TBody]):
             verify=self.config.verify,
         )
 
-    def delete(self, endpoint: str, params: TParams | None = None) -> TEntityDict:
+    def delete(
+        self,
+        endpoint: str,
+        entity_type: type[TEntityDict],
+        params: TParams | None = None,
+    ) -> TEntityDict:
         """
         Make a DELETE request to the endpoint with the given parameters.
 
@@ -833,6 +855,7 @@ class ApiCall(typing.Generic[TEntityDict, TParams, TBody]):
         return self.make_request(
             session.delete,
             endpoint,
+            entity_type,
             as_json=True,
             params=params,
             timeout=self.config.connection_timeout_seconds,
