@@ -1,28 +1,55 @@
+from __future__ import annotations
+
+from typesense.api_call import ApiCall
+from typesense.types.override import (
+    OverrideCreateSchema,
+    OverrideRetrieveSchema,
+    OverrideSchema,
+)
+
 from .override import Override
 
 
 class Overrides(object):
     RESOURCE_PATH = 'overrides'
 
-    def __init__(self, api_call, collection_name):
+    def __init__(
+        self,
+        api_call: ApiCall,
+        collection_name: str,
+    ) -> None:
         self.api_call = api_call
         self.collection_name = collection_name
-        self.overrides = {}
+        self.overrides: dict[str, Override] = {}
 
-    def __getitem__(self, override_id):
-        if override_id not in self.overrides:
-            self.overrides[override_id] = Override(self.api_call, self.collection_name, override_id)
-
+    def __getitem__(self, override_id: str) -> Override:
+        if not self.overrides.get(override_id):
+            self.overrides[override_id] = Override(
+                self.api_call, self.collection_name, override_id
+            )
         return self.overrides[override_id]
 
-    def _endpoint_path(self, override_id=None):
+    def _endpoint_path(self, override_id: str | None = None) -> str:
         from .collections import Collections
-        override_id = override_id or ''
-        return u"{0}/{1}/{2}/{3}".format(Collections.RESOURCE_PATH, self.collection_name,
-                                         Overrides.RESOURCE_PATH, override_id)
 
-    def upsert(self, id, schema):
-        return self.api_call.put(self._endpoint_path(id), schema)
+        override_id = override_id or ""
+        return "{0}/{1}/{2}/{3}".format(
+            Collections.RESOURCE_PATH,
+            self.collection_name,
+            Overrides.RESOURCE_PATH,
+            override_id,
+        )
 
-    def retrieve(self):
-        return self.api_call.get(self._endpoint_path())
+    def upsert(self, id: str, schema: OverrideCreateSchema) -> OverrideSchema:
+        response: OverrideSchema = self.api_call.put(
+            endpoint=self._endpoint_path(id),
+            entity_type=OverrideSchema,
+            body=schema,
+        )
+        return response
+
+    def retrieve(self) -> OverrideRetrieveSchema:
+        response: OverrideRetrieveSchema = self.api_call.get(
+            self._endpoint_path(), entity_type=OverrideRetrieveSchema, as_json=True
+        )
+        return response
