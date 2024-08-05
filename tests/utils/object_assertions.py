@@ -45,19 +45,15 @@ def assert_match_object(actual: TObj, expected: TObj | dict[str, Any]) -> None:
             raise_with_diff([{key: expected_attrs[key]}], [{key: actual_attrs[key]}])
 
 
-def assert_to_contain_object(actual: TObj, expected: TObj | dict[str, Any]) -> None:
+def assert_to_contain_object(
+    actual: TObj | dict[str, Any], expected: TObj | dict[str, Any]
+) -> None:
     """Assert that two objects have the same attribute values."""
-    actual_attrs = actual.__dict__
+    actual_attrs = obj_to_dict(actual)
 
-    if isinstance(expected, dict):
-        expected_attrs = expected
-    else:
-        expected_attrs = expected.__dict__
+    expected_attrs = obj_to_dict(expected)
 
     for key, _ in expected_attrs.items():
-        if not isinstance(key, str):
-            continue
-
         assert key in actual_attrs, f"Attribute {key} not found in expected object"
 
         if actual_attrs[key] != expected_attrs[key]:
