@@ -3,6 +3,8 @@
 import pytest
 import requests
 
+from typesense.alias import Alias
+from typesense.aliases import Aliases
 from typesense.api_call import ApiCall
 from typesense.collection import Collection
 from typesense.collections import Collections
@@ -58,6 +60,50 @@ def create_collection_fixture() -> None:
     response.raise_for_status()
 
 
+@pytest.fixture(scope="function", name="delete_all_aliases")
+def clear_typesense_aliases() -> None:
+    """Remove all aliases from the Typesense server."""
+    url = "http://localhost:8108/aliases"
+    headers = {"X-TYPESENSE-API-KEY": "xyz"}
+
+    # Get the list of collections
+    response = requests.get(url, headers=headers)
+    response.raise_for_status()
+
+    aliases = response.json()
+
+    # Delete each alias
+    for alias in aliases["aliases"]:
+        alias_name = alias.get("name")
+        delete_url = f"{url}/{alias_name}"
+        delete_response = requests.delete(delete_url, headers=headers)
+        delete_response.raise_for_status()
+
+
+@pytest.fixture(scope="function", name="create_another_collection")
+def create_another_collection_fixture() -> None:
+    """Create a collection in the Typesense server."""
+    url = "http://localhost:8108/collections"
+    headers = {"X-TYPESENSE-API-KEY": "xyz"}
+    data = {
+        "name": "companies_2",
+        "fields": [
+            {
+                "name": "company_name",
+                "type": "string",
+            },
+            {
+                "name": "num_employees",
+                "type": "int32",
+            },
+        ],
+        "default_sorting_field": "num_employees",
+    }
+
+    response = requests.post(url, headers=headers, json=data)
+    response.raise_for_status()
+
+
 @pytest.fixture(scope="function", name="create_override")
 def create_override_fixture(create_collection: None) -> None:
     url = "http://localhost:8108/collections/companies/overrides/company_override"
@@ -77,6 +123,18 @@ def create_synonym_fixture(create_collection: None) -> None:
     headers = {"X-TYPESENSE-API-KEY": "xyz"}
     data = {
         "synonyms": ["companies", "corporations", "firms"],
+    }
+
+    response = requests.put(url, headers=headers, json=data)
+    response.raise_for_status()
+
+
+@pytest.fixture(scope="function", name="create_alias")
+def create_alias_fixture(create_collection: None) -> None:
+    url = "http://localhost:8108/aliases/company_alias"
+    headers = {"X-TYPESENSE-API-KEY": "xyz"}
+    data = {
+        "collection_name": "companies",
     }
 
     response = requests.put(url, headers=headers, json=data)
@@ -117,6 +175,11 @@ def actual_overrides_fixture(actual_api_call: ApiCall) -> Overrides:
 @pytest.fixture(scope="function", name="actual_synonyms")
 def actual_synonyms_fixture(actual_api_call: ApiCall) -> Synonyms:
     return Synonyms(actual_api_call, "companies")
+
+
+@pytest.fixture(scope="function", name="actual_aliases")
+def actual_aliases_fixture(actual_api_call: ApiCall) -> Aliases:
+    return Aliases(actual_api_call)
 
 
 @pytest.fixture(scope="function", name="fake_config")
@@ -195,6 +258,18 @@ def fake_synonyms_fixture(fake_api_call: ApiCall) -> Synonyms:
 
 
 @pytest.fixture(scope="function", name="fake_synonym")
-def fake_override_synonym(fake_api_call: ApiCall) -> Synonym:
+def fake_synonym_fixture(fake_api_call: ApiCall) -> Synonym:
     """Return a Collection object with test values."""
     return Synonym(fake_api_call, "companies", "company_synonym")
+
+
+@pytest.fixture(scope="function", name="fake_aliases")
+def fake_aliases_fixture(fake_api_call: ApiCall) -> Aliases:
+    """Return a Collection object with test values."""
+    return Aliases(fake_api_call)
+
+
+@pytest.fixture(scope="function", name="fake_alias")
+def fake_alias_fixture(fake_api_call: ApiCall) -> Alias:
+    """Return a Collection object with test values."""
+    return Alias(fake_api_call, "company_alias")
