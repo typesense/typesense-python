@@ -1,5 +1,9 @@
-import typing
-from urllib import response
+import sys
+
+if sys.version_info >= (3, 11):
+    import typing
+else:
+    import typing_extensions as typing
 
 from typesense.api_call import ApiCall
 from typesense.types.analytics_rule import (
