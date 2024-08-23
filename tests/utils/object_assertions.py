@@ -3,12 +3,20 @@
 from __future__ import annotations
 
 import difflib
-from typing import Any, Counter, Iterable, TypeVar
+import sys
 
-TObj = TypeVar("TObj", bound=object)
+if sys.version_info >= (3, 11):
+    import typing
+else:
+    import typing_extensions as typing
 
 
-def obj_to_dict(input_obj: TObj | dict[str, Any]) -> dict[str, Any]:
+TObj = typing.TypeVar("TObj", bound=object)
+
+
+def obj_to_dict(
+    input_obj: typing.Union[TObj, typing.Dict[str, typing.Any]],
+) -> typing.Dict[str, typing.Any]:
     """
     Convert an object to a dictionary.
 
@@ -20,10 +28,13 @@ def obj_to_dict(input_obj: TObj | dict[str, Any]) -> dict[str, Any]:
     Returns:
         The object as a dictionary.
     """
-    return input_obj if isinstance(input_obj, dict) else input_obj.__dict__
+    return input_obj if isinstance(input_obj, typing.Dict) else input_obj.__dict__
 
 
-def assert_match_object(actual: TObj, expected: TObj | dict[str, Any]) -> None:
+def assert_match_object(
+    actual: typing.Union[TObj, typing.Dict[str, typing.Any]],
+    expected: typing.Union[TObj, typing.Dict[str, typing.Any]],
+) -> None:
     """
     Assert that two objects have the same attribute values.
 
@@ -46,7 +57,8 @@ def assert_match_object(actual: TObj, expected: TObj | dict[str, Any]) -> None:
 
 
 def assert_to_contain_object(
-    actual: TObj | dict[str, Any], expected: TObj | dict[str, Any]
+    actual: typing.Union[TObj, typing.Dict[str, typing.Any]],
+    expected: typing.Union[TObj, typing.Dict[str, typing.Any]],
 ) -> None:
     """Assert that two objects have the same attribute values."""
     actual_attrs = obj_to_dict(actual)
@@ -61,17 +73,17 @@ def assert_to_contain_object(
 
 
 def assert_object_lists_match(
-    actual: list[TObj],
-    expected: list[TObj | dict[str, Any]],
+    actual: typing.List[TObj],
+    expected: typing.List[typing.Union[TObj, typing.Dict[str, typing.Any]]],
 ) -> None:
     """Assert that two lists of objects have the same attribute values."""
     actual_dicts = [obj_to_dict(actual_obj) for actual_obj in actual]
     expected_dicts = [obj_to_dict(expected_obj) for expected_obj in expected]
 
-    actual_counter = Counter(
+    actual_counter = typing.Counter(
         tuple(sorted(dict_entry.items())) for dict_entry in actual_dicts
     )
-    expected_counter = Counter(
+    expected_counter = typing.Counter(
         tuple(sorted(dict_entry.items())) for dict_entry in expected_dicts
     )
     if actual_counter != expected_counter:
@@ -79,8 +91,8 @@ def assert_object_lists_match(
 
 
 def raise_with_diff(
-    expected_dicts: Iterable[dict[str, Any]],
-    actual_dicts: Iterable[dict[str, Any]],
+    expected_dicts: typing.Sequence[dict[str, typing.Any]],
+    actual_dicts: typing.Sequence[dict[str, typing.Any]],
 ) -> None:
     """
     Raise an AssertionError with a unified diff of the expected and actual values.
