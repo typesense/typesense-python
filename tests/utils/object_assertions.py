@@ -106,9 +106,9 @@ def raise_with_diff(
     diff = difflib.unified_diff(
         expected_str,
         actual_str,
-        fromfile='expected',
-        tofile='actual',
-        lineterm='',
+        fromfile="expected",
+        tofile="actual",
+        lineterm="",
     )
-    diff_output = '\n'.join(diff)
+    diff_output = "\n".join(diff)
     raise AssertionError(f"Lists do not contain the same elements:\n{diff_output}")
