@@ -2,6 +2,8 @@
 
 import pytest
 import requests
+from faker import Faker
+from faker.providers import company
 
 from typesense.alias import Alias
 from typesense.aliases import Aliases
@@ -11,6 +13,8 @@ from typesense.api_call import ApiCall
 from typesense.collection import Collection
 from typesense.collections import Collections
 from typesense.configuration import Configuration
+from typesense.document import Document
+from typesense.documents import Documents
 from typesense.key import Key
 from typesense.keys import Keys
 from typesense.operations import Operations
@@ -22,6 +26,9 @@ from typesense.synonym import Synonym
 from typesense.synonyms import Synonyms
 
 pytest.register_assert_rewrite("utils.object_assertions")
+
+fake = Faker()
+fake.add_provider(company)
 
 
 @pytest.fixture(scope="function", name="delete_all")
@@ -64,6 +71,21 @@ def create_collection_fixture() -> None:
     }
 
     response = requests.post(url, headers=headers, json=data)
+@pytest.fixture(scope="function", name="create_document")
+def create_document_fixture() -> None:
+    """Create a document in the Typesense server."""
+    url = "http://localhost:8108/collections/companies/documents"
+    headers = {"X-TYPESENSE-API-KEY": "xyz"}
+    document_data = {
+        "id": "0",
+        "company_name": "Company",
+        "num_employees": 10,
+    }
+
+    response = requests.post(url, headers=headers, json=document_data, timeout=3)
+    response.raise_for_status()
+
+
 @pytest.fixture(scope="function", name="create_stopword")
 def create_stopword_fixture() -> None:
     """Create a stopword set in the Typesense server."""
@@ -305,6 +327,12 @@ def actual_collections_fixture(actual_api_call: ApiCall) -> Collections:
     return Collections(actual_api_call)
 
 
+@pytest.fixture(scope="function", name="actual_documents")
+def actual_documents_fixture(actual_api_call: ApiCall) -> Documents:
+    """Return a Documents object using a real API."""
+    return Documents(actual_api_call, "companies")
+
+
 @pytest.fixture(scope="function", name="actual_overrides")
 def actual_overrides_fixture(actual_api_call: ApiCall) -> Overrides:
     return Overrides(actual_api_call, "companies")
@@ -483,3 +511,37 @@ def fake_key_fixture(fake_api_call: ApiCall) -> Key:
     return Key(fake_api_call, 1)
 
 
+@pytest.fixture(scope="function", name="fake_documents")
+def fake_documents_fixture(fake_api_call: ApiCall) -> Documents:
+    """Return a Documents object with test values."""
+    return Documents(fake_api_call, "companies")
+
+
+@pytest.fixture(scope="function", name="fake_document")
+def fake_document_fixture(fake_api_call: ApiCall) -> Document:
+    """Return a Document object with test values."""
+    return Document(fake_api_call, "companies", "0")
+
+
+class Company(typing.TypedDict):
+    """Company data type."""
+
+    id: str
+    company_name: str
+    num_employees: int
+
+
+@pytest.fixture(scope="function", name="generate_companies")
+def generate_companies_fixture() -> typing.List[Company]:
+    """Generate a list of companies using fake data."""
+    companies: typing.List[Company] = []
+    for _ in range(50):
+        companies.append(
+            {
+                "id": str(_),
+                "company_name": fake.company(),
+                "num_employees": fake.random_int(1, 1000),
+            },
+        )
+
+    return companies
