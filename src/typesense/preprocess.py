@@ -1,8 +1,6 @@
-def stringify_search_params(params):
-    return {key:stringify(val) for key, val in params.items()}
 import sys
 
-def stringify(val):
+from typesense.exceptions import InvalidParameter
 
 if sys.version_info > (3, 11):
     import typing
@@ -25,7 +23,13 @@ ParamSchema: typing.TypeAlias = typing.Dict[
 
 StringifiedParamSchema: typing.TypeAlias = typing.Dict[str, str]
 
+
+def stringify(val: _Types) -> str:
+    if not isinstance(val, (str, int, bool)):
+        raise InvalidParameter(f"Value {val} is not a string, integer, or boolean.")
     if isinstance(val, bool) or isinstance(val, int):
         return str(val).lower()
     else:
         return val
+
+
