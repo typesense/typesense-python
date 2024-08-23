@@ -11,6 +11,7 @@ from typesense.api_call import ApiCall
 from typesense.collection import Collection
 from typesense.collections import Collections
 from typesense.configuration import Configuration
+from typesense.operations import Operations
 from typesense.override import Override
 from typesense.overrides import Overrides
 from typesense.stopwords import Stopwords
@@ -296,6 +297,12 @@ def actual_stopwords_set_fixture(actual_api_call: ApiCall) -> StopwordsSet:
     return StopwordsSet(actual_api_call, "company_stopwords")
 
 
+@pytest.fixture(scope="function", name="actual_operations")
+def actual_operations_fixture(actual_api_call: ApiCall) -> Operations:
+    """Return a Operations object using a real API."""
+    return Operations(actual_api_call)
+
+
 @pytest.fixture(scope="function", name="fake_config")
 def fake_config_fixture() -> Configuration:
     """Return a Configuration object with test values."""
@@ -416,5 +423,11 @@ def actual_analytics_rules_fixture(actual_api_call: ApiCall) -> AnalyticsRules:
 def fake_analytics_rule_fixture(fake_api_call: ApiCall) -> AnalyticsRule:
     """Return a Collection object with test values."""
     return AnalyticsRule(fake_api_call, "company_analytics_rule")
+
+
+@pytest.fixture(scope="function", name="fake_operations")
+def fake_operations_fixture(fake_api_call: ApiCall) -> Operations:
+    """Return a Collection object with test values."""
+    return Operations(fake_api_call)
 
 
