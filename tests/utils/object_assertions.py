@@ -45,7 +45,7 @@ def assert_match_object(
     Raises:
         AssertionError: If the objects do not have the same attribute values.
     """
-    actual_attrs = actual.__dict__
+    actual_attrs = obj_to_dict(actual)
 
     expected_attrs = obj_to_dict(expected)
 
