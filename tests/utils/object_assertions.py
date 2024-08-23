@@ -56,6 +56,15 @@ def assert_match_object(
             raise_with_diff([{key: expected_attrs[key]}], [{key: actual_attrs[key]}])
 
 
+def assert_to_contain_keys(
+    actual: typing.Dict[str, typing.Any],
+    keys: typing.List[str],
+) -> None:
+    """Assert that the actual dictionary contains the expected keys."""
+    for key in keys:
+        assert key in actual, f"Key {key} not found in actual dictionary"
+
+
 def assert_to_contain_object(
     actual: typing.Union[TObj, typing.Dict[str, typing.Any]],
     expected: typing.Union[TObj, typing.Dict[str, typing.Any]],
