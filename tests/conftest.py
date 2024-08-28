@@ -17,6 +17,7 @@ from typesense.document import Document
 from typesense.documents import Documents
 from typesense.key import Key
 from typesense.keys import Keys
+from typesense.multi_search import MultiSearch
 from typesense.operations import Operations
 from typesense.override import Override
 from typesense.overrides import Overrides
@@ -331,6 +332,12 @@ def actual_collections_fixture(actual_api_call: ApiCall) -> Collections:
 def actual_documents_fixture(actual_api_call: ApiCall) -> Documents:
     """Return a Documents object using a real API."""
     return Documents(actual_api_call, "companies")
+
+
+@pytest.fixture(scope="function", name="actual_multi_search")
+def actual_multi_search_fixture(actual_api_call: ApiCall) -> MultiSearch:
+    """Return a MultiSearch object using a real API."""
+    return MultiSearch(actual_api_call)
 
 
 @pytest.fixture(scope="function", name="actual_overrides")
