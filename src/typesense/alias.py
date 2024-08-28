@@ -1,3 +1,6 @@
+from .utils import encodeURIComponent
+
+
 class Alias(object):
     def __init__(self, api_call, name):
         self.api_call = api_call
@@ -5,7 +8,8 @@ class Alias(object):
 
     def _endpoint_path(self):
         from .aliases import Aliases
-        return u"{0}/{1}".format(Aliases.RESOURCE_PATH, self.name)
+
+        return "{0}/{1}".format(Aliases.RESOURCE_PATH, encodeURIComponent(self.name))
 
     def retrieve(self):
         return self.api_call.get(self._endpoint_path())

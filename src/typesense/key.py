@@ -1,3 +1,4 @@
+from .utils import encodeURIComponent
 
 
 class Key(object):
@@ -7,7 +8,8 @@ class Key(object):
 
     def _endpoint_path(self):
         from .keys import Keys
-        return u"{0}/{1}".format(Keys.RESOURCE_PATH, self.key_id)
+
+        return "{0}/{1}".format(Keys.RESOURCE_PATH, encodeURIComponent(self.key_id))
 
     def retrieve(self):
         return self.api_call.get(self._endpoint_path())
