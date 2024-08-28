@@ -1,6 +1,7 @@
+from .documents import Documents
 from .overrides import Overrides
 from .synonyms import Synonyms
-from .documents import Documents
+from .utils import encodeURIComponent
 
 
 class Collection(object):
@@ -13,7 +14,10 @@ class Collection(object):
 
     def _endpoint_path(self):
         from .collections import Collections
-        return u"{0}/{1}".format(Collections.RESOURCE_PATH, self.name)
+
+        return "{0}/{1}".format(
+            Collections.RESOURCE_PATH, encodeURIComponent(self.name)
+        )
 
     def retrieve(self):
         return self.api_call.get(self._endpoint_path())

@@ -1,8 +1,10 @@
 from typesense.alias import Alias
 
+from .utils import encodeURIComponent
+
 
 class Aliases(object):
-    RESOURCE_PATH = '/aliases'
+    RESOURCE_PATH = "/aliases"
 
     def __init__(self, api_call):
         self.api_call = api_call
@@ -15,7 +17,7 @@ class Aliases(object):
         return self.aliases.get(name)
 
     def _endpoint_path(self, alias_name):
-        return u"{0}/{1}".format(Aliases.RESOURCE_PATH, alias_name)
+        return "{0}/{1}".format(Aliases.RESOURCE_PATH, encodeURIComponent(alias_name))
 
     def upsert(self, name, mapping):
         return self.api_call.put(self._endpoint_path(name), mapping)

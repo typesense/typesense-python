@@ -1,8 +1,9 @@
 from .analytics_rule import AnalyticsRule
+from .utils import encodeURIComponent
 
 
 class AnalyticsRules(object):
-    RESOURCE_PATH = '/analytics/rules'
+    RESOURCE_PATH = "/analytics/rules"
 
     def __init__(self, api_call):
         self.api_call = api_call
@@ -19,8 +20,9 @@ class AnalyticsRules(object):
         return self.api_call.post(AnalyticsRules.RESOURCE_PATH, rule, params)
 
     def upsert(self, id, rule):
-        return self.api_call.put(u"{0}/{1}".format(AnalyticsRules.RESOURCE_PATH, id), rule)
+        return self.api_call.put(
+            "{0}/{1}".format(AnalyticsRules.RESOURCE_PATH, encodeURIComponent(id)), rule
+        )
 
     def retrieve(self):
         return self.api_call.get(AnalyticsRules.RESOURCE_PATH)
-
