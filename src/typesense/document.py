@@ -1,20 +1,66 @@
-class Document(object):
-    def __init__(self, api_call, collection_name, document_id):
+import sys
+
+from typesense.api_call import ApiCall
+from typesense.configuration import Configuration
+from typesense.types.collection import CollectionSchema
+from typesense.types.document import (
+    DeleteQueryParameters,
+    DirtyValuesParameters,
+    DocumentSchema,
+    DocumentWriteParameters,
+)
+
+if sys.version_info >= (3, 11):
+    import typing
+else:
+    import typing_extensions as typing
+
+TDoc = typing.TypeVar("TDoc", bound=DocumentSchema)
+
+
+class Document(typing.Generic[TDoc]):
+    def __init__(
+        self, api_call: ApiCall, collection_name: str, document_id: str
+    ) -> None:
         self.api_call = api_call
         self.collection_name = collection_name
         self.document_id = document_id
 
-    def _endpoint_path(self):
-        from .documents import Documents
+    @property
+    def _endpoint_path(self) -> str:
         from .collections import Collections
-        return u"{0}/{1}/{2}/{3}".format(Collections.RESOURCE_PATH, self.collection_name, Documents.RESOURCE_PATH,
-                                         self.document_id)
+        from .documents import Documents
 
-    def retrieve(self):
-        return self.api_call.get(self._endpoint_path())
+        return "{0}/{1}/{2}/{3}".format(
+            Collections.RESOURCE_PATH,
+            self.collection_name,
+            Documents.RESOURCE_PATH,
+            self.document_id,
+        )
 
-    def update(self, document, params=None):
-        return self.api_call.patch(self._endpoint_path(), document, params)
+    def retrieve(self) -> TDoc:
+        response = self.api_call.get(
+            endpoint=self._endpoint_path,
+            entity_type=typing.Dict[str, str],
+            as_json=True,
+        )
 
-    def delete(self):
-        return self.api_call.delete(self._endpoint_path())
+        return typing.cast(TDoc, response)
+
+    def update(
+        self, document: TDoc, params: typing.Union[DirtyValuesParameters, None] = None
+    ) -> TDoc:
+        response = self.api_call.patch(
+            self._endpoint_path,
+            body=document,
+            params=params,
+            entity_type=typing.Dict[str, str],
+        )
+
+        return typing.cast(TDoc, response)
+
+    def delete(self) -> TDoc:
+        response = self.api_call.delete(
+            self._endpoint_path, entity_type=typing.Dict[str, str]
+        )
+        return typing.cast(TDoc, response)
