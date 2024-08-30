@@ -18,7 +18,7 @@ else:
 
 
 class Overrides(object):
-    RESOURCE_PATH = 'overrides'
+    RESOURCE_PATH = "overrides"
 
     def __init__(
         self,

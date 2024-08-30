@@ -16,7 +16,7 @@ else:
 
 
 class Synonyms(object):
-    RESOURCE_PATH = 'synonyms'
+    RESOURCE_PATH = "synonyms"
 
     def __init__(self, api_call: ApiCall, collection_name: str):
         self.api_call = api_call
