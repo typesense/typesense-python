@@ -1,0 +1,24 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+requests = "*"
+
+[dev-packages]
+mypy = "*"
+wemake-python-styleguide = "*"
+flake8 = "*"
+black = "*"
+pytest = "*"
+coverage = "*"
+pytest-mock = "*"
+requests-mock = "*"
+python-dotenv = "*"
+types-requests = "*"
+typing-extensions = {version = "*", markers = "python_version < '3.11'"}
+faker = "*"
+
+[requires]
+python_version = "3.8"
