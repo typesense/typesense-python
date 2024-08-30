@@ -13,6 +13,8 @@ from typesense.api_call import ApiCall
 from typesense.collection import Collection
 from typesense.collections import Collections
 from typesense.configuration import Configuration
+from typesense.conversation_model import ConversationModel
+from typesense.conversations_models import ConversationsModels
 from typesense.document import Document
 from typesense.documents import Documents
 from typesense.key import Key
@@ -87,6 +89,58 @@ def create_document_fixture() -> None:
     response.raise_for_status()
 
 
+@pytest.fixture(scope="function", name="create_conversation_history_collection")
+def create_conversation_history_collection_fixture() -> None:
+    """Create a collection for conversation history in the Typesense server."""
+    url = "http://localhost:8108/collections"
+    delete_url = "http://localhost:8108/collections/conversation_store"
+    headers = {"X-TYPESENSE-API-KEY": "xyz"}
+    collection_data = {
+        "name": "conversation_store",
+        "fields": [
+            {"name": "conversation_id", "type": "string"},
+            {"name": "model_id", "type": "string"},
+            {"name": "timestamp", "type": "int32"},
+            {"name": "role", "type": "string", "index": False},
+            {"name": "message", "type": "string", "index": False},
+        ],
+    }
+
+    delete_response = requests.delete(delete_url, headers=headers, timeout=3)
+    if delete_response.status_code not in {200, 404}:
+        delete_response.raise_for_status()
+    response = requests.post(url, headers=headers, json=collection_data, timeout=3)
+    response.raise_for_status()
+
+
+@pytest.fixture(scope="function", name="create_conversations_model")
+def create_conversations_model_fixture(
+    create_conversation_history_collection: None,
+) -> str:
+    """Create a conversations model in the Typesense server."""
+    url = "http://localhost:8108/conversations/models"
+    headers = {"X-TYPESENSE-API-KEY": "xyz"}
+    conversations_model_data = {
+        "api_key": os.environ["OPEN_AI_KEY"],
+        "max_bytes": 16384,
+        "model_name": "openai/gpt-3.5-turbo",
+        "history_collection": "conversation_store",
+        "system_prompt": "This is a system prompt",
+    }
+
+    response = requests.post(
+        url,
+        headers=headers,
+        json=conversations_model_data,
+        timeout=3,
+    )
+
+    response.raise_for_status()
+
+    conversation_model_id: str = response.json()["id"]
+    return conversation_model_id
+
+
 @pytest.fixture(scope="function", name="create_stopword")
 def create_stopword_fixture() -> None:
     """Create a stopword set in the Typesense server."""
@@ -134,6 +188,26 @@ def clear_typesense_aliases() -> None:
         alias_name = alias.get("name")
         delete_url = f"{url}/{alias_name}"
         delete_response = requests.delete(delete_url, headers=headers)
+@pytest.fixture(scope="function", name="delete_all_conversations_models")
+def clear_typesense_conversations_models() -> None:
+    """Remove all conversations_models from the Typesense server."""
+    url = "http://localhost:8108/conversations/models"
+    headers = {"X-TYPESENSE-API-KEY": "xyz"}
+
+    # Get the list of collections
+    response = requests.get(url, headers=headers, timeout=3)
+    response.raise_for_status()
+
+    conversations_models = response.json()
+
+    # Delete each alias
+    for conversation_model in conversations_models:
+        conversation_model_id = conversation_model.get("id")
+        delete_url = f"{url}/{conversation_model_id}"
+        delete_response = requests.delete(delete_url, headers=headers, timeout=3)
+        delete_response.raise_for_status()
+
+
 @pytest.fixture(scope="function", name="delete_all_stopwords")
 def clear_typesense_stopwords() -> None:
     """Remove all stopwords from the Typesense server."""
@@ -345,6 +419,14 @@ def actual_overrides_fixture(actual_api_call: ApiCall) -> Overrides:
     return Overrides(actual_api_call, "companies")
 
 
+@pytest.fixture(scope="function", name="actual_conversations_models")
+def actual_conversations_models_fixture(
+    actual_api_call: ApiCall,
+) -> ConversationsModels:
+    """Return a ConversationsModels object using a real API."""
+    return ConversationsModels(actual_api_call)
+
+
 @pytest.fixture(scope="function", name="actual_synonyms")
 def actual_synonyms_fixture(actual_api_call: ApiCall) -> Synonyms:
     return Synonyms(actual_api_call, "companies")
@@ -442,6 +524,18 @@ def fake_overrides_fixture(fake_api_call: ApiCall) -> Overrides:
     return Overrides(fake_api_call, "companies")
 
 
+@pytest.fixture(scope="function", name="fake_conversations_models")
+def fake_conversations_models_fixture(fake_api_call: ApiCall) -> ConversationsModels:
+    """Return a Collection object with test values."""
+    return ConversationsModels(fake_api_call)
+
+
+@pytest.fixture(scope="function", name="fake_conversation_model")
+def fake_conversation_model_fixture(fake_api_call: ApiCall) -> ConversationModel:
+    """Return a ConversationModel object with test values."""
+    return ConversationModel(fake_api_call, "conversation_model_id")
+
+
 @pytest.fixture(scope="function", name="fake_override")
 def fake_override_fixture(fake_api_call: ApiCall) -> Override:
     """Return a Collection object with test values."""
@@ -470,6 +564,8 @@ def fake_aliases_fixture(fake_api_call: ApiCall) -> Aliases:
 def fake_alias_fixture(fake_api_call: ApiCall) -> Alias:
     """Return a Collection object with test values."""
     return Alias(fake_api_call, "company_alias")
+
+
 @pytest.fixture(scope="function", name="fake_stopwords")
 def fake_stopwords_fixture(fake_api_call: ApiCall) -> Stopwords:
     """Return a Stopwords object with test values."""
