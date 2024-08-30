@@ -196,6 +196,7 @@ def test_actual_create(actual_collections: Collections, delete_all: None) -> Non
                 "sort": False,
                 "infix": False,
                 "stem": False,
+                "store": True,
             },
             {
                 "name": "num_employees",
@@ -207,6 +208,7 @@ def test_actual_create(actual_collections: Collections, delete_all: None) -> Non
                 "sort": False,
                 "infix": False,
                 "stem": False,
+                "store": True,
             },
         ],
         "name": "companies",
@@ -260,6 +262,7 @@ def test_actual_retrieve(
                     "sort": False,
                     "infix": False,
                     "stem": False,
+                    "store": True,
                 },
                 {
                     "name": "num_employees",
@@ -271,6 +274,7 @@ def test_actual_retrieve(
                     "sort": True,
                     "infix": False,
                     "stem": False,
+                    "store": True,
                 },
             ],
             "name": "companies",

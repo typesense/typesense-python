@@ -194,6 +194,7 @@ def test_actual_retrieve(
                 "sort": False,
                 "infix": False,
                 "stem": False,
+                "store": True,
             },
             {
                 "name": "num_employees",
@@ -205,6 +206,7 @@ def test_actual_retrieve(
                 "sort": True,
                 "infix": False,
                 "stem": False,
+                "store": True,
             },
         ],
         "name": "companies",
@@ -233,13 +235,6 @@ def test_actual_update(
             {
                 "name": "num_locations",
                 "type": "int32",
-                "facet": False,
-                "index": True,
-                "optional": False,
-                "locale": "",
-                "sort": True,
-                "infix": False,
-                "stem": False,
             },
         ],
     }
