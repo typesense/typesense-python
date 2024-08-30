@@ -32,7 +32,7 @@ _FieldType = typing.Literal[
 
 _ReferenceFieldType = typing.Literal["string", "int32", "int64", "float"]
 
-_Locales = typing.Literal["ja", "zh", "ko", "th", "el", "ru", "rs", "uk", "be", ""]
+Locales = typing.Literal["ja", "zh", "ko", "th", "el", "ru", "rs", "uk", "be", ""]
 
 
 class CollectionFieldSchema(typing.Generic[_TType], typing.TypedDict, total=False):
@@ -61,7 +61,7 @@ class CollectionFieldSchema(typing.Generic[_TType], typing.TypedDict, total=Fals
     optional: typing.NotRequired[bool]
     infix: typing.NotRequired[bool]
     stem: typing.NotRequired[bool]
-    locale: typing.NotRequired[_Locales]
+    locale: typing.NotRequired[Locales]
     sort: typing.NotRequired[bool]
     store: typing.NotRequired[bool]
     num_dim: typing.NotRequired[float]

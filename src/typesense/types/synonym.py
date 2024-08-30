@@ -2,7 +2,7 @@
 
 import sys
 
-from typesense.types.collection import _Locales
+from typesense.types.collection import Locales
 
 if sys.version_info >= (3, 11):
     import typing
@@ -26,8 +26,8 @@ class SynonymCreateSchema(typing.TypedDict):
 
     synonyms: typing.List[str]
     root: typing.NotRequired[str]
-    locale: typing.NotRequired[_Locales]
     symbols_to_index: typing.NotRequired[list[str]]
+    locale: typing.NotRequired[Locales]
 
 
 class SynonymSchema(SynonymCreateSchema):
