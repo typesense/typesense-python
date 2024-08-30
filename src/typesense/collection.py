@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sys
+
 from typesense.types.collection import CollectionSchema, CollectionUpdateSchema
 
 if sys.version_info >= (3, 11):
@@ -9,17 +10,20 @@ else:
     import typing_extensions as typing
 
 from typesense.api_call import ApiCall
+from typesense.types.document import DocumentSchema
+
+from .documents import Documents
 from .overrides import Overrides
 from .synonyms import Synonyms
-from .documents import Documents
+
+TDoc = typing.TypeVar("TDoc", bound=DocumentSchema)
 
 
-
-class Collection(object):
+class Collection(typing.Generic[TDoc]):
     def __init__(self, api_call: ApiCall, name: str):
         self.name = name
         self.api_call = api_call
-        self.documents = Documents(api_call, name)
+        self.documents = Documents[TDoc](api_call, name)
         self.overrides = Overrides(api_call, name)
         self.synonyms = Synonyms(api_call, name)
 
