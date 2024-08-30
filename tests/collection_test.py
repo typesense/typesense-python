@@ -181,7 +181,6 @@ def test_actual_retrieve(
     response = actual_collections["companies"].retrieve()
 
     expected: CollectionSchema = {
-        "created_at": int(time.time()),
         "default_sorting_field": "num_employees",
         "enable_nested_fields": False,
         "fields": [
@@ -213,6 +212,8 @@ def test_actual_retrieve(
         "symbols_to_index": [],
         "token_separators": [],
     }
+
+    response.pop("created_at")
 
     assert response == expected
 
