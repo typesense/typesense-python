@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
+import logging
 import sys
 import time
+
+from pytest_mock import MockFixture
 
 if sys.version_info >= (3, 11):
     import typing
@@ -19,6 +22,7 @@ from tests.utils.object_assertions import assert_match_object, assert_object_lis
 from typesense import exceptions
 from typesense.api_call import ApiCall
 from typesense.configuration import Configuration, Node
+from typesense.logger import logger
 
 
 @pytest.fixture(scope="function", name="config")
@@ -140,6 +144,14 @@ def test_normalize_params_with_booleans() -> None:
     ApiCall.normalize_params(parameter_dict)
 
     assert parameter_dict == {"key1": "true", "key2": "false"}
+
+
+def test_normalize_params_with_non_dict() -> None:
+    """Test that it raises when a non-dictionary is passed."""
+    parameter_non_dict = "string"
+
+    with pytest.raises(ValueError):
+        ApiCall.normalize_params(parameter_non_dict)
 
 
 def test_normalize_params_with_mixed_types() -> None:
@@ -436,6 +448,32 @@ def test_selects_next_available_node_on_timeout(
         assert request_mocker.request_history[1].url == "http://node1:8108/test"
         assert request_mocker.request_history[2].url == "http://node2:8108/test"
         assert request_mocker.call_count == 3
+
+
+def test_get_node_no_healthy_nodes(
+    api_call: ApiCall,
+    mocker: MockFixture,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """Test that it logs a message if no healthy nodes are found."""
+    for api_node in api_call.nodes:
+        api_node.healthy = False
+
+    api_call.config.nearest_node.healthy = False
+
+    mocker.patch.object(api_call, "node_due_for_health_check", return_value=False)
+
+    # Need to set the logger level to DEBUG to capture the message
+    logger.setLevel(logging.DEBUG)
+
+    selected_node = api_call.get_node()
+
+    with caplog.at_level(logging.DEBUG):
+        assert "No healthy nodes were found. Returning the next node." in caplog.text
+
+    assert selected_node == api_call.nodes[api_call.node_index]
+
+    assert api_call.node_index == 0
 
 
 def test_raises_if_no_nodes_are_healthy_with_the_last_exception(
