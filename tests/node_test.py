@@ -4,7 +4,7 @@ import time
 
 import pytest
 
-from tests.utils.object_assertions import assert_match_object, assert_to_contain_object
+from tests.utils.object_assertions import assert_match_object
 from typesense.configuration import Node
 from typesense.exceptions import ConfigError
 
