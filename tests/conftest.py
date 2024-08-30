@@ -15,6 +15,7 @@ from typesense.collections import Collections
 from typesense.configuration import Configuration
 from typesense.conversation_model import ConversationModel
 from typesense.conversations_models import ConversationsModels
+from typesense.debug import Debug
 from typesense.document import Document
 from typesense.documents import Documents
 from typesense.key import Key
@@ -408,6 +409,12 @@ def actual_documents_fixture(actual_api_call: ApiCall) -> Documents:
     return Documents(actual_api_call, "companies")
 
 
+@pytest.fixture(scope="function", name="actual_debug")
+def actual_debug_fixture(actual_api_call: ApiCall) -> Debug:
+    """Return a Debug object using a real API."""
+    return Debug(actual_api_call)
+
+
 @pytest.fixture(scope="function", name="actual_multi_search")
 def actual_multi_search_fixture(actual_api_call: ApiCall) -> MultiSearch:
     """Return a MultiSearch object using a real API."""
@@ -624,6 +631,12 @@ def fake_documents_fixture(fake_api_call: ApiCall) -> Documents:
 def fake_document_fixture(fake_api_call: ApiCall) -> Document:
     """Return a Document object with test values."""
     return Document(fake_api_call, "companies", "0")
+
+
+@pytest.fixture(scope="function", name="fake_debug")
+def fake_debug_fixture(fake_api_call: ApiCall) -> Debug:
+    """Return a debug object with test values."""
+    return Debug(fake_api_call)
 
 
 class Company(typing.TypedDict):
