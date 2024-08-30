@@ -2,8 +2,13 @@
 
 from __future__ import annotations
 
+import sys
 import time
-from typing import Dict
+
+if sys.version_info >= (3, 11):
+    import typing
+else:
+    import typing_extensions as typing
 
 import pytest
 import requests
@@ -131,7 +136,7 @@ def test_get_exception() -> None:
 
 def test_normalize_params_with_booleans() -> None:
     """Test that it correctly normalizes boolean values to strings."""
-    parameter_dict: Dict[str, str | bool] = {"key1": True, "key2": False}
+    parameter_dict: typing.Dict[str, str | bool] = {"key1": True, "key2": False}
     ApiCall.normalize_params(parameter_dict)
 
     assert parameter_dict == {"key1": "true", "key2": "false"}
@@ -151,7 +156,7 @@ def test_normalize_params_with_mixed_types() -> None:
 
 def test_normalize_params_with_empty_dict() -> None:
     """Test that it correctly normalizes an empty dictionary."""
-    parameter_dict: Dict[str, str] = {}
+    parameter_dict: typing.Dict[str, str] = {}
     ApiCall.normalize_params(parameter_dict)
     assert not parameter_dict
 
@@ -175,7 +180,10 @@ def test_make_request_as_json(api_call: ApiCall) -> None:
         )
 
         response = api_call.make_request(
-            session.get, "/test", as_json=True, entity_type=dict[str, str]
+            session.get,
+            "/test",
+            as_json=True,
+            entity_type=typing.Dict[str, str],
         )
         assert response == {"key": "value"}
 
@@ -192,7 +200,10 @@ def test_make_request_as_text(api_call: ApiCall) -> None:
         )
 
         response = api_call.make_request(
-            session.get, "/test", as_json=False, entity_type=dict[str, str]
+            session.get,
+            "/test",
+            as_json=False,
+            entity_type=typing.Dict[str, str],
         )
         assert response == "response text"
 
@@ -207,9 +218,11 @@ def test_get_as_json(
             json={"key": "value"},
             status_code=200,
         )
-        assert api_call.get("/test", as_json=True, entity_type=dict[str, str]) == {
-            "key": "value"
-        }
+        assert api_call.get(
+            "/test",
+            as_json=True,
+            entity_type=typing.Dict[str, str],
+        ) == {"key": "value"}
 
 
 def test_get_as_text(
@@ -223,7 +236,7 @@ def test_get_as_text(
             status_code=200,
         )
         assert (
-            api_call.get("/test", as_json=False, entity_type=dict[str, str])
+            api_call.get("/test", as_json=False, entity_type=typing.Dict[str, str])
             == "response text"
         )
 
@@ -239,7 +252,10 @@ def test_post_as_json(
             status_code=200,
         )
         assert api_call.post(
-            "/test", body={"data": "value"}, as_json=True, entity_type=dict[str, str]
+            "/test",
+            body={"data": "value"},
+            as_json=True,
+            entity_type=typing.Dict[str, str],
         ) == {
             "key": "value",
         }
@@ -263,7 +279,7 @@ def test_post_with_params(
             params=parameter_set,
             body={"key": "value"},
             as_json=True,
-            entity_type=dict[str, str],
+            entity_type=typing.Dict[str, str],
         )
 
         expected_parameter_set = {
@@ -292,7 +308,7 @@ def test_post_as_text(
             "/test",
             body={"data": "value"},
             as_json=False,
-            entity_type=dict[str, str],
+            entity_type=typing.Dict[str, str],
         )
         assert post_result == "response text"
 
@@ -310,7 +326,7 @@ def test_put_as_json(
         assert api_call.put(
             "/test",
             body={"data": "value"},
-            entity_type=dict[str, str],
+            entity_type=typing.Dict[str, str],
         ) == {"key": "value"}
 
 
@@ -327,7 +343,7 @@ def test_patch_as_json(
         assert api_call.patch(
             "/test",
             body={"data": "value"},
-            entity_type=dict[str, str],
+            entity_type=typing.Dict[str, str],
         ) == {"key": "value"}
 
 
@@ -342,7 +358,7 @@ def test_delete_as_json(
             status_code=200,
         )
 
-        response = api_call.delete("/test", entity_type=dict[str, str])
+        response = api_call.delete("/test", entity_type=typing.Dict[str, str])
         assert response == {"key": "value"}
 
 
@@ -360,7 +376,10 @@ def test_raise_custom_exception_with_header(
 
         with pytest.raises(exceptions.RequestMalformed) as exception:
             api_call.make_request(
-                requests.get, "/test", as_json=True, entity_type=dict[str, str]
+                requests.get,
+                "/test",
+                as_json=True,
+                entity_type=typing.Dict[str, str],
             )
             assert str(exception.value) == "[Errno 400] Test error"
 
@@ -378,7 +397,10 @@ def test_raise_custom_exception_without_header(
 
         with pytest.raises(exceptions.RequestMalformed) as exception:
             api_call.make_request(
-                requests.get, "/test", as_json=True, entity_type=dict[str, str]
+                requests.get,
+                "/test",
+                as_json=True,
+                entity_type=typing.Dict[str, str],
             )
             assert str(exception.value) == "[Errno 400] API error."
 
@@ -403,7 +425,11 @@ def test_selects_next_available_node_on_timeout(
             status_code=200,
         )
 
-        response = api_call.get("/test", as_json=True, entity_type=dict[str, str])
+        response = api_call.get(
+            "/test",
+            as_json=True,
+            entity_type=typing.Dict[str, str],
+        )
 
         assert response == {"key": "value"}
         assert request_mocker.request_history[0].url == "http://node0:8108/test"
@@ -426,10 +452,10 @@ def test_raises_if_no_nodes_are_healthy_with_the_last_exception(
         request_mocker.get("http://node2:8108/", exc=requests.exceptions.SSLError)
 
         with pytest.raises(requests.exceptions.SSLError):
-             api_call.get('/', entity_type=dict[str, str])
+            api_call.get("/", entity_type=typing.Dict[str, str])
 
 
-def test_uses_nearest_node_if_present_and_healthy(
+def test_uses_nearest_node_if_present_and_healthy(  # noqa: WPS213
     mocker: MockerFixture,
     api_call: ApiCall,
 ) -> None:
@@ -457,15 +483,18 @@ def test_uses_nearest_node_if_present_and_healthy(
         # 2 should go to node0,
         # 3 should go to node1,
         # 4 should go to node2 and resolve the request: 4 requests
-        api_call.get('/', entity_type=dict[str, str])
+        api_call.get("/", entity_type=typing.Dict[str, str])
         # 1 should go to node2 and resolve the request: 1 request
-        api_call.get('/', entity_type=dict[str, str])
+        api_call.get("/", entity_type=typing.Dict[str, str])
         # 1 should go to node2 and resolve the request: 1 request
-        api_call.get('/', entity_type=dict[str, str])
+        api_call.get("/", entity_type=typing.Dict[str, str])
 
         # Advance time by 5 seconds
         mocker.patch("time.time", return_value=current_time + 5)
-        api_call.get('/', entity_type=dict[str, str])  # 1 should go to node2 and resolve the request: 1 request
+        api_call.get(
+            "/",
+            entity_type=typing.Dict[str, str],
+        )  # 1 should go to node2 and resolve the request: 1 request
 
         # Advance time by 65 seconds
         mocker.patch("time.time", return_value=current_time + 65)
@@ -474,7 +503,7 @@ def test_uses_nearest_node_if_present_and_healthy(
         # 2 should go to node0,
         # 3 should go to node1,
         # 4 should go to node2 and resolve the request: 4 requests
-        api_call.get('/', entity_type=dict[str, str])
+        api_call.get("/", entity_type=typing.Dict[str, str])
 
         # Advance time by 185 seconds
         mocker.patch("time.time", return_value=current_time + 185)
@@ -487,11 +516,11 @@ def test_uses_nearest_node_if_present_and_healthy(
         )
 
         # 1 should go to nearest and resolve the request: 1 request
-        api_call.get('/', entity_type=dict[str, str])
+        api_call.get("/", entity_type=typing.Dict[str, str])
         # 1 should go to nearest and resolve the request: 1 request
-        api_call.get('/', entity_type=dict[str, str])
+        api_call.get("/", entity_type=typing.Dict[str, str])
         # 1 should go to nearest and resolve the request: 1 request
-        api_call.get('/', entity_type=dict[str, str])
+        api_call.get("/", entity_type=typing.Dict[str, str])
 
         # Check the request history
         assert request_mocker.request_history[0].url == "http://nearest:8108/"

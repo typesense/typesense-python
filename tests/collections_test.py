@@ -2,7 +2,14 @@
 
 from __future__ import annotations
 
+import sys
+
 import requests_mock
+
+if sys.version_info >= (3, 11):
+    import typing
+else:
+    import typing_extensions as typing
 
 from tests.utils.object_assertions import assert_match_object, assert_object_lists_match
 from typesense.api_call import ApiCall
@@ -53,7 +60,7 @@ def test_get_existing_collection(fake_collections: Collections) -> None:
 
 def test_retrieve(fake_collections: Collections) -> None:
     """Test that the Collections object can retrieve collections."""
-    json_response: list[CollectionSchema] = [
+    json_response: typing.List[CollectionSchema] = [
         {
             "created_at": 1619711487,
             "default_sorting_field": "num_employees",
@@ -238,7 +245,7 @@ def test_actual_retrieve(
     """Test that the Collections object can retrieve collections."""
     response = actual_collections.retrieve()
 
-    expected: list[CollectionSchema] = [
+    expected: typing.List[CollectionSchema] = [
         {
             "default_sorting_field": "num_employees",
             "enable_nested_fields": False,

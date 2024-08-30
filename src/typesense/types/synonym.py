@@ -26,8 +26,8 @@ class SynonymCreateSchema(typing.TypedDict):
 
     synonyms: typing.List[str]
     root: typing.NotRequired[str]
-    symbols_to_index: typing.NotRequired[list[str]]
     locale: typing.NotRequired[Locales]
+    symbols_to_index: typing.NotRequired[typing.List[str]]
 
 
 class SynonymSchema(SynonymCreateSchema):
@@ -57,7 +57,7 @@ class SynonymsRetrieveSchema(typing.TypedDict):
         synonyms(list[SynonymSchema]): The list of synonyms.
     """
 
-    synonyms: list[SynonymSchema]
+    synonyms: typing.List[SynonymSchema]
 
 
 class SynonymDeleteSchema(typing.TypedDict):

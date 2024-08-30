@@ -1,6 +1,13 @@
+import sys
+
 from typesense.alias import Alias
 from typesense.api_call import ApiCall
 from typesense.types.alias import AliasCreateSchema, AliasesResponseSchema, AliasSchema
+
+if sys.version_info >= (3, 11):
+    import typing
+else:
+    import typing_extensions as typing
 
 
 class Aliases:
@@ -8,7 +15,7 @@ class Aliases:
 
     def __init__(self, api_call: ApiCall):
         self.api_call = api_call
-        self.aliases: dict[str, Alias] = {}
+        self.aliases: typing.Dict[str, Alias] = {}
 
     def __getitem__(self, name: str) -> Alias:
         if not self.aliases.get(name):

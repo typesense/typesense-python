@@ -63,8 +63,8 @@ from typesense.exceptions import (
 from typesense.logger import logger
 
 session = requests.sessions.Session()
-TParams = typing.TypeVar("TParams", bound=typing.Dict[str, typing.Any])
-TBody = typing.TypeVar("TBody", bound=typing.Dict[str, typing.Any])
+TParams = typing.TypeVar("TParams")
+TBody = typing.TypeVar("TBody")
 TEntityDict = typing.TypeVar("TEntityDict")
 
 
@@ -79,8 +79,8 @@ class SessionFunctionKwargs(typing.Generic[TParams, TBody], typing.TypedDict):
         verify (bool): Whether to verify
     """
 
-    params: typing.NotRequired[TParams | None]
-    data: typing.NotRequired[TBody | str]
+    params: typing.NotRequired[typing.Union[TParams, None]]
+    data: typing.NotRequired[typing.Union[TBody, str, None]]
     timeout: float
     verify: bool
 
@@ -175,7 +175,7 @@ class ApiCall:
         return self.nodes[self.node_index]
 
     @staticmethod
-    def get_exception(http_code: int) -> type[TypesenseClientError]:
+    def get_exception(http_code: int) -> typing.Type[TypesenseClientError]:
         """
         Return the exception class for a given HTTP status code.
 
@@ -300,7 +300,7 @@ class ApiCall:
         entity_type: type[TEntityDict],
         as_json: bool,
         **kwargs: typing.Unpack[SessionFunctionKwargs[TParams, TBody]],
-    ) -> TEntityDict | str:
+    ) -> typing.Union[TEntityDict, str]:
         """
         Use a session function to make a request to the endpoint with the given kwargs.
 
@@ -450,7 +450,7 @@ class ApiCall:
         endpoint: str,
         entity_type: type[TEntityDict],
         as_json: typing.Literal[False],
-        params: TParams | None = None,
+        params: typing.Union[TParams, None] = None,
     ) -> str:
         """
         Make a GET request to the endpoint with the given parameters.
@@ -491,7 +491,7 @@ class ApiCall:
         endpoint: str,
         entity_type: type[TEntityDict],
         as_json: typing.Literal[True],
-        params: TParams | None = None,
+        params: typing.Union[TParams, None] = None,
     ) -> TEntityDict:
         """
         Make a GET request to the endpoint with the given parameters.
@@ -530,9 +530,9 @@ class ApiCall:
         self,
         endpoint: str,
         entity_type: type[TEntityDict],
-        as_json: typing.Literal[True] | typing.Literal[False] = True,
-        params: TParams | None = None,
-    ) -> TEntityDict | str:
+        as_json: typing.Union[typing.Literal[True], typing.Literal[False]] = True,
+        params: typing.Union[TParams, None] = None,
+    ) -> typing.Union[TEntityDict, str]:
         """
         Make a GET request to the endpoint with the given parameters.
 
@@ -580,9 +580,9 @@ class ApiCall:
         self,
         endpoint: str,
         entity_type: type[TEntityDict],
-        body: TBody,
         as_json: typing.Literal[False],
-        params: TParams | None = None,
+        params: typing.Union[TParams, None] = None,
+        body: typing.Union[TBody, None] = None,
     ) -> str:
         """
         Make a POST request to the endpoint with the given parameters.
@@ -623,9 +623,9 @@ class ApiCall:
         self,
         endpoint: str,
         entity_type: type[TEntityDict],
-        body: TBody,
         as_json: typing.Literal[True],
-        params: TParams | None = None,
+        params: typing.Union[TParams, None] = None,
+        body: typing.Union[TBody, None] = None,
     ) -> TEntityDict:
         """
         Make a POST request to the endpoint with the given parameters.
@@ -665,10 +665,10 @@ class ApiCall:
         self,
         endpoint: str,
         entity_type: type[TEntityDict],
-        body: TBody,
-        as_json: typing.Literal[True, False],
-        params: TParams | None = None,
-    ) -> str | TEntityDict:
+        as_json: typing.Union[typing.Literal[True], typing.Literal[False]] = True,
+        params: typing.Union[TParams, None] = None,
+        body: typing.Union[TBody, None] = None,
+    ) -> typing.Union[str, TEntityDict]:
         """
         Make a POST request to the endpoint with the given parameters.
 
@@ -709,8 +709,8 @@ class ApiCall:
             endpoint,
             entity_type,
             as_json=as_json,
-            params=params,
             data=body,
+            params=params,
             timeout=self.config.connection_timeout_seconds,
             verify=self.config.verify,
         )
@@ -720,7 +720,7 @@ class ApiCall:
         endpoint: str,
         entity_type: type[TEntityDict],
         body: TBody,
-        params: TParams | None = None,
+        params: typing.Union[TParams, None] = None,
     ) -> TEntityDict:
         """
         Make a PUT request to the endpoint with the given parameters.
@@ -770,7 +770,7 @@ class ApiCall:
         endpoint: str,
         entity_type: type[TEntityDict],
         body: TBody,
-        params: TParams | None = None,
+        params: typing.Union[TParams , None ]= None,
     ) -> TEntityDict:
         """
         Make a PATCH request to the endpoint with the given parameters.
@@ -819,7 +819,7 @@ class ApiCall:
         self,
         endpoint: str,
         entity_type: type[TEntityDict],
-        params: TParams | None = None,
+        params: typing.Union[TParams , None ]= None,
     ) -> TEntityDict:
         """
         Make a DELETE request to the endpoint with the given parameters.

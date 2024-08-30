@@ -44,7 +44,7 @@ class NodeConfigDict(typing.TypedDict):
     host: str
     port: int
     path: typing.NotRequired[str]
-    protocol: typing.Literal["http", "https"] | str
+    protocol: typing.Union[typing.Literal["http", "https"], str]
 
 
 class ConfigDict(typing.TypedDict):
@@ -78,7 +78,7 @@ class ConfigDict(typing.TypedDict):
             dictionaries or URLs that represent the read replica nodes.
     """
 
-    nodes: list[typing.Union[str, NodeConfigDict]]
+    nodes: typing.List[typing.Union[str, NodeConfigDict]]
     nearest_node: typing.NotRequired[typing.Union[str, NodeConfigDict]]
     api_key: str
     num_retries: typing.NotRequired[int]
@@ -88,7 +88,7 @@ class ConfigDict(typing.TypedDict):
     timeout_seconds: typing.NotRequired[int]  # deprecated
     master_node: typing.NotRequired[typing.Union[str, NodeConfigDict]]  # deprecated
     read_replica_nodes: typing.NotRequired[
-        list[typing.Union[str, NodeConfigDict]]
+        typing.List[typing.Union[str, NodeConfigDict]]
     ]  # deprecated
 
 
@@ -107,9 +107,9 @@ class Node:
     def __init__(
         self,
         host: str,
-        port: str | int,
+        port: typing.Union[str, int],
         path: str,
-        protocol: typing.Literal["http", "https"] | str,
+        protocol: typing.Union[typing.Literal["http", "https"], str],
     ) -> None:
         """
         Initialize a Node object with the specified host, port, path, and protocol.
@@ -194,7 +194,7 @@ class Configuration:
         self.validations.show_deprecation_warnings(config_dict)
         self.validations.validate_config_dict(config_dict)
 
-        self.nodes: list[Node] = [
+        self.nodes: typing.List[Node] = [
             self._initialize_nodes(node) for node in config_dict["nodes"]
         ]
 
@@ -294,7 +294,7 @@ class ConfigurationValidations:
             raise ConfigError("`api_key` is not defined.")
 
     @staticmethod
-    def validate_nodes(nodes: list[typing.Union[str, NodeConfigDict]]) -> None:
+    def validate_nodes(nodes: typing.List[typing.Union[str, NodeConfigDict]]) -> None:
         """
         Validate the nodes in the configuration dictionary.
 
@@ -339,7 +339,7 @@ class ConfigurationValidations:
             )
 
     @staticmethod
-    def validate_node_fields(node: str | NodeConfigDict) -> bool:
+    def validate_node_fields(node: typing.Union[str, NodeConfigDict]) -> bool:
         """
         Validate the fields of a node in the configuration dictionary.
 

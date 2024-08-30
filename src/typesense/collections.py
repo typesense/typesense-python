@@ -20,7 +20,7 @@ class Collections(object):
 
     def __init__(self, api_call: ApiCall):
         self.api_call = api_call
-        self.collections: dict[str, Collection] = {}
+        self.collections: typing.Dict[str, Collection] = {}
 
     def __getitem__(self, collection_name: str) -> Collection:
         if not self.collections.get(collection_name):
@@ -38,10 +38,10 @@ class Collections(object):
         )
         return call
 
-    def retrieve(self) -> list[CollectionSchema]:
-        call: list[CollectionSchema] = self.api_call.get(
+    def retrieve(self) -> typing.List[CollectionSchema]:
+        call: typing.List[CollectionSchema] = self.api_call.get(
             endpoint=Collections.RESOURCE_PATH,
             as_json=True,
-            entity_type=list[CollectionSchema],
+            entity_type=typing.List[CollectionSchema],
         )
         return call

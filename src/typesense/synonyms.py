@@ -1,3 +1,5 @@
+import sys
+
 from typesense.api_call import ApiCall
 from typesense.types.synonym import (
     SynonymCreateSchema,
@@ -7,6 +9,11 @@ from typesense.types.synonym import (
 
 from .synonym import Synonym
 
+if sys.version_info >= (3, 11):
+    import typing
+else:
+    import typing_extensions as typing
+
 
 class Synonyms(object):
     RESOURCE_PATH = 'synonyms'
@@ -14,7 +21,7 @@ class Synonyms(object):
     def __init__(self, api_call: ApiCall, collection_name: str):
         self.api_call = api_call
         self.collection_name = collection_name
-        self.synonyms: dict[str, Synonym] = {}
+        self.synonyms: typing.Dict[str, Synonym] = {}
 
     def __getitem__(self, synonym_id: str) -> Synonym:
         if not self.synonyms.get(synonym_id):
@@ -24,7 +31,7 @@ class Synonyms(object):
 
         return self.synonyms[synonym_id]
 
-    def _endpoint_path(self, synonym_id: str | None = None) -> str:
+    def _endpoint_path(self, synonym_id: typing.Union[str, None] = None) -> str:
         from typesense.collections import Collections
 
         synonym_id = synonym_id or ""

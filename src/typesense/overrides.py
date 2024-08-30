@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import sys
+
 from typesense.api_call import ApiCall
 from typesense.types.override import (
     OverrideCreateSchema,
@@ -8,6 +10,11 @@ from typesense.types.override import (
 )
 
 from .override import Override
+
+if sys.version_info >= (3, 11):
+    import typing
+else:
+    import typing_extensions as typing
 
 
 class Overrides(object):
@@ -20,7 +27,7 @@ class Overrides(object):
     ) -> None:
         self.api_call = api_call
         self.collection_name = collection_name
-        self.overrides: dict[str, Override] = {}
+        self.overrides: typing.Dict[str, Override] = {}
 
     def __getitem__(self, override_id: str) -> Override:
         if not self.overrides.get(override_id):
@@ -29,7 +36,7 @@ class Overrides(object):
             )
         return self.overrides[override_id]
 
-    def _endpoint_path(self, override_id: str | None = None) -> str:
+    def _endpoint_path(self, override_id: typing.Union[str, None] = None) -> str:
         from .collections import Collections
 
         override_id = override_id or ""

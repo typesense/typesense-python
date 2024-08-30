@@ -44,7 +44,10 @@ class Collection(object):
         return response
 
     # There's currently no parameters passed to Collection deletions, but ensuring future compatibility
-    def delete(self, params: dict[str, str | bool] | None = None) -> CollectionSchema:
+    def delete(
+        self,
+        params: typing.Union[typing.Dict[str, typing.Union[str, bool]], None] = None,
+    ) -> CollectionSchema:
         return self.api_call.delete(
             self._endpoint_path, entity_type=CollectionSchema, params=params
         )

@@ -22,7 +22,7 @@ class OverrideQueryRuleSchema(typing.TypedDict):
     query: str
     match: typing.Literal["contains", "exact"]
     filter_by: typing.NotRequired[str]
-    tags: typing.NotRequired[list[str]]
+    tags: typing.NotRequired[typing.List[str]]
 
 
 class OverrideFilterSchema(typing.TypedDict):
@@ -35,7 +35,7 @@ class OverrideFilterSchema(typing.TypedDict):
     """
 
     filter_by: str
-    tags: typing.NotRequired[list[str]]
+    tags: typing.NotRequired[typing.List[str]]
 
 
 class IncludesSchema(typing.TypedDict):
@@ -69,13 +69,13 @@ class OverrideCreateSchema(typing.TypedDict):
         stop_processing (bool): Whether to stop processing.
     """
 
-    rule: OverrideQueryRuleSchema | OverrideFilterSchema
+    rule: typing.Union[OverrideQueryRuleSchema, OverrideFilterSchema]
     sort_by: typing.NotRequired[str]
     filter_by: typing.NotRequired[str]
-    excludes: typing.NotRequired[list[str]]
+    excludes: typing.NotRequired[typing.List[str]]
     replace_query: typing.NotRequired[str]
-    includes: typing.NotRequired[list[IncludesSchema]]
-    metadata: typing.NotRequired[dict[str, str]]
+    includes: typing.NotRequired[typing.List[IncludesSchema]]
+    metadata: typing.NotRequired[typing.Dict[str, str]]
     filter_curated_hits: typing.NotRequired[bool]
     effective_from_ts: typing.NotRequired[int]
     effective_to_ts: typing.NotRequired[int]
@@ -97,4 +97,4 @@ class OverrideDeleteSchema(typing.TypedDict):
 class OverrideRetrieveSchema(typing.TypedDict):
     """The schema for the response of the Overrides.retrieve method."""
 
-    overrides: list[OverrideSchema]
+    overrides: typing.List[OverrideSchema]

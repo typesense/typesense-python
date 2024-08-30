@@ -67,7 +67,7 @@ class CollectionFieldSchema(typing.Generic[_TType], typing.TypedDict, total=Fals
     num_dim: typing.NotRequired[float]
     range_index: typing.NotRequired[bool]
     index: typing.NotRequired[bool]
-    vec_dist: typing.NotRequired[typing.Literal["cosine", "ip"] | str]
+    vec_dist: typing.NotRequired[typing.Union[typing.Literal["cosine", "ip"], str]]
 
 
 class RegularCollectionFieldSchema(CollectionFieldSchema[_FieldType]):
@@ -149,10 +149,12 @@ class CollectionCreateSchema(typing.TypedDict):
     """
 
     name: str
-    fields: list[RegularCollectionFieldSchema | ReferenceCollectionFieldSchema]
+    fields: typing.List[
+        typing.Union[RegularCollectionFieldSchema, ReferenceCollectionFieldSchema]
+    ]
     default_sorting_field: typing.NotRequired[str]
-    symbols_to_index: typing.NotRequired[list[str]]
-    token_separators: typing.NotRequired[list[str]]
+    symbols_to_index: typing.NotRequired[typing.List[str]]
+    token_separators: typing.NotRequired[typing.List[str]]
     enable_nested_fields: typing.NotRequired[bool]
     voice_query_model: typing.NotRequired[VoiceQueryModelSchema]
 
@@ -198,7 +200,7 @@ class CollectionUpdateSchema(typing.TypedDict):
 
     """
 
-    fields: list[
+    fields: typing.List[
         typing.Union[
             RegularCollectionFieldSchema,
             ReferenceCollectionFieldSchema,

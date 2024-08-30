@@ -1,11 +1,20 @@
 from __future__ import annotations
 
-from typing import Any
+import sys
+
+if sys.version_info >= (3, 11):
+    import typing
+else:
+    import typing_extensions as typing
 
 
 class TypesenseClientError(IOError):
-    def __init__(self, *args: object, **kwargs: dict[Any, Any]) -> None:
-        super(TypesenseClientError, self).__init__(*args, **kwargs)
+    def __init__(
+        self,
+        *args: object,
+        **kwargs: typing.Dict[typing.Any, typing.Any],
+    ) -> None:
+        super().__init__(*args, **kwargs)
 
 
 class ConfigError(TypesenseClientError):
