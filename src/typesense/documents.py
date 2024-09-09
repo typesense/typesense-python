@@ -1,9 +1,42 @@
-# mypy: disable-error-code="misc"
+"""
+This module provides functionality for managing documents in Typesense collections.
+
+Classes:
+    - Documents: Handles operations related to documents within a collection.
+
+Methods:
+    - __init__: Initializes the Documents object.
+    - __getitem__: Retrieves or creates a Document object for a given document_id.
+    - _endpoint_path: Constructs the API endpoint path for document operations.
+    - create: Creates a new document in the collection.
+    - create_many: (Deprecated) Creates multiple documents in the collection.
+    - upsert: Creates or updates a document in the collection.
+    - update: Updates a document in the collection.
+    - import_jsonl: (Deprecated) Imports documents from a JSONL string.
+    - import_: Imports documents into the collection.
+    - export: Exports documents from the collection.
+    - search: Searches for documents in the collection.
+    - delete: Deletes documents from the collection based on given parameters.
+
+Attributes:
+    - resource_path: The API resource path for document operations.
+
+The Documents class interacts with the Typesense API to manage document operations
+within a specific collection. It provides methods to create, update, import, export,
+search, and delete documents.
+
+This module uses type hinting and is compatible with Python 3.11+ as well as earlier
+versions through the use of the typing_extensions library.
+"""
+
 import json
 import sys
 
 from typesense.api_call import ApiCall
+from typesense.document import Document
 from typesense.exceptions import TypesenseClientError
+from typesense.logger import logger
+from typesense.preprocess import stringify_search_params
 from typesense.types.document import (
     DeleteQueryParameters,
     DeleteResponse,
@@ -27,10 +60,8 @@ from typesense.types.document import (
     UpdateByFilterResponse,
 )
 
-from .document import Document
-from .logger import logger
-from .preprocess import stringify_search_params
-from .validation import validate_search
+# mypy: disable-error-code="misc"
+
 
 if sys.version_info >= (3, 11):
     import typing
@@ -39,86 +70,169 @@ else:
 
 TDoc = typing.TypeVar("TDoc", bound=DocumentSchema)
 
+_ImportParameters = typing.Union[
+    DocumentImportParameters,
+    None,
+]
+
 
 class Documents(typing.Generic[TDoc]):
-    RESOURCE_PATH = "documents"
+    """
+    Class for managing documents in a Typesense collection.
+
+    This class provides methods to interact with documents, including
+    creating, updating, importing, exporting, searching, and deleting them.
+
+    Attributes:
+        resource_path (str): The API resource path for document operations.
+        api_call (ApiCall): The API call object for making requests.
+        collection_name (str): The name of the collection.
+        documents (Dict[str, Document[TDoc]]): A dictionary of Document objects.
+    """
+
+    resource_path: typing.Final[str] = "documents"
 
     def __init__(self, api_call: ApiCall, collection_name: str) -> None:
+        """
+        Initialize the Documents object.
+
+        Args:
+            api_call (ApiCall): The API call object for making requests.
+            collection_name (str): The name of the collection.
+        """
         self.api_call = api_call
         self.collection_name = collection_name
         self.documents: typing.Dict[str, Document[TDoc]] = {}
 
     def __getitem__(self, document_id: str) -> Document[TDoc]:
+        """
+        Get or create a Document object for a given document_id.
+
+        Args:
+            document_id (str): The ID of the document.
+
+        Returns:
+            Document[TDoc]: The Document object for the given ID.
+        """
         if document_id not in self.documents:
             self.documents[document_id] = Document(
-                self.api_call, self.collection_name, document_id
+                self.api_call,
+                self.collection_name,
+                document_id,
             )
 
         return self.documents[document_id]
 
-    def _endpoint_path(self, action: typing.Union[str, None] = None) -> str:
-        from .collections import Collections
-
-        action = action or ""
-        return "{0}/{1}/{2}/{3}".format(
-            Collections.RESOURCE_PATH,
-            self.collection_name,
-            Documents.RESOURCE_PATH,
-            action,
-        )
-
     def create(
-        self, document: TDoc, params: typing.Union[DirtyValuesParameters, None] = None
+        self,
+        document: TDoc,
+        dirty_values_parameters: typing.Union[DirtyValuesParameters, None] = None,
     ) -> TDoc:
-        params = params or {}
-        params["action"] = "create"
-        response = self.api_call.post(
+        """
+        Create a new document in the collection.
+
+        Args:
+            document (TDoc): The document to create.
+            dirty_values_parameters (Union[DirtyValuesParameters, None], optional):
+                Parameters for handling dirty values.
+
+        Returns:
+            TDoc: The created document.
+        """
+        dirty_values_parameters = dirty_values_parameters or {}
+        dirty_values_parameters["action"] = "create"
+        response: TDoc = self.api_call.post(
             self._endpoint_path(),
             body=document,
-            params=params,
+            params=dirty_values_parameters,
             as_json=True,
             entity_type=typing.Dict[str, str],
         )
-        return typing.cast(TDoc, response)
+        return response
 
     def create_many(
         self,
         documents: typing.List[TDoc],
-        params: typing.Union[DirtyValuesParameters, None] = None,
+        dirty_values_parameters: typing.Union[DirtyValuesParameters, None] = None,
     ) -> typing.List[typing.Union[ImportResponseSuccess, ImportResponseFail[TDoc]]]:
-        logger.warning("`create_many` is deprecated: please use `import_`.")
-        return self.import_(documents, params)
+        """
+        Create multiple documents in the collection.
+
+        Args:
+            documents (List[TDoc]): The list of documents to create.
+            dirty_values_parameters (Union[DirtyValuesParameters, None], optional):
+                Parameters for handling dirty values.
+
+        Returns:
+            List[Union[ImportResponseSuccess, ImportResponseFail[TDoc]]]:
+                The list of import responses.
+        """
+        logger.warn("`create_many` is deprecated: please use `import_`.")
+        return self.import_(documents, dirty_values_parameters)
 
     def upsert(
-        self, document: TDoc, params: typing.Union[DirtyValuesParameters, None] = None
+        self,
+        document: TDoc,
+        dirty_values_parameters: typing.Union[DirtyValuesParameters, None] = None,
     ) -> TDoc:
-        params = params or {}
-        params["action"] = "upsert"
-        response = self.api_call.post(
+        """
+        Create or update a document in the collection.
+
+        Args:
+            document (TDoc): The document to upsert.
+            dirty_values_parameters (Union[DirtyValuesParameters, None], optional):
+               Parameters for handling dirty values.
+
+        Returns:
+            TDoc: The upserted document.
+        """
+        dirty_values_parameters = dirty_values_parameters or {}
+        dirty_values_parameters["action"] = "upsert"
+        response: TDoc = self.api_call.post(
             self._endpoint_path(),
             body=document,
-            params=params,
+            params=dirty_values_parameters,
             as_json=True,
             entity_type=typing.Dict[str, str],
         )
-        return typing.cast(TDoc, response)
+        return response
 
     def update(
         self,
         document: TDoc,
-        params: typing.Union[UpdateByFilterParameters, None] = None,
+        dirty_values_parameters: typing.Union[UpdateByFilterParameters, None] = None,
     ) -> UpdateByFilterResponse:
-        params = params or {}
-        params["action"] = "update"
+        """
+        Update a document in the collection.
+
+        Args:
+            document (TDoc): The document to update.
+            dirty_values_parameters (Union[UpdateByFilterParameters, None], optional):
+                Parameters for handling dirty values and filtering.
+
+        Returns:
+            UpdateByFilterResponse: The response containing information about the update.
+        """
+        dirty_values_parameters = dirty_values_parameters or {}
+        dirty_values_parameters["action"] = "update"
         response: UpdateByFilterResponse = self.api_call.patch(
             self._endpoint_path(),
             body=document,
-            params=params,
+            params=dirty_values_parameters,
             entity_type=UpdateByFilterResponse,
         )
         return response
 
     def import_jsonl(self, documents_jsonl: str) -> str:
+        """
+        Import documents from a JSONL string.
+
+        Args:
+            documents_jsonl (str): The JSONL string containing documents to import.
+
+        Returns:
+            str: The import response as a string.
+        """
         logger.warning("`import_jsonl` is deprecated: please use `import_`.")
         return self.import_(documents_jsonl)
 
@@ -126,7 +240,7 @@ class Documents(typing.Generic[TDoc]):
     def import_(
         self,
         documents: typing.List[TDoc],
-        params: DocumentImportParametersReturnDocAndId,
+        import_parameters: DocumentImportParametersReturnDocAndId,
         batch_size: typing.Union[int, None] = None,
     ) -> typing.List[
         typing.Union[ImportResponseWithDocAndId[TDoc], ImportResponseFail[TDoc]]
@@ -136,7 +250,7 @@ class Documents(typing.Generic[TDoc]):
     def import_(
         self,
         documents: typing.List[TDoc],
-        params: DocumentImportParametersReturnId,
+        import_parameters: DocumentImportParametersReturnId,
         batch_size: typing.Union[int, None] = None,
     ) -> typing.List[typing.Union[ImportResponseWithId, ImportResponseFail[TDoc]]]: ...
 
@@ -144,7 +258,7 @@ class Documents(typing.Generic[TDoc]):
     def import_(
         self,
         documents: typing.List[TDoc],
-        params: typing.Union[DocumentWriteParameters, None] = None,
+        import_parameters: typing.Union[DocumentWriteParameters, None] = None,
         batch_size: typing.Union[int, None] = None,
     ) -> typing.List[typing.Union[ImportResponseSuccess, ImportResponseFail[TDoc]]]: ...
 
@@ -152,7 +266,7 @@ class Documents(typing.Generic[TDoc]):
     def import_(
         self,
         documents: typing.List[TDoc],
-        params: DocumentImportParametersReturnDoc,
+        import_parameters: DocumentImportParametersReturnDoc,
         batch_size: typing.Union[int, None] = None,
     ) -> typing.List[
         typing.Union[ImportResponseWithDoc[TDoc], ImportResponseFail[TDoc]]
@@ -162,10 +276,7 @@ class Documents(typing.Generic[TDoc]):
     def import_(
         self,
         documents: typing.List[TDoc],
-        params: typing.Union[
-            DocumentImportParameters,
-            None,
-        ],
+        import_parameters: _ImportParameters,
         batch_size: typing.Union[int, None] = None,
     ) -> typing.List[ImportResponse[TDoc]]: ...
 
@@ -173,26 +284,37 @@ class Documents(typing.Generic[TDoc]):
     def import_(
         self,
         documents: typing.Union[bytes, str],
-        params: typing.Union[
-            DocumentImportParameters,
-            None,
-        ] = None,
+        import_parameters: _ImportParameters = None,
         batch_size: typing.Union[int, None] = None,
     ) -> str: ...
 
-    # Actual implementation that matches the overloads
     def import_(
         self,
         documents: typing.Union[bytes, str, typing.List[TDoc]],
-        params: typing.Union[
-            DocumentImportParameters,
-            None,
-        ] = None,
+        import_parameters: _ImportParameters = None,
         batch_size: typing.Union[int, None] = None,
-    ) -> typing.Union[
-        ImportResponse[TDoc],
-        str,
-    ]:
+    ) -> typing.Union[ImportResponse[TDoc], str]:
+        """
+        Import documents into the collection.
+
+        This method supports various input types and import parameters.
+        It can handle both individual documents and batches of documents.
+
+        Args:
+            documents (Union[bytes, str, List[TDoc]]): The documents to import.
+
+            import_parameters (Union[DocumentImportParameters, None], optional):
+                Parameters for the import operation.
+
+            batch_size (Union[int, None], optional): The size of each batch for batch imports.
+
+        Returns:
+            (ImportResponse[TDoc] | str):
+                The import response, which can be a list of responses or a string.
+
+        Raises:
+            TypesenseClientError: If an empty list of documents is provided.
+        """
         if not isinstance(documents, (str, bytes)):
             if batch_size:
                 response_objs: ImportResponse[TDoc] = []
@@ -200,11 +322,14 @@ class Documents(typing.Generic[TDoc]):
                 for document in documents:
                     batch.append(document)
                     if len(batch) == batch_size:
-                        api_response = self.import_(documents=batch, params=params)
+                        api_response = self.import_(
+                            documents=batch,
+                            import_parameters=import_parameters,
+                        )
                         response_objs.extend(api_response)
                         batch = []
                 if batch:
-                    api_response = self.import_(batch, params)
+                    api_response = self.import_(batch, import_parameters)
                     response_objs.extend(api_response)
 
             else:
@@ -214,14 +339,14 @@ class Documents(typing.Generic[TDoc]):
 
                 if len(document_strs) == 0:
                     raise TypesenseClientError(
-                        f"Cannot import an empty list of documents."
+                        "Cannot import an empty list of documents.",
                     )
 
                 docs_import = "\n".join(document_strs)
                 res = self.api_call.post(
                     self._endpoint_path("import"),
                     body=docs_import,
-                    params=params,
+                    params=import_parameters,
                     entity_type=str,
                     as_json=False,
                 )
@@ -237,10 +362,10 @@ class Documents(typing.Generic[TDoc]):
                             ImportResponseSuccess,
                             ImportResponseFail[TDoc],
                         ] = json.loads(res_obj_str)
-                    except json.JSONDecodeError as e:
+                    except json.JSONDecodeError as decode_error:
                         raise TypesenseClientError(
-                            f"Invalid response - {res_obj_str}"
-                        ) from e
+                            f"Invalid response - {res_obj_str}",
+                        ) from decode_error
                     response_objs.append(res_obj_json)
 
             return response_objs
@@ -248,21 +373,44 @@ class Documents(typing.Generic[TDoc]):
             api_response = self.api_call.post(
                 self._endpoint_path("import"),
                 body=documents,
-                params=params,
+                params=import_parameters,
                 as_json=False,
                 entity_type=str,
             )
             return api_response
 
     def export(
-        self, params: typing.Union[DocumentExportParameters, None] = None
+        self,
+        export_parameters: typing.Union[DocumentExportParameters, None] = None,
     ) -> str:
+        """
+        Export documents from the collection.
+
+        Args:
+            export_parameters (Union[DocumentExportParameters, None], optional):
+                Parameters for the export operation.
+
+        Returns:
+            str: The exported documents as a string.
+        """
         api_response: str = self.api_call.get(
-            self._endpoint_path("export"), params=params, as_json=False, entity_type=str
+            self._endpoint_path("export"),
+            params=export_parameters,
+            as_json=False,
+            entity_type=str,
         )
         return api_response
 
     def search(self, search_parameters: SearchParameters) -> SearchResponse[TDoc]:
+        """
+        Search for documents in the collection.
+
+        Args:
+            search_parameters (SearchParameters): The search parameters.
+
+        Returns:
+            SearchResponse[TDoc]: The search response containing matching documents.
+        """
         stringified_search_params = stringify_search_params(search_parameters)
         response: SearchResponse[TDoc] = self.api_call.get(
             self._endpoint_path("search"),
@@ -273,9 +421,44 @@ class Documents(typing.Generic[TDoc]):
         return response
 
     def delete(
-        self, params: typing.Union[DeleteQueryParameters, None] = None
+        self,
+        delete_parameters: typing.Union[DeleteQueryParameters, None] = None,
     ) -> DeleteResponse:
+        """
+        Delete documents from the collection based on given parameters.
+
+        Args:
+            delete_parameters (Union[DeleteQueryParameters, None], optional):
+                Parameters for deletion.
+
+        Returns:
+            DeleteResponse: The response containing information about the deletion.
+        """
         response: DeleteResponse = self.api_call.delete(
-            self._endpoint_path(), params=params, entity_type=DeleteResponse
+            self._endpoint_path(),
+            params=delete_parameters,
+            entity_type=DeleteResponse,
         )
         return response
+
+    def _endpoint_path(self, action: typing.Union[str, None] = None) -> str:
+        """
+        Construct the API endpoint path for document operations.
+
+        Args:
+            action (Union[str, None], optional): The action to perform. Defaults to None.
+
+        Returns:
+            str: The constructed endpoint path.
+        """
+        from typesense.collections import Collections
+
+        action = action or ""
+        return "/".join(
+            [
+                Collections.RESOURCE_PATH,
+                self.collection_name,
+                self.resource_path,
+                action,
+            ],
+        )
