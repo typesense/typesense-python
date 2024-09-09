@@ -27,7 +27,7 @@ def test_validate_node_fields_with_valid_dict() -> None:
 def test_validate_node_fields_with_invalid_dict() -> None:
     """Test validate_node_fields with an invalid dictionary."""
     assert not ConfigurationValidations.validate_node_fields(
-        {  # type: ignore[arg-type]
+        {
             "host": "localhost",
             "port": 8108,
         },
