@@ -438,6 +438,8 @@ class ApiCall:
         Args:
             params (TParams): The request parameters.
         """
+        if not isinstance(params, typing.Dict):
+            raise ValueError("Params must be a dictionary.")
         for key in params.keys():
             if isinstance(params[key], bool) and params[key]:
                 params[key] = "true"
