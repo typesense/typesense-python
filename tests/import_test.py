@@ -35,7 +35,6 @@ module_names = [
     "conversations_models",
     "document",
     "documents",
-    "exceptions",
     "keys",
     "multi_search",
     "overrides",
