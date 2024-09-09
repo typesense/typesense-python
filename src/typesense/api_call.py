@@ -298,7 +298,7 @@ class ApiCall:
         fn: typing.Callable[..., requests.models.Response],
         endpoint: str,
         entity_type: type[TEntityDict],
-        as_json: bool,
+        as_json: typing.Union[typing.Literal[False], typing.Literal[True]],
         **kwargs: typing.Unpack[SessionFunctionKwargs[TParams, TBody]],
     ) -> typing.Union[TEntityDict, str]:
         """
