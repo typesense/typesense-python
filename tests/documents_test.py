@@ -223,7 +223,7 @@ def test_import_fail(
     """Test that the Documents object doesn't throw an error when importing documents."""
     wrong_company: Companies = {"company_name": "Wrong", "id": "0", "num_employees": 0}
     companies = generate_companies + [wrong_company]
-    request_spy = mocker.spy(actual_documents, "import_")
+    request_spy = mocker.spy(actual_documents, "_bulk_import")
     response = actual_documents.import_(companies)
 
     expected: typing.List[typing.Dict[str, typing.Union[str, bool, int]]] = [
@@ -280,12 +280,14 @@ def test_import_batch_size(
 ) -> None:
     """Test that the Documents object can import documents in batches."""
     batch_size = 5
-    document_spy = mocker.spy(actual_documents, "import_")
+    import_spy = mocker.spy(actual_documents, "import_")
+    batch_import_spy = mocker.spy(actual_documents, "_bulk_import")
     request_spy = mocker.spy(actual_api_call, "post")
     response = actual_documents.import_(generate_companies, batch_size=batch_size)
 
     expected = [{"success": True} for _ in generate_companies]
-    assert document_spy.call_count == len(generate_companies) // batch_size + 1
+    assert import_spy.call_count == 1
+    assert batch_import_spy.call_count == len(generate_companies) // batch_size
     assert request_spy.call_count == len(generate_companies) // batch_size
     assert response == expected
 
@@ -293,38 +295,47 @@ def test_import_batch_size(
 def test_import_return_docs(
     generate_companies: typing.List[Companies],
     actual_documents: Documents[Companies],
+    mocker: MockFixture,
     delete_all: None,
     create_collection: None,
 ) -> None:
     """Test that the Documents object can return documents when importing."""
+    request_spy = mocker.spy(actual_documents, "_bulk_import")
     response = actual_documents.import_(generate_companies, {"return_doc": True})
     expected = [
         {"success": True, "document": company} for company in generate_companies
     ]
+
+    assert request_spy.call_count == 1
     assert response == expected
 
 
 def test_import_return_ids(
     generate_companies: typing.List[Companies],
     actual_documents: Documents[Companies],
+    mocker: MockFixture,
     delete_all: None,
     create_collection: None,
 ) -> None:
     """Test that the Documents object can return document IDs when importing."""
+    request_spy = mocker.spy(actual_documents, "_bulk_import")
     response = actual_documents.import_(generate_companies, {"return_id": True})
     expected = [
         {"success": True, "id": company.get("id")} for company in generate_companies
     ]
+    assert request_spy.call_count == 1
     assert response == expected
 
 
 def test_import_return_ids_and_docs(
     generate_companies: typing.List[Companies],
     actual_documents: Documents[Companies],
+    mocker: MockFixture,
     delete_all: None,
     create_collection: None,
 ) -> None:
     """Test that the Documents object can return document IDs and documents when importing."""
+    request_spy = mocker.spy(actual_documents, "_bulk_import")
     response = actual_documents.import_(
         generate_companies,
         {"return_id": True, "return_doc": True},
@@ -333,6 +344,7 @@ def test_import_return_ids_and_docs(
         {"success": True, "document": company, "id": company.get("id")}
         for company in generate_companies
     ]
+    assert request_spy.call_count == 1
     assert response == expected
 
 

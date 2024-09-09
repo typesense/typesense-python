@@ -301,83 +301,23 @@ class Documents(typing.Generic[TDoc]):
         It can handle both individual documents and batches of documents.
 
         Args:
-            documents (Union[bytes, str, List[TDoc]]): The documents to import.
-
-            import_parameters (Union[DocumentImportParameters, None], optional):
-                Parameters for the import operation.
-
-            batch_size (Union[int, None], optional): The size of each batch for batch imports.
+            documents: The documents to import.
+            import_parameters: Parameters for the import operation.
+            batch_size: The size of each batch for batch imports.
 
         Returns:
-            (ImportResponse[TDoc] | str):
-                The import response, which can be a list of responses or a string.
+            The import response, which can be a list of responses or a string.
 
         Raises:
             TypesenseClientError: If an empty list of documents is provided.
         """
-        if not isinstance(documents, (str, bytes)):
-            if batch_size:
-                response_objs: ImportResponse[TDoc] = []
-                batch: typing.List[TDoc] = []
-                for document in documents:
-                    batch.append(document)
-                    if len(batch) == batch_size:
-                        api_response = self.import_(
-                            documents=batch,
-                            import_parameters=import_parameters,
-                        )
-                        response_objs.extend(api_response)
-                        batch = []
-                if batch:
-                    api_response = self.import_(batch, import_parameters)
-                    response_objs.extend(api_response)
+        if isinstance(documents, (str, bytes)):
+            return self._import_raw(documents, import_parameters)
 
-            else:
-                document_strs: typing.List[str] = []
-                for document in documents:
-                    document_strs.append(json.dumps(document))
+        if batch_size:
+            return self._batch_import(documents, import_parameters, batch_size)
 
-                if len(document_strs) == 0:
-                    raise TypesenseClientError(
-                        "Cannot import an empty list of documents.",
-                    )
-
-                docs_import = "\n".join(document_strs)
-                res = self.api_call.post(
-                    self._endpoint_path("import"),
-                    body=docs_import,
-                    params=import_parameters,
-                    entity_type=str,
-                    as_json=False,
-                )
-                res_obj_strs = res.split("\n")
-
-                response_objs = []
-                for res_obj_str in res_obj_strs:
-                    try:
-                        res_obj_json: typing.Union[
-                            ImportResponseWithDocAndId[TDoc],
-                            ImportResponseWithDoc[TDoc],
-                            ImportResponseWithId,
-                            ImportResponseSuccess,
-                            ImportResponseFail[TDoc],
-                        ] = json.loads(res_obj_str)
-                    except json.JSONDecodeError as decode_error:
-                        raise TypesenseClientError(
-                            f"Invalid response - {res_obj_str}",
-                        ) from decode_error
-                    response_objs.append(res_obj_json)
-
-            return response_objs
-        else:
-            api_response = self.api_call.post(
-                self._endpoint_path("import"),
-                body=documents,
-                params=import_parameters,
-                as_json=False,
-                entity_type=str,
-            )
-            return api_response
+        return self._bulk_import(documents, import_parameters)
 
     def export(
         self,
@@ -462,3 +402,66 @@ class Documents(typing.Generic[TDoc]):
                 action,
             ],
         )
+
+    def _import_raw(
+        self,
+        documents: typing.Union[bytes, str],
+        import_parameters: _ImportParameters,
+    ) -> str:
+        """Import raw document data."""
+        response: str = self.api_call.post(
+            self._endpoint_path("import"),
+            body=documents,
+            params=import_parameters,
+            as_json=False,
+            entity_type=str,
+        )
+
+        return response
+
+    def _batch_import(
+        self,
+        documents: typing.List[TDoc],
+        import_parameters: _ImportParameters,
+        batch_size: int,
+    ) -> ImportResponse[TDoc]:
+        """Import documents in batches."""
+        response_objs: ImportResponse[TDoc] = []
+        for batch_index in range(0, len(documents), batch_size):
+            batch = documents[batch_index : batch_index + batch_size]
+            api_response = self._bulk_import(batch, import_parameters)
+            response_objs.extend(api_response)
+        return response_objs
+
+    def _bulk_import(
+        self,
+        documents: typing.List[TDoc],
+        import_parameters: _ImportParameters,
+    ) -> ImportResponse[TDoc]:
+        """Import a list of documents in bulk."""
+        document_strs = [json.dumps(doc) for doc in documents]
+        if not document_strs:
+            raise TypesenseClientError("Cannot import an empty list of documents.")
+
+        docs_import = "\n".join(document_strs)
+        res = self.api_call.post(
+            self._endpoint_path("import"),
+            body=docs_import,
+            params=import_parameters,
+            entity_type=str,
+            as_json=False,
+        )
+        return self._parse_import_response(res)
+
+    def _parse_import_response(self, response: str) -> ImportResponse[TDoc]:
+        """Parse the import response string into a list of response objects."""
+        response_objs: typing.List[ImportResponse] = []
+        for res_obj_str in response.split("\n"):
+            try:
+                res_obj_json = json.loads(res_obj_str)
+            except json.JSONDecodeError as decode_error:
+                raise TypesenseClientError(
+                    f"Invalid response - {res_obj_str}",
+                ) from decode_error
+            response_objs.append(res_obj_json)
+        return response_objs
