@@ -2,7 +2,7 @@
 
 import pytest
 
-from tests.conftest import Company
+from tests.fixtures.document_fixtures import Companies
 from tests.utils.object_assertions import (
     assert_match_object,
     assert_object_lists_match,
@@ -154,7 +154,7 @@ def test_search_invalid_parameters(
                     {
                         "q": "com",
                         "query_by": "company_name",
-                        "invalid": [Company(company_name="", id="", num_employees=0)],
+                        "invalid": [Companies(company_name="", id="", num_employees=0)],
                     },
                 ],
             },
@@ -167,7 +167,7 @@ def test_search_invalid_parameters(
                     {
                         "q": "com",
                         "query_by": "company_name",
-                        "invalid": Company(company_name="", id="", num_employees=0),
+                        "invalid": Companies(company_name="", id="", num_employees=0),
                     },
                 ],
             },

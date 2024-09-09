@@ -12,7 +12,7 @@ else:
 import pytest
 from pytest_mock import MockFixture
 
-from tests.conftest import Company
+from tests.fixtures.document_fixtures import Companies
 from tests.utils.object_assertions import (
     assert_match_object,
     assert_object_lists_match,
@@ -63,14 +63,14 @@ def test_get_existing_document(fake_documents: Documents) -> None:
 
 
 def test_create(
-    actual_documents: Documents[Company],
+    actual_documents: Documents[Companies],
     actual_api_call: ApiCall,
     delete_all: None,
     create_collection: None,
     mocker: MockFixture,
 ) -> None:
     """Test that the Documents object can create a document on Typesense server."""
-    company: Company = {
+    company: Companies = {
         "company_name": "Typesense",
         "id": "1",
         "num_employees": 25,
@@ -89,14 +89,14 @@ def test_create(
 
 
 def test_upsert(
-    actual_documents: Documents[Company],
+    actual_documents: Documents[Companies],
     actual_api_call: ApiCall,
     delete_all: None,
     create_collection: None,
     mocker: MockFixture,
 ) -> None:
     """Test that the Documents object can upsert a document on Typesense server."""
-    company: Company = {
+    company: Companies = {
         "company_name": "company",
         "id": "0",
         "num_employees": 10,
@@ -113,7 +113,7 @@ def test_upsert(
         entity_type=typing.Dict[str, str],
     )
 
-    updated_company: Company = {
+    updated_company: Companies = {
         "company_name": "company_updated",
         "id": "0",
         "num_employees": 10,
@@ -136,7 +136,7 @@ def test_upsert(
 
 
 def test_update(
-    actual_documents: Documents[Company],
+    actual_documents: Documents[Companies],
     actual_api_call: ApiCall,
     delete_all: None,
     create_collection: None,
@@ -152,7 +152,7 @@ def test_update(
 
 
 def test_create_many(
-    actual_documents: Documents[Company],
+    actual_documents: Documents[Companies],
     actual_api_call: ApiCall,
     delete_all: None,
     create_collection: None,
@@ -160,7 +160,7 @@ def test_create_many(
     caplog: pytest.LogCaptureFixture,
 ) -> None:
     """Test that the Documents object can create many documents on Typesense server."""
-    companies: typing.List[Company] = [
+    companies: typing.List[Companies] = [
         {
             "company_name": "Typesense",
             "id": "1",
@@ -180,7 +180,7 @@ def test_create_many(
 
 
 def test_export(
-    actual_documents: Documents[Company],
+    actual_documents: Documents[Companies],
     delete_all: None,
     create_collection: None,
     create_document: None,
@@ -191,7 +191,7 @@ def test_export(
 
 
 def test_delete(
-    actual_documents: Documents[Company],
+    actual_documents: Documents[Companies],
     delete_all: None,
     create_collection: None,
     create_document: None,
@@ -202,7 +202,7 @@ def test_delete(
 
 
 def test_delete_ignore_missing(
-    actual_documents: Documents[Company],
+    actual_documents: Documents[Companies],
     delete_all: None,
     create_collection: None,
 ) -> None:
@@ -214,14 +214,14 @@ def test_delete_ignore_missing(
 
 
 def test_import_fail(
-    generate_companies: typing.List[Company],
-    actual_documents: Documents[Company],
+    generate_companies: typing.List[Companies],
+    actual_documents: Documents[Companies],
     delete_all: None,
     create_collection: None,
     mocker: MockFixture,
 ) -> None:
     """Test that the Documents object doesn't throw an error when importing documents."""
-    wrong_company: Company = {"company_name": "Wrong", "id": "0", "num_employees": 0}
+    wrong_company: Companies = {"company_name": "Wrong", "id": "0", "num_employees": 0}
     companies = generate_companies + [wrong_company]
     request_spy = mocker.spy(actual_documents, "import_")
     response = actual_documents.import_(companies)
@@ -242,7 +242,7 @@ def test_import_fail(
 
 
 def test_import_empty(
-    actual_documents: Documents[Company],
+    actual_documents: Documents[Companies],
     actual_api_call: ApiCall,
     delete_all: None,
     create_collection: None,
@@ -253,8 +253,8 @@ def test_import_empty(
 
 
 def test_import_json_fail(
-    actual_documents: Documents[Company],
-    generate_companies: typing.List[Company],
+    actual_documents: Documents[Companies],
+    generate_companies: typing.List[Companies],
     actual_api_call: ApiCall,
     delete_all: None,
     create_collection: None,
@@ -271,8 +271,8 @@ def test_import_json_fail(
 
 
 def test_import_batch_size(
-    generate_companies: typing.List[Company],
-    actual_documents: Documents[Company],
+    generate_companies: typing.List[Companies],
+    actual_documents: Documents[Companies],
     actual_api_call: ApiCall,
     delete_all: None,
     create_collection: None,
@@ -291,8 +291,8 @@ def test_import_batch_size(
 
 
 def test_import_return_docs(
-    generate_companies: typing.List[Company],
-    actual_documents: Documents[Company],
+    generate_companies: typing.List[Companies],
+    actual_documents: Documents[Companies],
     delete_all: None,
     create_collection: None,
 ) -> None:
@@ -305,8 +305,8 @@ def test_import_return_docs(
 
 
 def test_import_return_ids(
-    generate_companies: typing.List[Company],
-    actual_documents: Documents[Company],
+    generate_companies: typing.List[Companies],
+    actual_documents: Documents[Companies],
     delete_all: None,
     create_collection: None,
 ) -> None:
@@ -319,8 +319,8 @@ def test_import_return_ids(
 
 
 def test_import_return_ids_and_docs(
-    generate_companies: typing.List[Company],
-    actual_documents: Documents[Company],
+    generate_companies: typing.List[Companies],
+    actual_documents: Documents[Companies],
     delete_all: None,
     create_collection: None,
 ) -> None:
@@ -337,8 +337,8 @@ def test_import_return_ids_and_docs(
 
 
 def test_import_jsonl(
-    generate_companies: typing.List[Company],
-    actual_documents: Documents[Company],
+    generate_companies: typing.List[Companies],
+    actual_documents: Documents[Companies],
     delete_all: None,
     create_collection: None,
     caplog: pytest.LogCaptureFixture,
@@ -372,7 +372,7 @@ def test_import_jsonl(
 
 
 def test_search(
-    actual_documents: Documents[Company],
+    actual_documents: Documents[Companies],
     actual_api_call: ApiCall,
     delete_all: None,
     create_collection: None,
@@ -407,7 +407,7 @@ def test_search(
 
 
 def test_search_array(
-    actual_documents: Documents[Company],
+    actual_documents: Documents[Companies],
     actual_api_call: ApiCall,
     delete_all: None,
     create_collection: None,
@@ -442,7 +442,7 @@ def test_search_array(
 
 
 def test_search_invalid_parameters(
-    actual_documents: Documents[Company],
+    actual_documents: Documents[Companies],
     actual_api_call: ApiCall,
     delete_all: None,
     create_collection: None,
@@ -455,7 +455,7 @@ def test_search_invalid_parameters(
                 "q": "com",
                 "query_by": "company_name",
                 "invalid": [
-                    Company(company_name="", id="", num_employees=0),
+                    Companies(company_name="", id="", num_employees=0),
                 ],
             },
         )
@@ -465,6 +465,6 @@ def test_search_invalid_parameters(
             {
                 "q": "com",
                 "query_by": "company_name",
-                "invalid": Company(company_name="", id="", num_employees=0),
+                "invalid": Companies(company_name="", id="", num_employees=0),
             },
         )
