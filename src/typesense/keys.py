@@ -127,7 +127,7 @@ class Keys:
                 digestmod=hashlib.sha256,
             ).digest(),
         )
-        key_prefix = search_key[0:4]
+        key_prefix = search_key[:4]
         raw_scoped_key = f"{digest.decode('utf-8')}{key_prefix}{params_str}"
         return base64.b64encode(raw_scoped_key.encode("utf-8"))
 
