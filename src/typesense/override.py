@@ -1,7 +1,3 @@
-from __future__ import annotations
-
-import sys
-
 from typesense.api_call import ApiCall
 from typesense.types.override import OverrideDeleteSchema, OverrideSchema
 
