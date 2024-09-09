@@ -22,7 +22,7 @@ def test_init(fake_api_call: ApiCall) -> None:
         debug.api_call.config.nearest_node,
         fake_api_call.config.nearest_node,
     )
-    assert debug.RESOURCE_PATH == "/debug"  # noqa: WPS437
+    assert debug.resource_path == "/debug"  # noqa: WPS437
 
 
 def test_retrieve(fake_debug: Debug) -> None:
