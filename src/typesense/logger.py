@@ -1,3 +1,5 @@
+"""Logging configuration for the Typesense Python client."""
+
 import logging
 
 logger = logging.getLogger("typesense")
