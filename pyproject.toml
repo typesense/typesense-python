@@ -32,3 +32,10 @@ version = {attr = "typesense.__version__"}
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.coverage.run]
+source = ["."]
+omit = ["examples/*.py","./venv/*","tests/*/*.py","*__init__.py","*/*test.py", "./src/typesense/types/*.py"]
+
+[tool.coverage.report]
+omit = ["examples/*.py","./venv/*","tests/*.py","*__init__.py","*/*test.py"]
