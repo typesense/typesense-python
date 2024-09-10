@@ -1,3 +1,33 @@
+"""
+Functionality for preprocessing parameters in the Typesense Python client library.
+
+This module contains utility functions for converting various data types to strings and
+processing parameter lists and dictionaries. These functions are used to prepare
+data for API requests to Typesense.
+
+Key features:
+- Convert individual values (int, str, bool) to strings
+- Process lists of parameters into comma-separated strings
+- Stringify search parameter dictionaries
+
+Functions:
+    stringify: Convert a single value to a string.
+    process_param_list: Convert a list of parameters to a comma-separated string.
+    stringify_search_params: Convert a dictionary of search parameters to strings.
+
+Types:
+    _ListTypes: Type alias for a list of strings, integers, or booleans.
+    _Types: Type alias for a single string, integer, or boolean.
+    ParamSchema: Type alias for a dictionary of search parameters.
+    StringifiedParamSchema: Type alias for a dictionary of stringified search parameters.
+
+Dependencies:
+    - typesense.exceptions: Provides InvalidParameter exception
+    - typing or typing_extensions: For type hinting
+
+Note: This module uses conditional imports to support both Python 3.11+ and earlier versions.
+"""
+
 import sys
 
 from typesense.exceptions import InvalidParameter
@@ -7,11 +37,8 @@ if sys.version_info > (3, 11):
 else:
     import typing_extensions as typing
 
-
 _ListTypes = typing.List[typing.Union[str, int, bool]]
-
 _Types = typing.Union[int, str, bool]
-
 ParamSchema: typing.TypeAlias = typing.Dict[
     str,
     typing.Union[
@@ -19,12 +46,30 @@ ParamSchema: typing.TypeAlias = typing.Dict[
         _ListTypes,
     ],
 ]
-
-
 StringifiedParamSchema: typing.TypeAlias = typing.Dict[str, str]
 
 
 def stringify(argument: _Types) -> str:
+    """
+    Convert a single value to a string.
+
+    Args:
+        argument (_Types): The value to be converted to a string.
+
+    Returns:
+        str: The stringified version of the input.
+
+    Raises:
+        InvalidParameter: If the input is not a string, integer, or boolean.
+
+    Examples:
+        >>> stringify(True)
+        'true'
+        >>> stringify(42)
+        '42'
+        >>> stringify("Hello")
+        'Hello'
+    """
     if not isinstance(argument, (str, int, bool)):
         raise InvalidParameter(
             f"Value {argument} is not a string, integer, or boolean.",
@@ -69,6 +114,9 @@ def stringify_search_params(parameter_dict: ParamSchema) -> StringifiedParamSche
     """
     Convert the search parameters to strings.
 
+    This function takes a dictionary of search parameters and converts all values
+    to their string representations. List values are converted to comma-separated strings.
+
     Args:
         parameter_dict (ParamSchema): The search parameters.
 
@@ -86,8 +134,7 @@ def stringify_search_params(parameter_dict: ParamSchema) -> StringifiedParamSche
         >>> stringify_search_params({"a": [True, False, True], "b": [1, 2, 3]})
         {"a": "true,false,true", "b": "1,2,3"}
     """
-    stringified_params = {}
-
+    stringified_params: StringifiedParamSchema = {}
     for key, param_value in parameter_dict.items():
         if isinstance(param_value, list):
             stringified_params[key] = process_param_list(param_value)
@@ -97,5 +144,4 @@ def stringify_search_params(parameter_dict: ParamSchema) -> StringifiedParamSche
             raise InvalidParameter(
                 f"Value {param_value} is not a string, integer, or boolean",
             )
-
     return stringified_params
