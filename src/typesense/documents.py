@@ -396,7 +396,7 @@ class Documents(typing.Generic[TDoc]):
         action = action or ""
         return "/".join(
             [
-                Collections.RESOURCE_PATH,
+                Collections.resource_path,
                 self.collection_name,
                 self.resource_path,
                 action,

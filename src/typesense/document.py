@@ -127,7 +127,7 @@ class Document(typing.Generic[TDoc]):
 
         return "/".join(
             [
-                Collections.RESOURCE_PATH,
+                Collections.resource_path,
                 self.collection_name,
                 Documents.resource_path,
                 self.document_id,

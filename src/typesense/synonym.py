@@ -89,7 +89,7 @@ class Synonym:
 
         return "/".join(
             [
-                Collections.RESOURCE_PATH,
+                Collections.resource_path,
                 self.collection_name,
                 Synonyms.resource_path,
                 self.synonym_id,

@@ -95,7 +95,7 @@ class Override:
 
         return "/".join(
             [
-                Collections.RESOURCE_PATH,
+                Collections.resource_path,
                 self.collection_name,
                 Overrides.resource_path,
                 self.override_id,
