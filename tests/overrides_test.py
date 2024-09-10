@@ -19,7 +19,10 @@ def test_init(fake_api_call: ApiCall) -> None:
     overrides = Overrides(fake_api_call, "companies")
 
     assert_match_object(overrides.api_call, fake_api_call)
-    assert_object_lists_match(overrides.api_call.nodes, fake_api_call.nodes)
+    assert_object_lists_match(
+        overrides.api_call.node_manager.nodes,
+        fake_api_call.node_manager.nodes,
+    )
     assert_match_object(
         overrides.api_call.config.nearest_node,
         fake_api_call.config.nearest_node,
@@ -34,7 +37,9 @@ def test_get_missing_override(fake_overrides: Overrides) -> None:
 
     assert override.override_id == "company_override"
     assert_match_object(override.api_call, fake_overrides.api_call)
-    assert_object_lists_match(override.api_call.nodes, fake_overrides.api_call.nodes)
+    assert_object_lists_match(
+        override.api_call.node_manager.nodes, fake_overrides.api_call.node_manager.nodes
+    )
     assert_match_object(
         override.api_call.config.nearest_node,
         fake_overrides.api_call.config.nearest_node,

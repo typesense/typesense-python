@@ -25,7 +25,10 @@ def test_init(fake_api_call: ApiCall) -> None:
     keys = Keys(fake_api_call)
 
     assert_match_object(keys.api_call, fake_api_call)
-    assert_object_lists_match(keys.api_call.nodes, fake_api_call.nodes)
+    assert_object_lists_match(
+        keys.api_call.node_manager.nodes,
+        fake_api_call.node_manager.nodes,
+    )
     assert_match_object(
         keys.api_call.config.nearest_node,
         fake_api_call.config.nearest_node,
@@ -39,7 +42,9 @@ def test_get_missing_key(fake_keys: Keys) -> None:
     key = fake_keys[1]
 
     assert_match_object(key.api_call, fake_keys.api_call)
-    assert_object_lists_match(key.api_call.nodes, fake_keys.api_call.nodes)
+    assert_object_lists_match(
+        key.api_call.node_manager.nodes, fake_keys.api_call.node_manager.nodes
+    )
     assert_match_object(
         key.api_call.config.nearest_node,
         fake_keys.api_call.config.nearest_node,

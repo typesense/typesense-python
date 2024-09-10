@@ -22,7 +22,10 @@ def test_init(fake_api_call: ApiCall) -> None:
     assert synonym.collection_name == "companies"
     assert synonym.synonym_id == "company_synonym"
     assert_match_object(synonym.api_call, fake_api_call)
-    assert_object_lists_match(synonym.api_call.nodes, fake_api_call.nodes)
+    assert_object_lists_match(
+        synonym.api_call.node_manager.nodes,
+        fake_api_call.node_manager.nodes,
+    )
     assert_match_object(
         synonym.api_call.config.nearest_node,
         fake_api_call.config.nearest_node,

@@ -29,7 +29,10 @@ def test_init(fake_api_call: ApiCall) -> None:
     conversations_models = ConversationsModels(fake_api_call)
 
     assert_match_object(conversations_models.api_call, fake_api_call)
-    assert_object_lists_match(conversations_models.api_call.nodes, fake_api_call.nodes)
+    assert_object_lists_match(
+        conversations_models.api_call.node_manager.nodes,
+        fake_api_call.node_manager.nodes,
+    )
     assert_match_object(
         conversations_models.api_call.config.nearest_node,
         fake_api_call.config.nearest_node,
@@ -49,8 +52,8 @@ def test_get_missing_conversations_model(
         fake_conversations_models.api_call,
     )
     assert_object_lists_match(
-        conversations_model.api_call.nodes,
-        fake_conversations_models.api_call.nodes,
+        conversations_model.api_call.node_manager.nodes,
+        fake_conversations_models.api_call.node_manager.nodes,
     )
     assert_match_object(
         conversations_model.api_call.config.nearest_node,

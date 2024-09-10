@@ -19,7 +19,10 @@ def test_init(fake_api_call: ApiCall) -> None:
     stopwords = Stopwords(fake_api_call)
 
     assert_match_object(stopwords.api_call, fake_api_call)
-    assert_object_lists_match(stopwords.api_call.nodes, fake_api_call.nodes)
+    assert_object_lists_match(
+        stopwords.api_call.node_manager.nodes,
+        fake_api_call.node_manager.nodes,
+    )
     assert_match_object(
         stopwords.api_call.config.nearest_node,
         fake_api_call.config.nearest_node,
@@ -34,7 +37,9 @@ def test_get_missing_stopword(fake_stopwords: Stopwords) -> None:
 
     assert stopword.stopwords_set_id == "company_stopwords"
     assert_match_object(stopword.api_call, fake_stopwords.api_call)
-    assert_object_lists_match(stopword.api_call.nodes, fake_stopwords.api_call.nodes)
+    assert_object_lists_match(
+        stopword.api_call.node_manager.nodes, fake_stopwords.api_call.node_manager.nodes
+    )
     assert_match_object(
         stopword.api_call.config.nearest_node,
         fake_stopwords.api_call.config.nearest_node,

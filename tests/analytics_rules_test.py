@@ -18,7 +18,10 @@ def test_init(fake_api_call: ApiCall) -> None:
     analytics_rules = AnalyticsRules(fake_api_call)
 
     assert_match_object(analytics_rules.api_call, fake_api_call)
-    assert_object_lists_match(analytics_rules.api_call.nodes, fake_api_call.nodes)
+    assert_object_lists_match(
+        analytics_rules.api_call.node_manager.nodes,
+        fake_api_call.node_manager.nodes,
+    )
     assert_match_object(
         analytics_rules.api_call.config.nearest_node,
         fake_api_call.config.nearest_node,
@@ -34,8 +37,8 @@ def test_get_missing_analytics_rule(fake_analytics_rules: AnalyticsRules) -> Non
     assert analytics_rule.rule_id == "company_analytics_rule"
     assert_match_object(analytics_rule.api_call, fake_analytics_rules.api_call)
     assert_object_lists_match(
-        analytics_rule.api_call.nodes,
-        fake_analytics_rules.api_call.nodes,
+        analytics_rule.api_call.node_manager.nodes,
+        fake_analytics_rules.api_call.node_manager.nodes,
     )
     assert_match_object(
         analytics_rule.api_call.config.nearest_node,

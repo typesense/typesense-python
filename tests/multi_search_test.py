@@ -19,7 +19,10 @@ def test_init(fake_api_call: ApiCall) -> None:
     documents = MultiSearch(fake_api_call)
 
     assert_match_object(documents.api_call, fake_api_call)
-    assert_object_lists_match(documents.api_call.nodes, fake_api_call.nodes)
+    assert_object_lists_match(
+        documents.api_call.node_manager.nodes,
+        fake_api_call.node_manager.nodes,
+    )
     assert_match_object(
         documents.api_call.config.nearest_node,
         fake_api_call.config.nearest_node,

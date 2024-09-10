@@ -21,7 +21,10 @@ def test_init(fake_api_call: ApiCall) -> None:
 
     assert key.key_id == 3
     assert_match_object(key.api_call, fake_api_call)
-    assert_object_lists_match(key.api_call.nodes, fake_api_call.nodes)
+    assert_object_lists_match(
+        key.api_call.node_manager.nodes,
+        fake_api_call.node_manager.nodes,
+    )
     assert_match_object(
         key.api_call.config.nearest_node,
         fake_api_call.config.nearest_node,

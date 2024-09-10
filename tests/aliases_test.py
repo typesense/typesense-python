@@ -19,7 +19,10 @@ def test_init(fake_api_call: ApiCall) -> None:
     aliases = Aliases(fake_api_call)
 
     assert_match_object(aliases.api_call, fake_api_call)
-    assert_object_lists_match(aliases.api_call.nodes, fake_api_call.nodes)
+    assert_object_lists_match(
+        aliases.api_call.node_manager.nodes,
+        fake_api_call.node_manager.nodes,
+    )
     assert_match_object(
         aliases.api_call.config.nearest_node,
         fake_api_call.config.nearest_node,
@@ -34,7 +37,9 @@ def test_get_missing_alias(fake_aliases: Aliases) -> None:
 
     assert alias.name == "company_alias"
     assert_match_object(alias.api_call, fake_aliases.api_call)
-    assert_object_lists_match(alias.api_call.nodes, fake_aliases.api_call.nodes)
+    assert_object_lists_match(
+        alias.api_call.node_manager.nodes, fake_aliases.api_call.node_manager.nodes
+    )
     assert_match_object(
         alias.api_call.config.nearest_node,
         fake_aliases.api_call.config.nearest_node,

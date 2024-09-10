@@ -10,7 +10,10 @@ def test_init(fake_api_call: ApiCall) -> None:
     analytics = Analytics(fake_api_call)
 
     assert_match_object(analytics.rules.api_call, fake_api_call)
-    assert_object_lists_match(analytics.rules.api_call.nodes, fake_api_call.nodes)
+    assert_object_lists_match(
+        analytics.rules.api_call.node_manager.nodes,
+        fake_api_call.node_manager.nodes,
+    )
     assert_match_object(
         analytics.rules.api_call.config.nearest_node,
         fake_api_call.config.nearest_node,

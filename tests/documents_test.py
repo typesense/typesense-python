@@ -28,7 +28,10 @@ def test_init(fake_api_call: ApiCall) -> None:
     documents = Documents(fake_api_call, "companies")
 
     assert_match_object(documents.api_call, fake_api_call)
-    assert_object_lists_match(documents.api_call.nodes, fake_api_call.nodes)
+    assert_object_lists_match(
+        documents.api_call.node_manager.nodes,
+        fake_api_call.node_manager.nodes,
+    )
     assert_match_object(
         documents.api_call.config.nearest_node,
         fake_api_call.config.nearest_node,
@@ -42,7 +45,9 @@ def test_get_missing_document(fake_documents: Documents) -> None:
     document = fake_documents["1"]
 
     assert_match_object(document.api_call, fake_documents.api_call)
-    assert_object_lists_match(document.api_call.nodes, fake_documents.api_call.nodes)
+    assert_object_lists_match(
+        document.api_call.node_manager.nodes, fake_documents.api_call.node_manager.nodes
+    )
     assert_match_object(
         document.api_call.config.nearest_node,
         fake_documents.api_call.config.nearest_node,

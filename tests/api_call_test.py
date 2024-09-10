@@ -20,7 +20,7 @@ from pytest_mock import MockerFixture
 
 from tests.utils.object_assertions import assert_match_object, assert_object_lists_match
 from typesense import exceptions
-from typesense.api_call import ApiCall
+from typesense.api_call import ApiCall, RequestHandler
 from typesense.configuration import Configuration, Node
 from typesense.logger import logger
 
@@ -76,8 +76,8 @@ def test_initialization(
 ) -> None:
     """Test the initialization of the ApiCall object."""
     assert api_call.config == config
-    assert_object_lists_match(api_call.nodes, config.nodes)
-    assert api_call.node_index == 0
+    assert_object_lists_match(api_call.node_manager.nodes, config.nodes)
+    assert api_call.node_manager.node_index == 0
 
 
 def test_node_due_for_health_check(
@@ -86,14 +86,14 @@ def test_node_due_for_health_check(
     """Test that it correctly identifies if a node is due for health check."""
     node = Node(host="localhost", port=8108, protocol="http", path=" ")
     node.last_access_ts = time.time() - 61
-    assert api_call.node_due_for_health_check(node) is True
+    assert api_call.node_manager._is_due_for_health_check(node) is True
 
 
 def test_get_node_nearest_healthy(
     api_call: ApiCall,
 ) -> None:
     """Test that it correctly selects the nearest node if it is healthy."""
-    node = api_call.get_node()
+    node = api_call.node_manager.get_node()
     assert_match_object(node, api_call.config.nearest_node)
 
 
@@ -102,8 +102,8 @@ def test_get_node_nearest_not_healthy(
 ) -> None:
     """Test that it selects the next available node if the nearest node is not healthy."""
     api_call.config.nearest_node.healthy = False
-    node = api_call.get_node()
-    assert_match_object(node, api_call.nodes[0])
+    node = api_call.node_manager.get_node()
+    assert_match_object(node, api_call.node_manager.nodes[0])
 
 
 def test_get_node_round_robin_selection(
@@ -114,34 +114,34 @@ def test_get_node_round_robin_selection(
     api_call.config.nearest_node = None
     mocker.patch("time.time", return_value=100)
 
-    node1 = api_call.get_node()
+    node1 = api_call.node_manager.get_node()
     assert_match_object(node1, api_call.config.nodes[0])
 
-    node2 = api_call.get_node()
+    node2 = api_call.node_manager.get_node()
     assert_match_object(node2, api_call.config.nodes[1])
 
-    node3 = api_call.get_node()
+    node3 = api_call.node_manager.get_node()
     assert_match_object(node3, api_call.config.nodes[2])
 
 
 def test_get_exception() -> None:
     """Test that it correctly returns the exception class for a given status code."""
-    assert ApiCall.get_exception(0) == exceptions.HTTPStatus0Error
-    assert ApiCall.get_exception(400) == exceptions.RequestMalformed
-    assert ApiCall.get_exception(401) == exceptions.RequestUnauthorized
-    assert ApiCall.get_exception(403) == exceptions.RequestForbidden
-    assert ApiCall.get_exception(404) == exceptions.ObjectNotFound
-    assert ApiCall.get_exception(409) == exceptions.ObjectAlreadyExists
-    assert ApiCall.get_exception(422) == exceptions.ObjectUnprocessable
-    assert ApiCall.get_exception(500) == exceptions.ServerError
-    assert ApiCall.get_exception(503) == exceptions.ServiceUnavailable
-    assert ApiCall.get_exception(999) == exceptions.TypesenseClientError
+    assert RequestHandler._get_exception(0) == exceptions.HTTPStatus0Error
+    assert RequestHandler._get_exception(400) == exceptions.RequestMalformed
+    assert RequestHandler._get_exception(401) == exceptions.RequestUnauthorized
+    assert RequestHandler._get_exception(403) == exceptions.RequestForbidden
+    assert RequestHandler._get_exception(404) == exceptions.ObjectNotFound
+    assert RequestHandler._get_exception(409) == exceptions.ObjectAlreadyExists
+    assert RequestHandler._get_exception(422) == exceptions.ObjectUnprocessable
+    assert RequestHandler._get_exception(500) == exceptions.ServerError
+    assert RequestHandler._get_exception(503) == exceptions.ServiceUnavailable
+    assert RequestHandler._get_exception(999) == exceptions.TypesenseClientError
 
 
 def test_normalize_params_with_booleans() -> None:
     """Test that it correctly normalizes boolean values to strings."""
     parameter_dict: typing.Dict[str, str | bool] = {"key1": True, "key2": False}
-    ApiCall.normalize_params(parameter_dict)
+    RequestHandler.normalize_params(parameter_dict)
 
     assert parameter_dict == {"key1": "true", "key2": "false"}
 
@@ -151,13 +151,13 @@ def test_normalize_params_with_non_dict() -> None:
     parameter_non_dict = "string"
 
     with pytest.raises(ValueError):
-        ApiCall.normalize_params(parameter_non_dict)
+        RequestHandler.normalize_params(parameter_non_dict)
 
 
 def test_normalize_params_with_mixed_types() -> None:
     """Test that it correctly normalizes boolean values to strings."""
     parameter_dict = {"key1": True, "key2": False, "key3": "value", "key4": 123}
-    ApiCall.normalize_params(parameter_dict)
+    RequestHandler.normalize_params(parameter_dict)
     assert parameter_dict == {
         "key1": "true",
         "key2": "false",
@@ -169,14 +169,14 @@ def test_normalize_params_with_mixed_types() -> None:
 def test_normalize_params_with_empty_dict() -> None:
     """Test that it correctly normalizes an empty dictionary."""
     parameter_dict: typing.Dict[str, str] = {}
-    ApiCall.normalize_params(parameter_dict)
+    RequestHandler.normalize_params(parameter_dict)
     assert not parameter_dict
 
 
 def test_normalize_params_with_no_booleans() -> None:
     """Test that it correctly normalizes a dictionary with no boolean values."""
     parameter_dict = {"key1": "value", "key2": 123}
-    ApiCall.normalize_params(parameter_dict)
+    RequestHandler.normalize_params(parameter_dict)
     assert parameter_dict == {"key1": "value", "key2": 123}
 
 
@@ -191,7 +191,7 @@ def test_make_request_as_json(api_call: ApiCall) -> None:
             status_code=200,
         )
 
-        response = api_call.make_request(
+        response = api_call._execute_request(
             session.get,
             "/test",
             as_json=True,
@@ -211,7 +211,7 @@ def test_make_request_as_text(api_call: ApiCall) -> None:
             status_code=200,
         )
 
-        response = api_call.make_request(
+        response = api_call._execute_request(
             session.get,
             "/test",
             as_json=False,
@@ -387,7 +387,7 @@ def test_raise_custom_exception_with_header(
         )
 
         with pytest.raises(exceptions.RequestMalformed) as exception:
-            api_call.make_request(
+            api_call._execute_request(
                 requests.get,
                 "/test",
                 as_json=True,
@@ -408,7 +408,7 @@ def test_raise_custom_exception_without_header(
         )
 
         with pytest.raises(exceptions.RequestMalformed) as exception:
-            api_call.make_request(
+            api_call._execute_request(
                 requests.get,
                 "/test",
                 as_json=True,
@@ -456,24 +456,30 @@ def test_get_node_no_healthy_nodes(
     caplog: pytest.LogCaptureFixture,
 ) -> None:
     """Test that it logs a message if no healthy nodes are found."""
-    for api_node in api_call.nodes:
+    for api_node in api_call.node_manager.nodes:
         api_node.healthy = False
 
     api_call.config.nearest_node.healthy = False
 
-    mocker.patch.object(api_call, "node_due_for_health_check", return_value=False)
+    mocker.patch.object(
+        api_call.node_manager,
+        "_is_due_for_health_check",
+        return_value=False,
+    )
 
     # Need to set the logger level to DEBUG to capture the message
     logger.setLevel(logging.DEBUG)
 
-    selected_node = api_call.get_node()
+    selected_node = api_call.node_manager.get_node()
 
     with caplog.at_level(logging.DEBUG):
         assert "No healthy nodes were found. Returning the next node." in caplog.text
 
-    assert selected_node == api_call.nodes[api_call.node_index]
+    assert (
+        selected_node == api_call.node_manager.nodes[api_call.node_manager.node_index]
+    )
 
-    assert api_call.node_index == 0
+    assert api_call.node_manager.node_index == 0
 
 
 def test_raises_if_no_nodes_are_healthy_with_the_last_exception(
@@ -579,3 +585,19 @@ def test_uses_nearest_node_if_present_and_healthy(  # noqa: WPS213
         assert request_mocker.request_history[11].url == "http://nearest:8108/"
         assert request_mocker.request_history[12].url == "http://nearest:8108/"
         assert request_mocker.request_history[13].url == "http://nearest:8108/"
+
+
+def test_max_retries_no_last_exception(api_call: ApiCall) -> None:
+    """Test that it raises if the maximum number of retries is reached."""
+    with pytest.raises(
+        exceptions.TypesenseClientError,
+        match="All nodes are unhealthy",
+    ):
+        api_call._execute_request(
+            requests.get,
+            "/",
+            as_json=True,
+            entity_type=typing.Dict[str, str],
+            num_retries=10,
+            last_exception=None,
+        )

@@ -12,7 +12,9 @@ def test_client_init(fake_config_dict: ConfigDict) -> None:
     assert fake_client.config == fake_client.api_call.config
 
     assert_match_object(fake_client.api_call.config, fake_client.config)
-    assert_object_lists_match(fake_client.api_call.nodes, fake_client.config.nodes)
+    assert_object_lists_match(
+        fake_client.api_call.node_manager.nodes, fake_client.config.nodes
+    )
     assert_match_object(
         fake_client.api_call.config.nearest_node,
         fake_client.config.nearest_node,
@@ -62,7 +64,9 @@ def test_retrieve_collection_actual(
 
 
 def test_retrieve_collection_actual_no_name(
-    actual_client: Client, delete_all: None, create_collection: None,
+    actual_client: Client,
+    delete_all: None,
+    create_collection: None,
 ) -> None:
     """Test that the client can retrieve an actual collection."""
     collection = actual_client.typed_collection(model=Companies)

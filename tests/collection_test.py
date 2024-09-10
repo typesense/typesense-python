@@ -23,7 +23,10 @@ def test_init(fake_api_call: ApiCall) -> None:
 
     assert collection.name == "companies"
     assert_match_object(collection.api_call, fake_api_call)
-    assert_object_lists_match(collection.api_call.nodes, fake_api_call.nodes)
+    assert_object_lists_match(
+        collection.api_call.node_manager.nodes,
+        fake_api_call.node_manager.nodes,
+    )
     assert_match_object(
         collection.api_call.config.nearest_node,
         fake_api_call.config.nearest_node,

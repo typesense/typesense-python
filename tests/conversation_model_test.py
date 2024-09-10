@@ -31,7 +31,10 @@ def test_init(fake_api_call: ApiCall) -> None:
 
     assert conversation_model.model_id == "conversation_model_id"
     assert_match_object(conversation_model.api_call, fake_api_call)
-    assert_object_lists_match(conversation_model.api_call.nodes, fake_api_call.nodes)
+    assert_object_lists_match(
+        conversation_model.api_call.node_manager.nodes,
+        fake_api_call.node_manager.nodes,
+    )
     assert_match_object(
         conversation_model.api_call.config.nearest_node,
         fake_api_call.config.nearest_node,
