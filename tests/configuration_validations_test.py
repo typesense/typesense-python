@@ -44,7 +44,7 @@ def test_deprecation_warning_timeout_seconds(caplog: pytest.LogCaptureFixture) -
     }
     ConfigurationValidations.show_deprecation_warnings(config_dict)
     assert (
-        ' '.join(
+        " ".join(
             [
                 "Deprecation warning: timeout_seconds is now renamed",
                 "to connection_timeout_seconds",
@@ -180,7 +180,7 @@ def test_validate_config_dict_with_wrong_nearest_node() -> None:
     """Test validate_config_dict with wrong nearest node."""
     with pytest.raises(
         ConfigError,
-        match='`nearest_node` entry must be a URL string or a dictionary with the following required keys: host, port, protocol',  # noqa: B950
+        match="`nearest_node` entry must be a URL string or a dictionary with the following required keys: host, port, protocol",  # noqa: B950
     ):
         ConfigurationValidations.validate_config_dict(
             {
