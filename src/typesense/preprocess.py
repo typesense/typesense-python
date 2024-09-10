@@ -24,13 +24,14 @@ ParamSchema: typing.TypeAlias = typing.Dict[
 StringifiedParamSchema: typing.TypeAlias = typing.Dict[str, str]
 
 
-def stringify(val: _Types) -> str:
-    if not isinstance(val, (str, int, bool)):
-        raise InvalidParameter(f"Value {val} is not a string, integer, or boolean.")
-    if isinstance(val, bool) or isinstance(val, int):
-        return str(val).lower()
-    else:
-        return val
+def stringify(argument: _Types) -> str:
+    if not isinstance(argument, (str, int, bool)):
+        raise InvalidParameter(
+            f"Value {argument} is not a string, integer, or boolean.",
+        )
+    if isinstance(argument, (bool, int)):
+        return str(argument).lower()
+    return argument
 
 
 def process_param_list(
