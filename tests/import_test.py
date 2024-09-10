@@ -32,6 +32,7 @@ module_names = [
     "collection",
     "collections",
     "configuration",
+    "request_handler",
     "conversations_models",
     "document",
     "documents",
