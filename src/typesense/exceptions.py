@@ -1,51 +1,81 @@
+"""
+This module defines custom exception classes for the Typesense client.
+
+Classes:
+    - TypesenseClientError: Base exception class for Typesense client errors.
+    - ConfigError: Raised when there is an error in the client configuration.
+    - Timeout: Raised when a request times out.
+    - RequestMalformed: Raised when a request's parameters are malformed.
+    - RequestUnauthorized: Raised when a request is unauthorized.
+    - RequestForbidden: Raised when a request is forbidden.
+    - ObjectNotFound: Raised when a resource is not found.
+    - ObjectAlreadyExists: Raised when a resource already exists.
+    - ObjectUnprocessable: Raised when a resource is unprocessable.
+    - ServerError: Raised when the server encounters an error.
+    - ServiceUnavailable: Raised when the service is unavailable.
+    - HTTPStatus0Error: Raised when the HTTP status code is 0.
+    - InvalidParameter: Raised when a parameter is invalid.
+
+These exception classes provide specific error types for various scenarios
+that may occur when interacting with the Typesense API.
+
+This module uses type hinting and is compatible with Python 3.11+ as well as earlier
+versions through the use of the typing_extensions library.
+"""
+
+
 class TypesenseClientError(IOError):
-    def __init__(self, *args, **kwargs):
-        super(TypesenseClientError, self).__init__(*args, **kwargs)
+    """
+    Base exception class for Typesense client errors.
+
+    This class extends IOError and serves as the parent class for all
+    custom Typesense client exceptions.
+    """
 
 
 class ConfigError(TypesenseClientError):
-    pass
+    """Raised when there is an error in the client configuration."""
 
 
 class Timeout(TypesenseClientError):
-    pass
+    """Raised when a request times out."""
 
 
 class RequestMalformed(TypesenseClientError):
-    pass
+    """Raised when a request's parameters are malformed."""
 
 
 class RequestUnauthorized(TypesenseClientError):
-    pass
+    """Raised when a request is unauthorized."""
 
 
 class RequestForbidden(TypesenseClientError):
-    pass
+    """Raised when a request is forbidden."""
 
 
 class ObjectNotFound(TypesenseClientError):
-    pass
+    """Raised when a resource is not found."""
 
 
 class ObjectAlreadyExists(TypesenseClientError):
-    pass
+    """Raised when a resource already exists."""
 
 
 class ObjectUnprocessable(TypesenseClientError):
-    pass
+    """Raised when a resource is unprocessable."""
 
 
 class ServerError(TypesenseClientError):
-    pass
+    """Raised when the server encounters an error."""
 
 
 class ServiceUnavailable(TypesenseClientError):
-    pass
+    """Raised when the service is unavailable."""
 
 
 class HTTPStatus0Error(TypesenseClientError):
-    pass
+    """Raised when the HTTP status code is 0."""
 
 
 class InvalidParameter(TypesenseClientError):
-    pass
+    """Raised when a parameter is invalid."""
