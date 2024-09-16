@@ -74,6 +74,8 @@ class ConfigDict(typing.TypedDict):
         master_node (typing.Union[str, NodeConfigDict], deprecated): A dictionary or
             URL that represents the master node.
 
+        additional_headers (dict): Additional headers to include in the request.
+
         read_replica_nodes (list[typing.Union[str, NodeConfigDict]], deprecated): A list of
             dictionaries or URLs that represent the read replica nodes.
     """
@@ -87,6 +89,7 @@ class ConfigDict(typing.TypedDict):
     verify: typing.NotRequired[bool]
     timeout_seconds: typing.NotRequired[int]  # deprecated
     master_node: typing.NotRequired[typing.Union[str, NodeConfigDict]]  # deprecated
+    additional_headers: typing.NotRequired[typing.Dict[str, str]]
     read_replica_nodes: typing.NotRequired[
         typing.List[typing.Union[str, NodeConfigDict]]
     ]  # deprecated
@@ -213,6 +216,7 @@ class Configuration:
             60,
         )
         self.verify = config_dict.get("verify", True)
+        self.additional_headers = config_dict.get("additional_headers", {})
 
     def _handle_nearest_node(
         self,
