@@ -30,7 +30,7 @@ def test_init(fake_api_call: ApiCall) -> None:
 
 def test_retrieve(fake_debug: Debug) -> None:
     """Test that the Debug object can retrieve a debug."""
-    json_response: DebugResponseSchema = {"state": 1, "version": "27.0"}
+    json_response: DebugResponseSchema = {"state": 1, "version": "27.1"}
 
     with requests_mock.Mocker() as mock:
         mock.get(
@@ -48,7 +48,7 @@ def test_retrieve(fake_debug: Debug) -> None:
 
 def test_actual_retrieve(actual_debug: Debug) -> None:
     """Test that the Debug object can retrieve a debug on Typesense server."""
-    json_response: DebugResponseSchema = {"state": 1, "version": "27.0"}
+    json_response: DebugResponseSchema = {"state": 1, "version": "27.1"}
 
     response = actual_debug.retrieve()
 
