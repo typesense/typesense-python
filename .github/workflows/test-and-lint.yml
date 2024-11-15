@@ -1,0 +1,57 @@
+name: Test and Lint
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
+    services:
+      typesense:
+        image: typesense/typesense:27.1
+        ports:
+          - 8108:8108
+        volumes:
+          - /tmp/typesense-data:/data
+          - /tmp/typesense-analytics:/analytics
+        env:
+          TYPESENSE_API_KEY: xyz
+          TYPESENSE_DATA_DIR: /data
+          TYPESENSE_ENABLE_CORS: true
+          TYPESENSE_ANALYTICS_DIR: /analytics
+          TYPESENSE_ENABLE_SEARCH_ANALYTICS: true
+
+    steps:
+    - name: Wait for Typesense
+      run: |
+        timeout 20 bash -c 'while [[ "$(curl -s -o /dev/null -w ''%{http_code}'' localhost:8108/health)" != "200" ]]; do sleep 1; done' || false
+    - uses: actions/checkout@v4
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+        cache: 'pip'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements/dev.txt
+
+    - name: Lint with Flake8
+      run: |
+        flake8 src/typesense
+
+    - name: Check types with mypy
+      run: |
+        mypy src/typesense
+
+    - name: Run tests and coverage (excluding OpenAI)
+      run: |
+        coverage run -m pytest -m "not open_ai"
