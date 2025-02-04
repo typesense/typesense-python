@@ -45,6 +45,7 @@ from typesense.debug import Debug
 from typesense.keys import Keys
 from typesense.multi_search import MultiSearch
 from typesense.operations import Operations
+from typesense.stemming import Stemming
 from typesense.stopwords import Stopwords
 
 TDoc = typing.TypeVar("TDoc", bound=DocumentSchema)
@@ -56,7 +57,7 @@ class Client:
 
     This class serves as the entry point for all Typesense operations. It initializes
     and provides access to various components of the Typesense SDK, such as collections,
-    multi-search, keys, aliases, analytics, operations, debug, stopwords,
+    multi-search, keys, aliases, analytics, stemming, operations, debug, stopwords,
     and conversation models.
 
     Attributes:
@@ -67,6 +68,7 @@ class Client:
         keys (Keys): Instance for managing API keys.
         aliases (Aliases): Instance for managing collection aliases.
         analytics (Analytics): Instance for analytics operations.
+        stemming (Stemming): Instance for stemming dictionary operations.
         operations (Operations): Instance for various Typesense operations.
         debug (Debug): Instance for debug operations.
         stopwords (Stopwords): Instance for managing stopwords.
@@ -96,6 +98,7 @@ class Client:
         self.keys = Keys(self.api_call)
         self.aliases = Aliases(self.api_call)
         self.analytics = Analytics(self.api_call)
+        self.stemming = Stemming(self.api_call)
         self.operations = Operations(self.api_call)
         self.debug = Debug(self.api_call)
         self.stopwords = Stopwords(self.api_call)
