@@ -830,11 +830,13 @@ class DeleteQueryParameters(typing.TypedDict):
     Parameters for deleting documents.
 
     Attributes:
+      truncate (str): Truncate the collection, keeping just the schema.
       filter_by (str): Filter to apply to documents.
       batch_size (int): Batch size for deleting documents.
       ignore_not_found (bool): Ignore not found documents.
     """
 
+    truncate: typing.NotRequired[bool]
     filter_by: str
     batch_size: typing.NotRequired[int]
     ignore_not_found: typing.NotRequired[bool]
