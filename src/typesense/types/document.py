@@ -368,6 +368,7 @@ class FilterParameters(typing.TypedDict):
     """
 
     filter_by: typing.NotRequired[str]
+    max_filter_by_candidates: typing.NotRequired[int]
     enable_lazy_filter: typing.NotRequired[bool]
 
 
