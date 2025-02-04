@@ -17,6 +17,7 @@ _FieldType = typing.Literal[
     "float",
     "bool",
     "geopoint",
+    "geopolygon",
     "geopoint[]",
     "string[]",
     "int32[]",
