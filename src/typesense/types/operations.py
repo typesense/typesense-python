@@ -41,6 +41,21 @@ class HealthCheckResponse(typing.TypedDict):
     ok: bool
 
 
+class SchemaChangesResponse(typing.TypedDict):
+    """
+    Response schema for schema changes.
+
+    Attributes:
+        collection (str): The name of the collection.
+        validated_docs (int): The number of validated documents.
+        altered_docs (int): The number of altered documents
+    """
+
+    collection: str
+    validated_docs: int
+    altered_docs: int
+
+
 class OperationResponse(typing.TypedDict):
     """
     Response schema for operations.
