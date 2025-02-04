@@ -569,6 +569,7 @@ class MultiSearchParameters(SearchParameters):
     """
 
     collection: str
+    rerank_hybrid_matches: typing.NotRequired[bool]
 
 
 class MultiSearchCommonParameters(
