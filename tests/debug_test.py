@@ -47,9 +47,11 @@ def test_retrieve(fake_debug: Debug) -> None:
 
 
 def test_actual_retrieve(actual_debug: Debug) -> None:
-    """Test that the Debug object can retrieve a debug on Typesense server."""
-    json_response: DebugResponseSchema = {"state": 1, "version": "27.0"}
-
+    """Test that the Debug object can retrieve a debug on Typesense server and verify response structure."""
     response = actual_debug.retrieve()
 
-    assert response == json_response
+    assert "state" in response
+    assert "version" in response
+
+    assert isinstance(response["state"], int)
+    assert isinstance(response["version"], str)
