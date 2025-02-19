@@ -66,6 +66,7 @@ def test_configuration_explicit() -> None:
         "num_retries": 5,
         "retry_interval_seconds": 2.0,
         "verify": False,
+        "additional_headers": {"X-Test": "test", "X-Test2": "test2"},
     }
 
     configuration = Configuration(config)
@@ -82,6 +83,7 @@ def test_configuration_explicit() -> None:
         "num_retries": 5,
         "retry_interval_seconds": 2.0,
         "verify": False,
+        "additional_headers": {"X-Test": "test", "X-Test2": "test2"},
     }
 
     assert_to_contain_object(configuration, expected)
