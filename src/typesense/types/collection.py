@@ -17,6 +17,7 @@ _FieldType = typing.Literal[
     "float",
     "bool",
     "geopoint",
+    "geopolygon",
     "geopoint[]",
     "string[]",
     "int32[]",
@@ -46,6 +47,8 @@ class CollectionFieldSchema(typing.Generic[_TType], typing.TypedDict, total=Fals
       optional (bool): Whether the field is optional.
       infix (bool): Whether the field is an infix.
       stem (bool): Whether the field is a stem.
+      symbols_to_index (list[str]): The symbols to index
+      token_separators (list[str]): The token separators.
       locale (Locales): The locale of the field.
       sort (bool): Whether the field is sortable.
       store (bool): Whether the field is stored.
@@ -64,6 +67,8 @@ class CollectionFieldSchema(typing.Generic[_TType], typing.TypedDict, total=Fals
     locale: typing.NotRequired[Locales]
     sort: typing.NotRequired[bool]
     store: typing.NotRequired[bool]
+    symbols_to_index: typing.NotRequired[typing.List[str]]
+    token_separators: typing.NotRequired[typing.List[str]]
     num_dim: typing.NotRequired[float]
     range_index: typing.NotRequired[bool]
     index: typing.NotRequired[bool]
@@ -83,6 +88,8 @@ class RegularCollectionFieldSchema(CollectionFieldSchema[_FieldType]):
       stem (bool): Whether the field is a stem.
       locale (Locales): The locale of the field.
       sort (bool): Whether the field is sortable.
+      symbols_to_index (list[str]): The symbols to index
+      token_separators (list[str]): The token separators.
       store (bool): Whether the field is stored.
       num_dim (float): The number of dimensions.
       range_index (bool): Whether the field is a range index.
@@ -101,6 +108,8 @@ class ReferenceCollectionFieldSchema(CollectionFieldSchema[_ReferenceFieldType])
       facet (bool): Whether the field is a facet.
       optional (bool): Whether the field is optional.
       infix (bool): Whether the field is an infix.
+      symbols_to_index (list[str]): The symbols to index
+      token_separators (list[str]): The token separators.
       stem (bool): Whether the field is a stem.
       locale (Locales): The locale of the field.
       sort (bool): Whether the field is sortable.

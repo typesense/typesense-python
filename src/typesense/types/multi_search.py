@@ -29,4 +29,5 @@ class MultiSearchRequestSchema(typing.TypedDict):
         searches (list[MultiSearchParameters]): The search parameters.
     """
 
+    union: typing.NotRequired[typing.Literal[True]]
     searches: typing.List[MultiSearchParameters]

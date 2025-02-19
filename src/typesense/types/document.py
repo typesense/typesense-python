@@ -368,6 +368,7 @@ class FilterParameters(typing.TypedDict):
     """
 
     filter_by: typing.NotRequired[str]
+    max_filter_by_candidates: typing.NotRequired[int]
     enable_lazy_filter: typing.NotRequired[bool]
 
 
@@ -569,6 +570,7 @@ class MultiSearchParameters(SearchParameters):
     """
 
     collection: str
+    rerank_hybrid_matches: typing.NotRequired[bool]
 
 
 class MultiSearchCommonParameters(
@@ -830,11 +832,13 @@ class DeleteQueryParameters(typing.TypedDict):
     Parameters for deleting documents.
 
     Attributes:
+      truncate (str): Truncate the collection, keeping just the schema.
       filter_by (str): Filter to apply to documents.
       batch_size (int): Batch size for deleting documents.
       ignore_not_found (bool): Ignore not found documents.
     """
 
+    truncate: typing.NotRequired[bool]
     filter_by: str
     batch_size: typing.NotRequired[int]
     ignore_not_found: typing.NotRequired[bool]

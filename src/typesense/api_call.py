@@ -473,7 +473,7 @@ class ApiCall:
         url: str,
         entity_type: typing.Type[TEntityDict],
         as_json: bool,
-        **kwargs: typing.Any,
+        **kwargs: SessionFunctionKwargs[TParams, TBody],
     ) -> typing.Union[TEntityDict, str]:
         """Make the API request and process the response."""
         request_response = self.request_handler.make_request(

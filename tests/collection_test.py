@@ -197,6 +197,7 @@ def test_actual_retrieve(
                 "sort": False,
                 "infix": False,
                 "stem": False,
+                "stem_dictionary": "",
                 "store": True,
             },
             {
@@ -209,6 +210,7 @@ def test_actual_retrieve(
                 "sort": True,
                 "infix": False,
                 "stem": False,
+                "stem_dictionary": "",
                 "store": True,
             },
         ],

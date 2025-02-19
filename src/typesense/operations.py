@@ -22,6 +22,7 @@ from typesense.types.operations import (
     HealthCheckResponse,
     LogSlowRequestsTimeParams,
     OperationResponse,
+    SchemaChangesResponse,
     SnapshotParameters,
 )
 
@@ -48,8 +49,9 @@ class Operations:
     """
 
     resource_path: typing.Final[str] = "/operations"
-    healht_path: typing.Final[str] = "/health"
+    health_path: typing.Final[str] = "/health"
     config_path: typing.Final[str] = "/config"
+    schema_changes: typing.Final[str] = "/schema_changes"
 
     def __init__(self, api_call: ApiCall):
         """
@@ -59,6 +61,23 @@ class Operations:
             api_call (ApiCall): The ApiCall instance for making API requests.
         """
         self.api_call = api_call
+
+    @typing.overload
+    def perform(
+        self,
+        operation_name: typing.Literal["schema_changes"],
+        query_params: None = None,
+    ) -> typing.List[SchemaChangesResponse]:
+        """
+        Perform a vote operation.
+
+        Args:
+            operation_name (Literal["schema_changes"]): The name of the operation.
+            query_params (None, optional): Query parameters (not used for vote operation).
+
+        Returns:
+            OperationResponse: The response from the vote operation.
+        """
 
     @typing.overload
     def perform(
@@ -150,7 +169,13 @@ class Operations:
     def perform(
         self,
         operation_name: typing.Union[
-            typing.Literal["snapshot, vote, db/compact, cache/clear"],
+            typing.Literal[
+                "snapshot",
+                "vote",
+                "db/compact",
+                "cache/clear",
+                "schema_changes",
+            ],
             str,
         ],
         query_params: typing.Union[
@@ -189,7 +214,7 @@ class Operations:
             bool: True if the server is healthy, False otherwise.
         """
         call_resp = self.api_call.get(
-            Operations.healht_path,
+            Operations.health_path,
             as_json=True,
             entity_type=HealthCheckResponse,
         )

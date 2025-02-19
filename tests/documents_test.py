@@ -237,7 +237,6 @@ def test_import_fail(
     expected.append(
         {
             "code": 409,
-            "document": '{"company_name": "Wrong", "id": "0", "num_employees": 0}',
             "error": "A document with id 0 already exists.",
             "success": False,
         },

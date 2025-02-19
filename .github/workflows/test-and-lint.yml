@@ -14,7 +14,7 @@ jobs:
         python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
     services:
       typesense:
-        image: typesense/typesense:27.1
+        image: typesense/typesense:28.0
         ports:
           - 8108:8108
         volumes:
