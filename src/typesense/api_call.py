@@ -334,7 +334,7 @@ class ApiCall:
         as_json: typing.Literal[True],
         last_exception: typing.Union[None, Exception] = None,
         num_retries: int = 0,
-        **kwargs: typing.Any,
+        **kwargs: SessionFunctionKwargs[TParams, TBody],
     ) -> TEntityDict:
         """
         Execute a request to the Typesense API with retry logic.
@@ -373,7 +373,7 @@ class ApiCall:
         as_json: typing.Literal[False],
         last_exception: typing.Union[None, Exception] = None,
         num_retries: int = 0,
-        **kwargs: typing.Any,
+        **kwargs: SessionFunctionKwargs[TParams, TBody],
     ) -> str:
         """
         Execute a request to the Typesense API with retry logic.
@@ -411,7 +411,7 @@ class ApiCall:
         as_json: typing.Union[typing.Literal[True], typing.Literal[False]] = True,
         last_exception: typing.Union[None, Exception] = None,
         num_retries: int = 0,
-        **kwargs: typing.Any,
+        **kwargs: SessionFunctionKwargs[TParams, TBody],
     ) -> typing.Union[TEntityDict, str]:
         """
         Execute a request to the Typesense API with retry logic.
@@ -473,7 +473,7 @@ class ApiCall:
         url: str,
         entity_type: typing.Type[TEntityDict],
         as_json: bool,
-        **kwargs: typing.Any,
+        **kwargs: SessionFunctionKwargs[TParams, TBody],
     ) -> typing.Union[TEntityDict, str]:
         """Make the API request and process the response."""
         request_response = self.request_handler.make_request(
@@ -493,7 +493,7 @@ class ApiCall:
     def _prepare_request_params(
         self,
         endpoint: str,
-        **kwargs: typing.Any,
+        **kwargs: SessionFunctionKwargs[TParams, TBody],
     ) -> typing.Tuple[Node, str, SessionFunctionKwargs[TParams, TBody]]:
         node = self.node_manager.get_node()
         url = node.url() + endpoint
