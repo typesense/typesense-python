@@ -6,6 +6,7 @@ import logging
 import sys
 import time
 
+from isort import Config
 from pytest_mock import MockFixture
 
 if sys.version_info >= (3, 11):
@@ -135,6 +136,43 @@ def test_normalize_params_with_no_booleans() -> None:
     assert parameter_dict == {"key1": "value", "key2": 123}
 
 
+def test_additional_headers(fake_api_call: ApiCall) -> None:
+    """Test the `make_request` method with additional headers from the config."""
+    session = requests.sessions.Session()
+    api_call = ApiCall(
+        Configuration(
+            {
+                "additional_headers": {
+                    "AdditionalHeader1": "test",
+                    "AdditionalHeader2": "test2",
+                },
+                "api_key": "test-api",
+                "nodes": [
+                    "http://nearest:8108",
+                ],
+            },
+        ),
+    )
+
+    with requests_mock.mock(session=session) as request_mocker:
+        request_mocker.get(
+            "http://nearest:8108/test",
+            json={"key": "value"},
+            status_code=200,
+        )
+
+        api_call._execute_request(
+            session.get,
+            "/test",
+            as_json=True,
+            entity_type=typing.Dict[str, str],
+        )
+
+        request = request_mocker.request_history[-1]
+        assert request.headers["AdditionalHeader1"] == "test"
+        assert request.headers["AdditionalHeader2"] == "test2"
+
+
 def test_make_request_as_json(fake_api_call: ApiCall) -> None:
     """Test the `make_request` method with JSON response."""
     session = requests.sessions.Session()
@@ -172,6 +210,7 @@ def test_make_request_as_text(fake_api_call: ApiCall) -> None:
             as_json=False,
             entity_type=typing.Dict[str, str],
         )
+
         assert response == "response text"
 
 
@@ -431,7 +470,8 @@ def test_get_node_no_healthy_nodes(
         assert "No healthy nodes were found. Returning the next node." in caplog.text
 
     assert (
-        selected_node == fake_api_call.node_manager.nodes[fake_api_call.node_manager.node_index]
+        selected_node
+        == fake_api_call.node_manager.nodes[fake_api_call.node_manager.node_index]
     )
 
     assert fake_api_call.node_manager.node_index == 0

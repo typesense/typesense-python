@@ -204,7 +204,11 @@ class RequestHandler:
         Raises:
             TypesenseClientError: If the API returns an error response.
         """
-        headers = {self.api_key_header_name: self.config.api_key}
+        headers = {
+            self.api_key_header_name: self.config.api_key,
+        }
+        headers.update(self.config.additional_headers)
+
         kwargs.setdefault("headers", {}).update(headers)
         kwargs.setdefault("timeout", self.config.connection_timeout_seconds)
         kwargs.setdefault("verify", self.config.verify)
