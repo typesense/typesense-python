@@ -827,6 +827,17 @@ class SearchResponse(typing.Generic[TDoc], typing.TypedDict):
     conversation: typing.NotRequired[Conversation]
 
 
+class DeleteSingleDocumentParameters(typing.TypedDict):
+    """
+    Parameters for deleting a single document.
+
+    Attributes:
+      ignore_not_found (bool): Ignore not found documents.
+    """
+
+    ignore_not_found: typing.NotRequired[bool]
+
+
 class DeleteQueryParameters(typing.TypedDict):
     """
     Parameters for deleting documents.
