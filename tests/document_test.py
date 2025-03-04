@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 import requests_mock
 
 from tests.fixtures.document_fixtures import Companies
@@ -13,6 +14,7 @@ from tests.utils.object_assertions import (
 from typesense.api_call import ApiCall
 from typesense.document import Document
 from typesense.documents import Documents
+from typesense.exceptions import ObjectNotFound
 
 
 def test_init(fake_api_call: ApiCall) -> None:
@@ -133,3 +135,28 @@ def test_actual_delete(
         "company_name": "Company",
         "num_employees": 10,
     }
+
+
+def test_actual_delete_non_existent(
+    actual_documents: Documents,
+    delete_all: None,
+    create_collection: None,
+    create_document: None,
+) -> None:
+    """Test that the Document object can delete an document from Typesense Server."""
+    with pytest.raises(ObjectNotFound):
+        actual_documents["1"].delete()
+
+
+def test_actual_delete_non_existent_ignore_not_found(
+    actual_documents: Documents,
+    delete_all: None,
+    create_collection: None,
+    create_document: None,
+) -> None:
+    """Test that the Document object can delete an document from Typesense Server."""
+    response = actual_documents["1"].delete(
+        delete_parameters={"ignore_not_found": True},
+    )
+
+    assert response == {"id": "1"}

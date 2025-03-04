@@ -22,7 +22,11 @@ versions through the use of the typing_extensions library.
 import sys
 
 from typesense.api_call import ApiCall
-from typesense.types.document import DirtyValuesParameters, DocumentSchema
+from typesense.types.document import (
+    DeleteSingleDocumentParameters,
+    DirtyValuesParameters,
+    DocumentSchema,
+)
 
 if sys.version_info >= (3, 11):
     import typing
@@ -101,7 +105,10 @@ class Document(typing.Generic[TDoc]):
         )
         return typing.cast(TDoc, response)
 
-    def delete(self) -> TDoc:
+    def delete(
+        self,
+        delete_parameters: typing.Union[DeleteSingleDocumentParameters, None] = None,
+    ) -> TDoc:
         """
         Delete this specific document.
 
@@ -111,6 +118,7 @@ class Document(typing.Generic[TDoc]):
         response: TDoc = self.api_call.delete(
             self._endpoint_path,
             entity_type=typing.Dict[str, str],
+            params=delete_parameters,
         )
         return response
 
