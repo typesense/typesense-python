@@ -5,6 +5,7 @@ name = "pypi"
 
 [packages]
 requests = "*"
+typing-extensions = {version = "*", markers = "python_version < '3.11'"}
 
 [dev-packages]
 mypy = "*"
@@ -17,7 +18,6 @@ pytest-mock = "*"
 requests-mock = "*"
 python-dotenv = "*"
 types-requests = "*"
-typing-extensions = {version = "*", markers = "python_version < '3.11'"}
 faker = "*"
 
 [requires]
