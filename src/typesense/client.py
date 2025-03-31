@@ -17,6 +17,7 @@ Dependencies:
     - typesense.conversations_models: Provides the ConversationsModels class.
     - typesense.debug: Provides the Debug class.
     - typesense.keys: Provides the Keys class.
+    - typesense.metrics: Provides the Metrics class.
     - typesense.multi_search: Provides the MultiSearch class.
     - typesense.operations: Provides the Operations class.
     - typesense.stopwords: Provides the Stopwords class.
@@ -43,6 +44,7 @@ from typesense.configuration import ConfigDict, Configuration
 from typesense.conversations_models import ConversationsModels
 from typesense.debug import Debug
 from typesense.keys import Keys
+from typesense.metrics import Metrics
 from typesense.multi_search import MultiSearch
 from typesense.operations import Operations
 from typesense.stemming import Stemming
@@ -72,6 +74,7 @@ class Client:
         operations (Operations): Instance for various Typesense operations.
         debug (Debug): Instance for debug operations.
         stopwords (Stopwords): Instance for managing stopwords.
+        metrics (Metrics): Instance for retrieving system and Typesense metrics.
         conversations_models (ConversationsModels): Instance for managing conversation models.
     """
 
@@ -102,6 +105,7 @@ class Client:
         self.operations = Operations(self.api_call)
         self.debug = Debug(self.api_call)
         self.stopwords = Stopwords(self.api_call)
+        self.metrics = Metrics(self.api_call)
         self.conversations_models = ConversationsModels(self.api_call)
 
     def typed_collection(
