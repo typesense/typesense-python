@@ -95,3 +95,39 @@ class MetricsResponse(MetricsResponseBase):
     system_cpu24_active_percentage: typing.Optional[str]
 
 
+class Metrics:
+    """
+    Manages metrics retrieval from the Typesense API.
+
+    This class provides methods to retrieve system and Typesense metrics
+    such as CPU, memory, disk, and network usage.
+
+    Attributes:
+        resource_path (str): The base path for metrics endpoint.
+        api_call (ApiCall): The ApiCall instance for making API requests.
+    """
+
+    resource_path: typing.Final[str] = "/metrics.json"
+
+    def __init__(self, api_call: ApiCall):
+        """
+        Initialize the Metrics instance.
+
+        Args:
+            api_call (ApiCall): The ApiCall instance for making API requests.
+        """
+        self.api_call = api_call
+
+    def retrieve(self) -> MetricsResponse:
+        """
+        Retrieve metrics from the Typesense API.
+
+        Returns:
+            MetricsResponse: A dictionary containing system and Typesense metrics.
+        """
+        response: MetricsResponse = self.api_call.get(
+            Metrics.resource_path,
+            as_json=True,
+            entity_type=MetricsResponse,
+        )
+        return response
