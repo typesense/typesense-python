@@ -300,6 +300,7 @@ class DocumentImportParametersReturnDocAndId(DocumentWriteParameters):
 
 
 DocumentImportParameters: typing.TypeAlias = typing.Union[
+    DocumentWriteParameters,
     DocumentImportParametersReturnId,
     DocumentImportParametersReturnDoc,
     DocumentImportParametersReturnDocAndId,
