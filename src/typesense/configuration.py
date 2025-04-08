@@ -78,6 +78,8 @@ class ConfigDict(typing.TypedDict):
 
         read_replica_nodes (list[typing.Union[str, NodeConfigDict]], deprecated): A list of
             dictionaries or URLs that represent the read replica nodes.
+
+        connection_timeout_seconds (float): The connection timeout in seconds.
     """
 
     nodes: typing.List[typing.Union[str, NodeConfigDict]]
@@ -93,6 +95,7 @@ class ConfigDict(typing.TypedDict):
     read_replica_nodes: typing.NotRequired[
         typing.List[typing.Union[str, NodeConfigDict]]
     ]  # deprecated
+    connection_timeout_seconds: typing.NotRequired[float]
 
 
 class Node:
