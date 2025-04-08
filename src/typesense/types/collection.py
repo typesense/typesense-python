@@ -75,6 +75,7 @@ class CollectionFieldSchema(typing.Generic[_TType], typing.TypedDict, total=Fals
     index: typing.NotRequired[bool]
     vec_dist: typing.NotRequired[typing.Union[typing.Literal["cosine", "ip"], str]]
 
+
 class HNSWParamsSchema(typing.TypedDict):
     """
     The schema for the HNSW parameters in the CollectionFieldSchema.
@@ -86,6 +87,7 @@ class HNSWParamsSchema(typing.TypedDict):
 
     M: typing.NotRequired[int]
     ef_construction: typing.NotRequired[int]
+
 
 class RegularCollectionFieldSchema(CollectionFieldSchema[_FieldType]):
     """
