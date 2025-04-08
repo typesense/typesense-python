@@ -70,10 +70,22 @@ class CollectionFieldSchema(typing.Generic[_TType], typing.TypedDict, total=Fals
     symbols_to_index: typing.NotRequired[typing.List[str]]
     token_separators: typing.NotRequired[typing.List[str]]
     num_dim: typing.NotRequired[float]
+    hnsw_params: typing.NotRequired[HNSWParamsSchema]
     range_index: typing.NotRequired[bool]
     index: typing.NotRequired[bool]
     vec_dist: typing.NotRequired[typing.Union[typing.Literal["cosine", "ip"], str]]
 
+class HNSWParamsSchema(typing.TypedDict):
+    """
+    The schema for the HNSW parameters in the CollectionFieldSchema.
+
+    Attributes:
+        M (int): The number of bi-directional links created for every new element.
+        ef_construction (int): The size of the dynamic list for the nearest neighbors.
+    """
+
+    M: typing.NotRequired[int]
+    ef_construction: typing.NotRequired[int]
 
 class RegularCollectionFieldSchema(CollectionFieldSchema[_FieldType]):
     """
