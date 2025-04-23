@@ -261,8 +261,7 @@ class RequestHandler:
         content_type = response.headers.get("Content-Type", "")
         if content_type.startswith("application/json"):
             try:
-                err_message: str = response.json().get("message", "API error.")
-                return err_message
+                return typing.cast(str, response.json().get("message", "API error."))
             except requests.exceptions.JSONDecodeError:
                 return f"API error: Invalid JSON response: {response.text}"
         return "API error."
