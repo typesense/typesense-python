@@ -61,17 +61,28 @@ class Collections(typing.Generic[TDoc]):
         """
         Check if a collection exists in Typesense.
 
+        This method tries to retrieve the specified collection to check for its existence,
+        utilizing the Collection.retrieve() method but without caching non-existent collections.
+
         Args:
             collection_name (str): The name of the collection to check.
 
         Returns:
             bool: True if the collection exists, False otherwise.
         """
+        if collection_name in self.collections:
+            try:
+                self.collections[collection_name].retrieve()
+                return True
+            except Exception:
+                self.collections.pop(collection_name, None)
+                return False
+        
         try:
-            all_collections = self.retrieve()
+            Collection(self.api_call, collection_name).retrieve()
+            return True
         except Exception:
             return False
-        return any(coll["name"] == collection_name for coll in all_collections)
 
     def __getitem__(self, collection_name: str) -> Collection[TDoc]:
         """
