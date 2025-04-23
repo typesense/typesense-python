@@ -57,6 +57,22 @@ class Collections(typing.Generic[TDoc]):
         self.api_call = api_call
         self.collections: typing.Dict[str, Collection[TDoc]] = {}
 
+    def __contains__(self, collection_name: str) -> bool:
+        """
+        Check if a collection exists in Typesense.
+
+        Args:
+            collection_name (str): The name of the collection to check.
+
+        Returns:
+            bool: True if the collection exists, False otherwise.
+        """
+        try:
+            all_collections = self.retrieve()
+        except Exception:
+            return False
+        return any(coll["name"] == collection_name for coll in all_collections)
+
     def __getitem__(self, collection_name: str) -> Collection[TDoc]:
         """
         Get or create a Collection instance for a given collection name.
