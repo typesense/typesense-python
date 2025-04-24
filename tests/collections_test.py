@@ -293,3 +293,18 @@ def test_actual_retrieve(
 
     response[0].pop("created_at")
     assert response == expected
+
+
+def test_actual_contains(
+    actual_collections: Collections,
+    delete_all: None,
+    create_collection: None,
+) -> None:
+    """Test that the Collections object can check if a collection exists in Typesense."""
+    # Test for existing collection
+    assert "companies" in actual_collections
+
+    # Test for non-existing collection
+    assert "non_existent_collection" not in actual_collections
+    # Test again
+    assert "non_existent_collection" not in actual_collections

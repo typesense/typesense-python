@@ -57,6 +57,34 @@ class Collections(typing.Generic[TDoc]):
         self.api_call = api_call
         self.collections: typing.Dict[str, Collection[TDoc]] = {}
 
+    def __contains__(self, collection_name: str) -> bool:
+        """
+        Check if a collection exists in Typesense.
+
+        This method tries to retrieve the specified collection to check for its existence,
+        utilizing the Collection.retrieve() method but without caching non-existent collections.
+
+        Args:
+            collection_name (str): The name of the collection to check.
+
+        Returns:
+            bool: True if the collection exists, False otherwise.
+        """
+        if collection_name in self.collections:
+            try:  # noqa: WPS229, WPS529
+
+                self.collections[collection_name].retrieve()  # noqa: WPS529
+                return True
+            except Exception:
+                self.collections.pop(collection_name, None)
+                return False
+
+        try:  # noqa: WPS229, WPS529
+            Collection(self.api_call, collection_name).retrieve()
+            return True
+        except Exception:
+            return False
+
     def __getitem__(self, collection_name: str) -> Collection[TDoc]:
         """
         Get or create a Collection instance for a given collection name.
