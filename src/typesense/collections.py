@@ -71,14 +71,15 @@ class Collections(typing.Generic[TDoc]):
             bool: True if the collection exists, False otherwise.
         """
         if collection_name in self.collections:
-            try:
-                self.collections[collection_name].retrieve()
+            try:  # noqa: WPS229, WPS529
+
+                self.collections[collection_name].retrieve()  # noqa: WPS529
                 return True
             except Exception:
                 self.collections.pop(collection_name, None)
                 return False
-        
-        try:
+
+        try:  # noqa: WPS229, WPS529
             Collection(self.api_call, collection_name).retrieve()
             return True
         except Exception:
