@@ -306,3 +306,5 @@ def test_actual_contains(
 
     # Test for non-existing collection
     assert "non_existent_collection" not in actual_collections
+    # Test again
+    assert "non_existent_collection" not in actual_collections
