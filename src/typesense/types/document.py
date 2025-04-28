@@ -347,6 +347,8 @@ class QueryParameters(typing.TypedDict):
       preset (str): Preset for search queries.
       vector_query (str): Vector query for search.
       voice_query (str): Voice query for search.
+      stopwords (str, list[str]): A comma separated list of words to be dropped from the search query while searching.
+      validate_field_names (bool): Controls whether Typesense should validate if the fields exist in the schema.
     """
 
     prefix: typing.NotRequired[typing.Union[str, bool, typing.List[bool]]]
@@ -357,6 +359,8 @@ class QueryParameters(typing.TypedDict):
     preset: typing.NotRequired[str]
     vector_query: typing.NotRequired[str]
     voice_query: typing.NotRequired[str]
+    stopwords: typing.NotRequired[typing.Union[str, typing.List[str]]]
+    validate_field_names: typing.NotRequired[bool]
 
 
 class FilterParameters(typing.TypedDict):
@@ -393,6 +397,9 @@ class RankingAndSortingParameters(typing.TypedDict):
       enable_overrides (bool): Enable overrides.
       override_tags (str, list[str]): Tags to override.
       max_candidates (int): Maximum number of candidates to return.
+      enable_synonyms (bool): If you have some synonyms defined but want to disable all of them for a particular search query, set `enable_synonyms` to `false`.
+      filter_curated_hits (bool): Whether the `filter_by` condition of the search query should be applicable to curated results (override definitions, pinned hits, hidden hits, etc.
+      synonym_prefix (bool): Allow synonym resolution on word prefixes in the query.
     """
 
     query_by_weights: typing.NotRequired[typing.Union[str, typing.List[int]]]
@@ -406,6 +413,9 @@ class RankingAndSortingParameters(typing.TypedDict):
     enable_overrides: typing.NotRequired[bool]
     override_tags: typing.NotRequired[typing.Union[str, typing.List[str]]]
     max_candidates: typing.NotRequired[int]
+    enable_synonyms: typing.NotRequired[bool]
+    filter_curated_hits: typing.NotRequired[bool]
+    synonym_prefix: typing.NotRequired[bool]
 
 
 class PaginationParameters(typing.TypedDict):
@@ -437,6 +447,7 @@ class FacetingParameters(typing.TypedDict):
       facet_return_parent (str): Return parent of facet.
       facet_sample_percent (int): Sample percentage of facet values to return.
       facet_sample_threshold (int): Sample threshold of facet values to return.
+      facet_strategy (str): Typesense supports two strategies for efficient faceting, and has some built-in heuristics to pick the right strategy for you.
     """
 
     facet_by: typing.NotRequired[typing.Union[str, typing.List[str]]]
@@ -446,6 +457,13 @@ class FacetingParameters(typing.TypedDict):
     facet_return_parent: typing.NotRequired[str]
     facet_sample_percent: typing.NotRequired[int]
     facet_sample_threshold: typing.NotRequired[int]
+    facet_strategy: typing.NotRequired[
+        typing.Union[
+            typing.Literal["exhaustive"],
+            typing.Literal["top_values"],
+            typing.Literal["automatic"],  # default
+        ]
+    ]
 
 
 class GroupingParameters(typing.TypedDict):
@@ -518,6 +536,10 @@ class TypoToleranceParameters(typing.TypedDict):
         - `left_to_right`: Drop tokens from left to right.
         - `both_sides:3`: Drop tokens from both sides with a threshold of 3.
           Afterwards, drops back to the default right to left.
+
+      enable_typos_for_numerical_tokens (bool): Set this parameter to `false` to disable typos on numerical query tokens.
+      enable_typos_for_alpha_numerical_tokens (bool): Set this parameter to `false` to disable typos on alphanumerical query tokens.
+      synonym_num_typos (int): Allow synonym resolution on typo-corrected words in the query.
     """
 
     num_typos: typing.NotRequired[int]
@@ -530,6 +552,8 @@ class TypoToleranceParameters(typing.TypedDict):
         typing.Literal["right_to_left", "left_to_right", "both_sides:3"]
     ]
     enable_typos_for_numerical_tokens: typing.NotRequired[bool]
+    enable_typos_for_alpha_numerical_tokens: typing.NotRequired[bool]
+    synonym_num_typos: typing.NotRequired[int]
 
 
 class CachingParameters(typing.TypedDict):
