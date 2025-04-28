@@ -94,6 +94,41 @@ def test_get_exception() -> None:
     assert RequestHandler._get_exception(999) == exceptions.TypesenseClientError
 
 
+def test_get_error_message_with_invalid_json() -> None:
+    """Test that it correctly handles invalid JSON in error responses."""
+    response = requests.Response()
+    response.headers["Content-Type"] = "application/json"
+    response.status_code = 400
+    # Set an invalid JSON string that would cause JSONDecodeError
+    response._content = b'{"message": "Error occurred", "details": {"key": "value"'
+    
+    error_message = RequestHandler._get_error_message(response)
+    assert "API error: Invalid JSON response:" in error_message
+    assert '{"message": "Error occurred", "details": {"key": "value"' in error_message
+
+
+def test_get_error_message_with_valid_json() -> None:
+    """Test that it correctly extracts error message from valid JSON responses."""
+    response = requests.Response()
+    response.headers["Content-Type"] = "application/json"
+    response.status_code = 400
+    response._content = b'{"message": "Error occurred", "details": {"key": "value"}}'
+    
+    error_message = RequestHandler._get_error_message(response)
+    assert error_message == "Error occurred"
+
+
+def test_get_error_message_with_non_json_content_type() -> None:
+    """Test that it returns a default error message for non-JSON content types."""
+    response = requests.Response()
+    response.headers["Content-Type"] = "text/plain"
+    response.status_code = 400
+    response._content = b'Not a JSON content'
+    
+    error_message = RequestHandler._get_error_message(response)
+    assert error_message == "API error."
+
+
 def test_normalize_params_with_booleans() -> None:
     """Test that it correctly normalizes boolean values to strings."""
     parameter_dict: typing.Dict[str, str | bool] = {"key1": True, "key2": False}
