@@ -67,6 +67,9 @@ while i < 10000:
     res = client.collections['books'].documents.search({
         'q': 'the',
         'query_by': 'title',
-        'sort_by': 'ratings_count:desc'
+        'sort_by': 'ratings_count:desc',
+        'page': i,
+        'per_page': 10,
     })
     print(res['found'])
+    i += 1
