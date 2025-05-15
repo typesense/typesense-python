@@ -26,6 +26,7 @@ from typesense.types.document import (
     DeleteSingleDocumentParameters,
     DirtyValuesParameters,
     DocumentSchema,
+    RetrieveParameters,
 )
 
 if sys.version_info >= (3, 11):
@@ -67,7 +68,7 @@ class Document(typing.Generic[TDoc]):
         self.collection_name = collection_name
         self.document_id = document_id
 
-    def retrieve(self) -> TDoc:
+    def retrieve(self, params: RetrieveParameters) -> TDoc:
         """
         Retrieve this specific document.
 
@@ -78,6 +79,7 @@ class Document(typing.Generic[TDoc]):
             endpoint=self._endpoint_path,
             entity_type=typing.Dict[str, str],
             as_json=True,
+            params=params,
         )
         return response
 
