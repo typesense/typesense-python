@@ -68,7 +68,10 @@ class Document(typing.Generic[TDoc]):
         self.collection_name = collection_name
         self.document_id = document_id
 
-    def retrieve(self, params: RetrieveParameters) -> TDoc:
+    def retrieve(
+        self,
+        retrieve_parameters: typing.Union[RetrieveParameters, None] = None,
+    ) -> TDoc:
         """
         Retrieve this specific document.
 
@@ -79,7 +82,7 @@ class Document(typing.Generic[TDoc]):
             endpoint=self._endpoint_path,
             entity_type=typing.Dict[str, str],
             as_json=True,
-            params=params,
+            params=retrieve_parameters,
         )
         return response
 
