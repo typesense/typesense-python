@@ -889,3 +889,16 @@ class DeleteResponse(typing.TypedDict):
     """
 
     num_deleted: int
+
+
+class RetrieveParameters(typing.TypedDict):
+    """
+    Parameters for retrieving documents.
+
+    Attributes:
+      include_fields (str): Fields to include in the retrieved documents.
+      exclude_fields (str): Fields to exclude from the retrieved documents.
+    """
+
+    include_fields: typing.NotRequired[typing.Union[str, typing.List[str]]]
+    exclude_fields: typing.NotRequired[typing.Union[str, typing.List[str]]]
