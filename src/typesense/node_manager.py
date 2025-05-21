@@ -30,9 +30,10 @@ used internally by other components of the library.
 """
 
 import copy
-import time
 import random
 import sys
+import time
+
 if sys.version_info >= (3, 11):
     import typing
 else:
@@ -81,73 +82,15 @@ class NodeManager:
             return self.config.nearest_node
 
         healthy_nodes = self._get_healthy_nodes()
-        
+
         if not healthy_nodes:
             logger.debug("No healthy nodes were found. Returning the next node.")
             return self.nodes[self.node_index]
 
         if self.config.round_robin_hosts:
             return self._get_shuffled_node(healthy_nodes)
-        
+
         return self._get_next_round_robin_node()
-
-    def _should_use_nearest_node(self) -> bool:
-        """
-        Check if we should use the nearest node.
-
-        Returns:
-            bool: True if nearest node should be used, False otherwise.
-        """
-        return bool(
-            self.config.nearest_node
-            and (
-                self.config.nearest_node.healthy
-                or self._is_due_for_health_check(self.config.nearest_node)
-            )
-        )
-
-    def _get_healthy_nodes(self) -> typing.List[Node]:
-        """
-        Get a list of all healthy nodes.
-
-        Returns:
-            List[Node]: List of healthy nodes.
-        """
-        return [
-            node for node in self.nodes 
-            if node.healthy or self._is_due_for_health_check(node)
-        ]
-
-    def _get_shuffled_node(self, healthy_nodes: typing.List[Node]) -> Node:
-        """
-        Get a randomly shuffled node from the list of healthy nodes.
-
-        Args:
-            healthy_nodes (List[Node]): List of healthy nodes to choose from.
-
-        Returns:
-            Node: A randomly selected healthy node.
-        """
-        random.shuffle(healthy_nodes)
-        self.node_index = (self.node_index + 1) % len(self.nodes)
-        return healthy_nodes[0]
-
-    def _get_next_round_robin_node(self) -> Node:
-        """
-        Get the next node using standard round-robin selection.
-
-        Returns:
-            Node: The next node in the round-robin sequence.
-        """
-        node_index = 0
-        while node_index < len(self.nodes):
-            node_index += 1
-            node = self.nodes[self.node_index]
-            self.node_index = (self.node_index + 1) % len(self.nodes)
-            if node.healthy or self._is_due_for_health_check(node):
-                return node
-
-        return self.nodes[self.node_index]
 
     def set_node_health(self, node: Node, is_healthy: bool) -> None:
         """
@@ -187,3 +130,62 @@ class NodeManager:
             self.set_node_health(self.config.nearest_node, is_healthy=True)
         for node in self.nodes:
             self.set_node_health(node, is_healthy=True)
+
+    def _should_use_nearest_node(self) -> bool:
+        """
+        Check if we should use the nearest node.
+
+        Returns:
+            bool: True if nearest node should be used, False otherwise.
+        """
+        return bool(
+            self.config.nearest_node
+            and (
+                self.config.nearest_node.healthy
+                or self._is_due_for_health_check(self.config.nearest_node)
+            ),
+        )
+
+    def _get_healthy_nodes(self) -> typing.List[Node]:
+        """
+        Get a list of all healthy nodes.
+
+        Returns:
+            List[Node]: List of healthy nodes.
+        """
+        return [
+            node
+            for node in self.nodes
+            if node.healthy or self._is_due_for_health_check(node)
+        ]
+
+    def _get_shuffled_node(self, healthy_nodes: typing.List[Node]) -> Node:
+        """
+        Get a randomly shuffled node from the list of healthy nodes.
+
+        Args:
+            healthy_nodes (List[Node]): List of healthy nodes to choose from.
+
+        Returns:
+            Node: A randomly selected healthy node.
+        """
+        random.shuffle(healthy_nodes)
+        self.node_index = (self.node_index + 1) % len(self.nodes)
+        return healthy_nodes[0]
+
+    def _get_next_round_robin_node(self) -> Node:
+        """
+        Get the next node using standard round-robin selection.
+
+        Returns:
+            Node: The next node in the round-robin sequence.
+        """
+        node_index = 0
+        while node_index < len(self.nodes):
+            node_index += 1
+            node = self.nodes[self.node_index]
+            self.node_index = (self.node_index + 1) % len(self.nodes)
+            if node.healthy or self._is_due_for_health_check(node):
+                return node
+
+        return self.nodes[self.node_index]
