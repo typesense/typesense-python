@@ -1,6 +1,0 @@
--i https://pypi.org/simple
-certifi==2024.8.30; python_version >= '3.6'
-charset-normalizer==3.3.2; python_full_version >= '3.7.0'
-idna==3.8; python_version >= '3.6'
-requests==2.32.3; python_version >= '3.8'
-urllib3==2.2.2; python_version >= '3.8'

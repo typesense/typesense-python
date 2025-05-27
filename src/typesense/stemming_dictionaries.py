@@ -152,8 +152,8 @@ class StemmingDictionaries:
         for line in response.split("\n"):
             try:
                 decoded = json.loads(line)
-            except json.JSONDecodeError:
-                raise ValueError(f"Failed to parse JSON from response: {line}")
+            except json.JSONDecodeError as err:
+                raise ValueError(f"Failed to parse JSON from response: {line}") from err
             object_list.append(decoded)
         return object_list
 
