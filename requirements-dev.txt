@@ -60,6 +60,8 @@ requests==2.32.3
     #   requests-mock
 requests-mock==1.12.1
     # via typesense (pyproject.toml:dev)
+ruff==0.11.11
+    # via typesense (pyproject.toml:dev)
 types-requests==2.32.0.20250515
     # via typesense (pyproject.toml:dev)
 typing-extensions==4.13.2

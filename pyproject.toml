@@ -41,6 +41,7 @@ dev = [
     "python-dotenv",
     "types-requests",
     "faker",
+    "ruff>=0.11.11",
 ]
 
 [tool.uv]
