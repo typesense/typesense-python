@@ -8,6 +8,20 @@ else:
     import typing_extensions as typing
 
 
+_ActionT = typing.TypeVar(
+    "_ActionT",
+    bound=typing.Union[
+        "_CollectionActions",
+        "_DocumentActions",
+        "_AliasActions",
+        "_SynonymActions",
+        "_OverrideActions",
+        "_StopwordActions",
+        "_KeyActions",
+        "_MiscActions",
+    ],
+)
+
 _CollectionActions = typing.Literal[
     "collections:list",
     "collections:get",
@@ -87,12 +101,12 @@ _Actions = typing.Union[
 ]
 
 
-class ApiKeyCreateSchema(typing.TypedDict):
+class ApiKeyCreateSchema(typing.Generic[_ActionT], typing.TypedDict):
     """
     Schema for creating a [new API key](https://typesense.org/docs/26.0/api/api-keys.html#create-an-api-key).
 
     Attributes:
-        actions (list[str]): The actions allowed for this key.
+        actions (list[_ActionT]): The actions allowed for this key.
         collections (list[str]): The collections this key has access to.
         description (str): The description for this key.
         value (str): The value of the key.
@@ -100,7 +114,7 @@ class ApiKeyCreateSchema(typing.TypedDict):
         autodelete (bool): Whether the key should be deleted after it expires.
     """
 
-    actions: typing.List[_Actions]
+    actions: typing.List[_ActionT]
     collections: typing.List[str]
     description: str
     value: typing.NotRequired[str]
@@ -108,7 +122,10 @@ class ApiKeyCreateSchema(typing.TypedDict):
     autodelete: typing.NotRequired[bool]
 
 
-class ApiKeyCreateResponseSchema(ApiKeyCreateSchema):
+ApiKeyCreateSchemaCompat = ApiKeyCreateSchema[_Actions]
+
+
+class ApiKeyCreateResponseSchema(ApiKeyCreateSchema[_ActionT]):
     """
     Response schema for creating a [new API key](https://typesense.org/docs/26.0/api/api-keys.html#create-an-api-key).
 
@@ -121,12 +138,15 @@ class ApiKeyCreateResponseSchema(ApiKeyCreateSchema):
     id: int
 
 
-class ApiKeySchema(typing.TypedDict):
+ApiKeyCreateResponseSchemaCompat = ApiKeyCreateResponseSchema[_Actions]
+
+
+class ApiKeySchema(typing.Generic[_ActionT], typing.TypedDict):
     """
     Response schema for an [API key](https://typesense.org/docs/26.0/api/api-keys.html#retrieve-an-api-key).
 
     Attributes:
-        actions (list[str]): The actions allowed for this key.
+        actions (list[_ActionT]): The actions allowed for this key.
         collections (list[str]): The collections this key has access to.
         description (str): The description for this key.
         id (int): The ID of the key.
@@ -134,7 +154,7 @@ class ApiKeySchema(typing.TypedDict):
         expires_at (int): The time in UNIX timestamp format when the key
     """
 
-    actions: typing.List[_Actions]
+    actions: typing.List[_ActionT]
     collections: typing.List[str]
     description: str
     id: int
@@ -142,15 +162,21 @@ class ApiKeySchema(typing.TypedDict):
     expires_at: int
 
 
-class ApiKeyRetrieveSchema(typing.TypedDict):
+ApiKeySchemaCompat = ApiKeySchema[_Actions]
+
+
+class ApiKeyRetrieveSchema(typing.Generic[_ActionT], typing.TypedDict):
     """
     Response schema for retrieving [API keys](https://typesense.org/docs/26.0/api/api-keys.html#list-all-keys).
 
     Attributes:
-        keys (list[ApiKeySchema]): The list of keys.
+        keys (list[ApiKeySchema[_ActionT]]): The list of keys.
     """
 
-    keys: typing.List[ApiKeySchema]
+    keys: typing.List[ApiKeySchema[_ActionT]]
+
+
+ApiKeyRetrieveSchemaCompat = ApiKeyRetrieveSchema[_Actions]
 
 
 class ApiKeyDeleteSchema(typing.TypedDict):
