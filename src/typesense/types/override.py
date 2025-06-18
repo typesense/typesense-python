@@ -8,6 +8,12 @@ else:
     import typing_extensions as typing
 
 
+_OverrideRuleT = typing.TypeVar(
+    "_OverrideRuleT",
+    bound=typing.Union["OverrideQueryRuleSchema", "OverrideFilterSchema"],
+)
+
+
 class OverrideQueryRuleSchema(typing.TypedDict):
     """
     The schema for the rule field in the Overrides.upsert method.
@@ -51,12 +57,12 @@ class IncludesSchema(typing.TypedDict):
     position: int
 
 
-class OverrideCreateSchema(typing.TypedDict):
+class OverrideCreateSchema(typing.Generic[_OverrideRuleT], typing.TypedDict):
     """
     The schema for the request of the Overrides.upsert method.
 
     Attributes:
-        rule (OverrideQueryRuleSchema | OverrideFilterSchema): The rule.
+        rule (_OverrideRuleT): The rule.
         sort_by (str): The sort by string.
         filter_by (str): The filter by string.
         excludes (list[str]): The excludes list.
@@ -69,7 +75,7 @@ class OverrideCreateSchema(typing.TypedDict):
         stop_processing (bool): Whether to stop processing.
     """
 
-    rule: typing.Union[OverrideQueryRuleSchema, OverrideFilterSchema]
+    rule: _OverrideRuleT
     sort_by: typing.NotRequired[str]
     filter_by: typing.NotRequired[str]
     excludes: typing.NotRequired[typing.List[str]]
@@ -82,10 +88,20 @@ class OverrideCreateSchema(typing.TypedDict):
     stop_processing: typing.NotRequired[bool]
 
 
-class OverrideSchema(OverrideCreateSchema):
+OverrideCreateSchemaCompat = OverrideCreateSchema[
+    typing.Union[OverrideQueryRuleSchema, OverrideFilterSchema]
+]
+
+
+class OverrideSchema(OverrideCreateSchema[_OverrideRuleT]):
     """The schema for the response of the Overrides.upsert method."""
 
     id: str
+
+
+OverrideSchemaCompat = OverrideSchema[
+    typing.Union[OverrideQueryRuleSchema, OverrideFilterSchema]
+]
 
 
 class OverrideDeleteSchema(typing.TypedDict):
