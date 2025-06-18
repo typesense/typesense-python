@@ -113,4 +113,4 @@ class OverrideDeleteSchema(typing.TypedDict):
 class OverrideRetrieveSchema(typing.TypedDict):
     """The schema for the response of the Overrides.retrieve method."""
 
-    overrides: typing.List[OverrideSchema]
+    overrides: typing.List[OverrideSchema[typing.Union[OverrideQueryRuleSchema, OverrideFilterSchema]]]
