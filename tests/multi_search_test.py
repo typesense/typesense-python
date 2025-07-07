@@ -106,6 +106,51 @@ def test_multi_search_multiple_searches(
         )
 
 
+def test_multi_search_union(
+    actual_multi_search: MultiSearch,
+    actual_api_call: ApiCall,
+    delete_all: None,
+    create_collection: None,
+    create_document: None,
+) -> None:
+    """Test that the MultiSearch object can perform multiple searches."""
+    request_params: MultiSearchRequestSchema = {
+        "union": True,
+        "searches": [
+            {"q": "com", "query_by": "company_name", "collection": "companies"},
+            {"q": "company", "query_by": "company_name", "collection": "companies"},
+        ],
+    }
+
+    response = actual_multi_search.perform(search_queries=request_params)
+
+    assert_to_contain_keys(
+        response,
+        [
+            "found",
+            "hits",
+            "page",
+            "out_of",
+            "union_request_params",
+            "search_time_ms",
+            "search_cutoff",
+        ],
+    )
+
+    assert_to_contain_keys(
+        response.get("hits")[0],
+        [
+            "collection",
+            "document",
+            "highlights",
+            "highlight",
+            "text_match",
+            "text_match_info",
+            "search_index",
+        ],
+    )
+
+
 def test_multi_search_array(
     actual_multi_search: MultiSearch,
     actual_api_call: ApiCall,
