@@ -83,7 +83,10 @@ class MultiSearch:
             stringify_search_params(search_params)
             for search_params in search_queries.get("searches")
         ]
-        search_body = {"searches": stringified_search_params}
+        search_body = {
+            "searches": stringified_search_params,
+            "union": search_queries.get("union", False),
+        }
         response: MultiSearchResponse = self.api_call.post(
             MultiSearch.resource_path,
             body=search_body,
