@@ -80,6 +80,8 @@ class ConfigDict(typing.TypedDict):
             dictionaries or URLs that represent the read replica nodes.
 
         connection_timeout_seconds (float): The connection timeout in seconds.
+
+        round_robin_hosts (bool): Whether or not to shuffle hosts between requests
     """
 
     nodes: typing.List[typing.Union[str, NodeConfigDict]]
@@ -96,6 +98,7 @@ class ConfigDict(typing.TypedDict):
         typing.List[typing.Union[str, NodeConfigDict]]
     ]  # deprecated
     connection_timeout_seconds: typing.NotRequired[float]
+    round_robin_hosts: typing.NotRequired[bool]
 
 
 class Node:
@@ -184,6 +187,7 @@ class Configuration:
         retry_interval_seconds (float): The interval in seconds between retries.
         healthcheck_interval_seconds (int): The interval in seconds between health checks.
         verify (bool): Whether to verify the SSL certificate.
+        round_robin_hosts (bool): Whether or not to shuffle hosts between requests
     """
 
     def __init__(
@@ -219,6 +223,7 @@ class Configuration:
             60,
         )
         self.verify = config_dict.get("verify", True)
+        self.round_robin_hosts = config_dict.get("round_robin_hosts", False)
         self.additional_headers = config_dict.get("additional_headers", {})
 
     def _handle_nearest_node(

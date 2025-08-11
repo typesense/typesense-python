@@ -80,6 +80,28 @@ def test_get_node_round_robin_selection(
     assert_match_object(node3, fake_api_call.config.nodes[2])
 
 
+def test_get_node_round_robin_shuffle(
+    fake_api_call: ApiCall,
+    mocker: MockerFixture,
+) -> None:
+    """Test that it shuffles healthy nodes when round_robin_hosts is true."""
+    fake_api_call.config.nearest_node = None
+    fake_api_call.config.round_robin_hosts = True
+    mocker.patch("time.time", return_value=100)
+
+    shuffle_mock = mocker.patch("random.shuffle")
+
+    for _ in range(3):
+        fake_api_call.node_manager.get_node()
+
+    assert shuffle_mock.call_count == 3
+
+    for call in shuffle_mock.call_args_list:
+        args = call[0][0]
+        assert isinstance(args, list)
+        assert all(node.healthy for node in args)
+
+
 def test_get_exception() -> None:
     """Test that it correctly returns the exception class for a given status code."""
     assert RequestHandler._get_exception(0) == exceptions.HTTPStatus0Error
