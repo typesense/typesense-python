@@ -46,6 +46,7 @@ from typesense.debug import Debug
 from typesense.keys import Keys
 from typesense.metrics import Metrics
 from typesense.multi_search import MultiSearch
+from typesense.nl_search_models import NLSearchModels
 from typesense.operations import Operations
 from typesense.stemming import Stemming
 from typesense.stopwords import Stopwords
@@ -107,6 +108,7 @@ class Client:
         self.stopwords = Stopwords(self.api_call)
         self.metrics = Metrics(self.api_call)
         self.conversations_models = ConversationsModels(self.api_call)
+        self.nl_search_models = NLSearchModels(self.api_call)
 
     def typed_collection(
         self,

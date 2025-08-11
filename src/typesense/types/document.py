@@ -569,6 +569,23 @@ class CachingParameters(typing.TypedDict):
     cache_ttl: typing.NotRequired[int]
 
 
+class NLLanguageParameters(typing.TypedDict):
+    """
+    Parameters regarding [caching search results](https://typesense.org/docs/26.0/api/search.html#caching-parameters).
+
+    Attributes:
+      nl_query_prompt_cache_ttl (int): The duration (in seconds) that determines how long the schema prompts are cached.
+      nl_query (bool): Whether to use natural language in the query or not.
+      nl_model_id (str): The ID of the natural language model to use for the query.
+      nl_query_debug (bool): Whether to return the raw LLM response or not.
+    """
+
+    nl_query_prompt_cache_ttl: typing.NotRequired[int]
+    nl_query: typing.NotRequired[bool]
+    nl_model_id: typing.NotRequired[str]
+    nl_query_debug: typing.NotRequired[bool]
+
+
 class SearchParameters(
     RequiredSearchParameters,
     QueryParameters,
@@ -580,6 +597,7 @@ class SearchParameters(
     ResultsParameters,
     TypoToleranceParameters,
     CachingParameters,
+    NLLanguageParameters,
 ):
     """Parameters for searching documents."""
 
@@ -823,6 +841,38 @@ class Conversation(typing.TypedDict):
     query: str
 
 
+class LLMResponse(typing.TypedDict):
+    """
+    Schema for a raw LLM response.
+
+    Attributes:
+      content (str): Content of the LLM response.
+      extraction_method (str): Extraction method of the LLM response (e.g. "regex").
+      model (str): Model used to generate the response.
+    """
+
+    content: str
+    extraction_method: str
+    model: str
+
+
+class ParsedNLQuery(typing.TypedDict):
+    """
+    Schema for a parsed natural language query.
+
+    Attributes:
+      parse_time_ms (int): Parse time in milliseconds.
+      generated_params (SearchParameters): Generated parameters.
+      augmented_params (SearchParameters): Augmented parameters.
+      llm_response (LLMResponse): Raw LLM response.
+    """
+
+    parse_time_ms: int
+    generated_params: SearchParameters
+    augmented_params: SearchParameters
+    llm_response: typing.NotRequired[LLMResponse]
+
+
 class SearchResponse(typing.Generic[TDoc], typing.TypedDict):
     """
     Schema for a search response.
@@ -838,6 +888,7 @@ class SearchResponse(typing.Generic[TDoc], typing.TypedDict):
       hits (list[Hit[TDoc]]): List of hits in the search results.
       grouped_hits (list[GroupedHit[TDoc]]): List of grouped hits in the search results.
       conversation (Conversation): Conversation in the search results.
+      parsed_nl_query (ParsedNLQuery): Information about the natural language query
     """
 
     facet_counts: typing.List[SearchResponseFacetCountSchema]
@@ -850,6 +901,7 @@ class SearchResponse(typing.Generic[TDoc], typing.TypedDict):
     hits: typing.List[Hit[TDoc]]
     grouped_hits: typing.NotRequired[typing.List[GroupedHit[TDoc]]]
     conversation: typing.NotRequired[Conversation]
+    parsed_nl_query: typing.NotRequired[ParsedNLQuery]
 
 
 class DeleteSingleDocumentParameters(typing.TypedDict):
