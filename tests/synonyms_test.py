@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 import requests_mock
 
 from tests.utils.object_assertions import (
@@ -11,7 +12,24 @@ from tests.utils.object_assertions import (
 )
 from typesense.api_call import ApiCall
 from typesense.collections import Collections
+from tests.utils.version import is_v30_or_above
+from typesense.client import Client
 from typesense.synonyms import Synonyms, SynonymSchema, SynonymsRetrieveSchema
+
+
+pytestmark = pytest.mark.skipif(
+    is_v30_or_above(
+        Client(
+            {
+                "api_key": "xyz",
+                "nodes": [
+                    {"host": "localhost", "port": 8108, "protocol": "http"}
+                ],
+            }
+        )
+    ),
+    reason="Skip synonyms tests on v30+",
+)
 
 
 def test_init(fake_api_call: ApiCall) -> None:

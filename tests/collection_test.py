@@ -218,6 +218,7 @@ def test_actual_retrieve(
         "num_documents": 0,
         "symbols_to_index": [],
         "token_separators": [],
+        "synonym_sets": []
     }
 
     response.pop("created_at")

@@ -180,6 +180,7 @@ class CollectionCreateSchema(typing.TypedDict):
     token_separators: typing.NotRequired[typing.List[str]]
     enable_nested_fields: typing.NotRequired[bool]
     voice_query_model: typing.NotRequired[VoiceQueryModelSchema]
+    synonym_sets: typing.NotRequired[typing.List[typing.List[str]]]
 
 
 class CollectionSchema(CollectionCreateSchema):

@@ -36,6 +36,7 @@ else:
     import typing_extensions as typing
 
 from typesense.aliases import Aliases
+from typesense.analytics_v1 import AnalyticsV1
 from typesense.analytics import Analytics
 from typesense.api_call import ApiCall
 from typesense.collection import Collection
@@ -70,7 +71,8 @@ class Client:
         multi_search (MultiSearch): Instance for performing multi-search operations.
         keys (Keys): Instance for managing API keys.
         aliases (Aliases): Instance for managing collection aliases.
-        analytics (Analytics): Instance for analytics operations.
+        analyticsV1 (AnalyticsV1): Instance for analytics operations (V1).
+        analytics (AnalyticsV30): Instance for analytics operations (v30).
         stemming (Stemming): Instance for stemming dictionary operations.
         operations (Operations): Instance for various Typesense operations.
         debug (Debug): Instance for debug operations.
@@ -101,6 +103,7 @@ class Client:
         self.multi_search = MultiSearch(self.api_call)
         self.keys = Keys(self.api_call)
         self.aliases = Aliases(self.api_call)
+        self.analyticsV1 = AnalyticsV1(self.api_call)
         self.analytics = Analytics(self.api_call)
         self.stemming = Stemming(self.api_call)
         self.operations = Operations(self.api_call)

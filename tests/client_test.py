@@ -27,9 +27,9 @@ def test_client_init(fake_config_dict: ConfigDict) -> None:
     assert fake_client.keys.keys is not None
     assert fake_client.aliases
     assert fake_client.aliases.aliases is not None
-    assert fake_client.analytics
-    assert fake_client.analytics.rules
-    assert fake_client.analytics.rules.rules is not None
+    assert fake_client.analyticsV1
+    assert fake_client.analyticsV1.rules
+    assert fake_client.analyticsV1.rules.rules is not None
     assert fake_client.operations
     assert fake_client.debug
 
