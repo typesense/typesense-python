@@ -51,6 +51,7 @@ from typesense.nl_search_models import NLSearchModels
 from typesense.operations import Operations
 from typesense.stemming import Stemming
 from typesense.stopwords import Stopwords
+from typesense.synonym_sets import SynonymSets
 
 TDoc = typing.TypeVar("TDoc", bound=DocumentSchema)
 
@@ -109,6 +110,7 @@ class Client:
         self.operations = Operations(self.api_call)
         self.debug = Debug(self.api_call)
         self.stopwords = Stopwords(self.api_call)
+        self.synonym_sets = SynonymSets(self.api_call)
         self.metrics = Metrics(self.api_call)
         self.conversations_models = ConversationsModels(self.api_call)
         self.nl_search_models = NLSearchModels(self.api_call)

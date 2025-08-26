@@ -19,6 +19,9 @@ versions through the use of the typing_extensions library.
 
 from typesense.analytics_rules_v1 import AnalyticsRulesV1
 from typesense.api_call import ApiCall
+from typesense.logger import logger
+
+_analytics_v1_deprecation_warned = False
 
 
 class AnalyticsV1(object):
@@ -39,6 +42,17 @@ class AnalyticsV1(object):
         Args:
             api_call (ApiCall): The API call object for making requests.
         """
-        self.rules = AnalyticsRulesV1(api_call)
+        self._rules = AnalyticsRulesV1(api_call)
+
+    @property
+    def rules(self) -> AnalyticsRulesV1:
+        global _analytics_v1_deprecation_warned
+        if not _analytics_v1_deprecation_warned:
+            logger.warning(
+                "AnalyticsV1 is deprecated and will be removed in a future release. "
+                "Use client.analytics instead."
+            )
+            _analytics_v1_deprecation_warned = True
+        return self._rules
 
 

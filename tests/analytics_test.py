@@ -7,7 +7,7 @@ from typesense.analytics import Analytics
 from typesense.api_call import ApiCall
 
 
-@pytest.mark.skipif(is_v30_or_above(Client({"api_key": "xyz", "nodes": [{"host": "localhost", "port": 8108, "protocol": "http"}]})), reason="Skip AnalyticsV1 tests on v30+")
+@pytest.mark.skipif(not is_v30_or_above(Client({"api_key": "xyz", "nodes": [{"host": "localhost", "port": 8108, "protocol": "http"}]})), reason="Skip AnalyticsV1 tests on v30+")
 def test_init(fake_api_call: ApiCall) -> None:
     """Test that the AnalyticsV1 object is initialized correctly."""
     analytics = Analytics(fake_api_call)

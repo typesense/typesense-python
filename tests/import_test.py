@@ -20,6 +20,7 @@ typing_module_names = [
     "operations",
     "override",
     "stopword",
+    "synonym_set",
     "synonym",
 ]
 
@@ -41,6 +42,8 @@ module_names = [
     "overrides",
     "operations",
     "synonyms",
+    "synonym_set",
+    "synonym_sets",
     "preprocess",
     "stopwords",
 ]
