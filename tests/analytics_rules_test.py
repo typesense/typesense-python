@@ -40,7 +40,7 @@ def test_rules_create(fake_api_call) -> None:
         "name": "company_analytics_rule",
         "type": "popular_queries",
         "collection": "companies",
-        "event_type": "query",
+        "event_type": "search",
         "params": {"destination_collection": "companies_queries", "limit": 1000},
     }
     with requests_mock.Mocker() as mock:
@@ -95,7 +95,7 @@ def test_actual_create(
         "name": "company_analytics_rule",
         "type": "nohits_queries",
         "collection": "companies",
-        "event_type": "query",
+        "event_type": "search",
         "params": {"destination_collection": "companies_queries", "limit": 1000},
     }
     resp = actual_analytics_rules.create(rule=body)

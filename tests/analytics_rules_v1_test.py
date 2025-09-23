@@ -15,7 +15,16 @@ from typesense.types.analytics_rule_v1 import (
 )
 
 
-@pytest.mark.skipif(is_v30_or_above(Client({"api_key": "xyz", "nodes": [{"host": "localhost", "port": 8108, "protocol": "http"}]})), reason="Skip AnalyticsV1 tests on v30+")
+pytestmark = pytest.mark.skipif(
+    is_v30_or_above(
+        Client({
+            "api_key": "xyz",
+            "nodes": [{"host": "localhost", "port": 8108, "protocol": "http"}],
+        })
+    ),
+    reason="Skip AnalyticsV1 tests on v30+"
+)
+
 def test_init(fake_api_call: ApiCall) -> None:
     """Test that the AnalyticsRulesV1 object is initialized correctly."""
     analytics_rules = AnalyticsRulesV1(fake_api_call)
@@ -33,7 +42,6 @@ def test_init(fake_api_call: ApiCall) -> None:
     assert not analytics_rules.rules
 
 
-@pytest.mark.skipif(is_v30_or_above(Client({"api_key": "xyz", "nodes": [{"host": "localhost", "port": 8108, "protocol": "http"}]})), reason="Skip AnalyticsV1 tests on v30+")
 def test_get_missing_analytics_rule(fake_analytics_rules: AnalyticsRulesV1) -> None:
     """Test that the AnalyticsRulesV1 object can get a missing analytics_rule."""
     analytics_rule = fake_analytics_rules["company_analytics_rule"]
@@ -54,7 +62,6 @@ def test_get_missing_analytics_rule(fake_analytics_rules: AnalyticsRulesV1) -> N
     )
 
 
-@pytest.mark.skipif(is_v30_or_above(Client({"api_key": "xyz", "nodes": [{"host": "localhost", "port": 8108, "protocol": "http"}]})), reason="Skip AnalyticsV1 tests on v30+")
 def test_get_existing_analytics_rule(fake_analytics_rules: AnalyticsRulesV1) -> None:
     """Test that the AnalyticsRulesV1 object can get an existing analytics_rule."""
     analytics_rule = fake_analytics_rules["company_analytics_rule"]
@@ -65,7 +72,6 @@ def test_get_existing_analytics_rule(fake_analytics_rules: AnalyticsRulesV1) -> 
     assert analytics_rule is fetched_analytics_rule
 
 
-@pytest.mark.skipif(is_v30_or_above(Client({"api_key": "xyz", "nodes": [{"host": "localhost", "port": 8108, "protocol": "http"}]})), reason="Skip AnalyticsV1 tests on v30+")
 def test_retrieve(fake_analytics_rules: AnalyticsRulesV1) -> None:
     """Test that the AnalyticsRulesV1 object can retrieve analytics_rules."""
     json_response: RulesRetrieveSchema = {
@@ -96,7 +102,6 @@ def test_retrieve(fake_analytics_rules: AnalyticsRulesV1) -> None:
         assert response == json_response
 
 
-@pytest.mark.skipif(is_v30_or_above(Client({"api_key": "xyz", "nodes": [{"host": "localhost", "port": 8108, "protocol": "http"}]})), reason="Skip AnalyticsV1 tests on v30+")
 def test_create(fake_analytics_rules: AnalyticsRulesV1) -> None:
     """Test that the AnalyticsRulesV1 object can create a analytics_rule."""
     json_response: RuleCreateSchemaForQueries = {
@@ -145,7 +150,7 @@ def test_create(fake_analytics_rules: AnalyticsRulesV1) -> None:
         }
 
 
-@pytest.mark.skipif(is_v30_or_above(Client({"api_key": "xyz", "nodes": [{"host": "localhost", "port": 8108, "protocol": "http"}]})), reason="Skip AnalyticsV1 tests on v30+")
+
 def test_actual_create(
     actual_analytics_rules: AnalyticsRulesV1,
     delete_all: None,
@@ -177,7 +182,7 @@ def test_actual_create(
     }
 
 
-@pytest.mark.skipif(is_v30_or_above(Client({"api_key": "xyz", "nodes": [{"host": "localhost", "port": 8108, "protocol": "http"}]})), reason="Skip AnalyticsV1 tests on v30+")
+
 def test_actual_update(
     actual_analytics_rules: AnalyticsRulesV1,
     delete_all: None,
@@ -208,7 +213,7 @@ def test_actual_update(
     }
 
 
-@pytest.mark.skipif(is_v30_or_above(Client({"api_key": "xyz", "nodes": [{"host": "localhost", "port": 8108, "protocol": "http"}]})), reason="Skip AnalyticsV1 tests on v30+")
+
 def test_actual_retrieve(
     actual_analytics_rules: AnalyticsRulesV1,
     delete_all: None,

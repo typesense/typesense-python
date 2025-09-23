@@ -12,8 +12,16 @@ from typesense.analytics_rules_v1 import AnalyticsRulesV1
 from typesense.api_call import ApiCall
 from typesense.types.analytics_rule_v1 import RuleDeleteSchema, RuleSchemaForQueries
 
+pytestmark = pytest.mark.skipif(
+    is_v30_or_above(
+        Client({
+            "api_key": "xyz",
+            "nodes": [{"host": "localhost", "port": 8108, "protocol": "http"}],
+        })
+    ),
+    reason="Skip AnalyticsV1 tests on v30+"
+)
 
-@pytest.mark.skipif(is_v30_or_above(Client({"api_key": "xyz", "nodes": [{"host": "localhost", "port": 8108, "protocol": "http"}]})), reason="Skip AnalyticsV1 tests on v30+")
 def test_init(fake_api_call: ApiCall) -> None:
     """Test that the AnalyticsRuleV1 object is initialized correctly."""
     analytics_rule = AnalyticsRuleV1(fake_api_call, "company_analytics_rule")
@@ -34,7 +42,7 @@ def test_init(fake_api_call: ApiCall) -> None:
     )
 
 
-@pytest.mark.skipif(is_v30_or_above(Client({"api_key": "xyz", "nodes": [{"host": "localhost", "port": 8108, "protocol": "http"}]})), reason="Skip AnalyticsV1 tests on v30+")
+
 def test_retrieve(fake_analytics_rule: AnalyticsRuleV1) -> None:
     """Test that the AnalyticsRuleV1 object can retrieve an analytics_rule."""
     json_response: RuleSchemaForQueries = {
@@ -65,7 +73,7 @@ def test_retrieve(fake_analytics_rule: AnalyticsRuleV1) -> None:
         assert response == json_response
 
 
-@pytest.mark.skipif(is_v30_or_above(Client({"api_key": "xyz", "nodes": [{"host": "localhost", "port": 8108, "protocol": "http"}]})), reason="Skip AnalyticsV1 tests on v30+")
+
 def test_delete(fake_analytics_rule: AnalyticsRuleV1) -> None:
     """Test that the AnalyticsRuleV1 object can delete an analytics_rule."""
     json_response: RuleDeleteSchema = {
@@ -88,7 +96,7 @@ def test_delete(fake_analytics_rule: AnalyticsRuleV1) -> None:
         assert response == json_response
 
 
-@pytest.mark.skipif(is_v30_or_above(Client({"api_key": "xyz", "nodes": [{"host": "localhost", "port": 8108, "protocol": "http"}]})), reason="Skip AnalyticsV1 tests on v30+")
+
 def test_actual_retrieve(
     actual_analytics_rules: AnalyticsRulesV1,
     delete_all: None,
@@ -111,7 +119,7 @@ def test_actual_retrieve(
     assert response == expected
 
 
-@pytest.mark.skipif(is_v30_or_above(Client({"api_key": "xyz", "nodes": [{"host": "localhost", "port": 8108, "protocol": "http"}]})), reason="Skip AnalyticsV1 tests on v30+")
+
 def test_actual_delete(
     actual_analytics_rules: AnalyticsRulesV1,
     delete_all: None,

@@ -223,7 +223,8 @@ def test_actual_create(actual_collections: Collections, delete_all: None) -> Non
         "num_documents": 0,
         "symbols_to_index": [],
         "token_separators": [],
-        "synonym_sets": []
+        "synonym_sets": [],
+        "curation_sets": [],
     }
 
     response = actual_collections.create(
@@ -292,7 +293,8 @@ def test_actual_retrieve(
             "num_documents": 0,
             "symbols_to_index": [],
             "token_separators": [],
-            "synonym_sets": []
+            "synonym_sets": [],
+            "curation_sets": [],
         },
     ]
 

@@ -57,6 +57,8 @@ def test_retrieve(fake_collection: Collection) -> None:
         "num_documents": 0,
         "symbols_to_index": [],
         "token_separators": [],
+        "synonym_sets": [],
+        "curation_sets": [],
     }
 
     with requests_mock.mock() as mock:
@@ -100,6 +102,8 @@ def test_update(fake_collection: Collection) -> None:
         "num_documents": 0,
         "symbols_to_index": [],
         "token_separators": [],
+        "synonym_sets": [],
+        "curation_sets": [],
     }
 
     with requests_mock.mock() as mock:
@@ -158,6 +162,8 @@ def test_delete(fake_collection: Collection) -> None:
         "num_documents": 0,
         "symbols_to_index": [],
         "token_separators": [],
+        "synonym_sets": [],
+        "curation_sets": [],
     }
 
     with requests_mock.mock() as mock:
@@ -218,7 +224,8 @@ def test_actual_retrieve(
         "num_documents": 0,
         "symbols_to_index": [],
         "token_separators": [],
-        "synonym_sets": []
+        "synonym_sets": [],
+        "curation_sets": [],
     }
 
     response.pop("created_at")

@@ -38,7 +38,7 @@ def create_analytics_rule_fixture(
         "name": "company_analytics_rule",
         "type": "nohits_queries",
         "collection": "companies",
-        "event_type": "query",
+        "event_type": "search",
         "params": {
             "destination_collection": "companies_queries",
             "limit": 1000,

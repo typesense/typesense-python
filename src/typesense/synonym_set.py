@@ -11,6 +11,8 @@ from typesense.api_call import ApiCall
 from typesense.types.synonym_set import (
     SynonymSetDeleteSchema,
     SynonymSetRetrieveSchema,
+    SynonymItemSchema,
+    SynonymItemDeleteSchema,
 )
 
 
@@ -37,6 +39,55 @@ class SynonymSet:
         response: SynonymSetDeleteSchema = self.api_call.delete(
             self._endpoint_path,
             entity_type=SynonymSetDeleteSchema,
+        )
+        return response
+    
+    @property
+    def _items_path(self) -> str:
+        return "/".join([self._endpoint_path, "items"])  # /synonym_sets/{name}/items
+
+    def list_items(
+        self,
+        *,
+        limit: typing.Union[int, None] = None,
+        offset: typing.Union[int, None] = None,
+    ) -> typing.List[SynonymItemSchema]:
+        params: typing.Dict[str, typing.Union[int, None]] = {
+            "limit": limit,
+            "offset": offset,
+        }
+        clean_params: typing.Dict[str, int] = {
+            k: v for k, v in params.items() if v is not None  # type: ignore[dict-item]
+        }
+        response: typing.List[SynonymItemSchema] = self.api_call.get(
+            self._items_path,
+            as_json=True,
+            entity_type=typing.List[SynonymItemSchema],
+            params=clean_params or None,
+        )
+        return response
+
+    def get_item(self, item_id: str) -> SynonymItemSchema:
+        response: SynonymItemSchema = self.api_call.get(
+            "/".join([self._items_path, item_id]),
+            as_json=True,
+            entity_type=SynonymItemSchema,
+        )
+        return response
+
+    def upsert_item(self, item_id: str, item: SynonymItemSchema) -> SynonymItemSchema:
+        response: SynonymItemSchema = self.api_call.put(
+            "/".join([self._items_path, item_id]),
+            body=item,
+            entity_type=SynonymItemSchema,
+        )
+        return response
+
+    def delete_item(self, item_id: str) -> typing.Dict[str, str]:
+        # API returns {"id": "..."} for delete; openapi defines SynonymItemDeleteResponse with name but for items it's id
+        response: SynonymItemDeleteSchema = self.api_call.delete(
+            "/".join([self._items_path, item_id]),
+            entity_type=typing.Dict[str, str],
         )
         return response
 

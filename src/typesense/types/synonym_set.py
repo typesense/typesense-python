@@ -29,6 +29,12 @@ class SynonymItemSchema(typing.TypedDict):
     locale: typing.NotRequired[Locales]
     symbols_to_index: typing.NotRequired[typing.List[str]]
 
+class SynonymItemDeleteSchema(typing.TypedDict):
+    """
+    Schema for deleting a synonym item.
+    """
+
+    id: str
 
 class SynonymSetCreateSchema(typing.TypedDict):
     """
@@ -68,5 +74,3 @@ class SynonymSetDeleteSchema(typing.TypedDict):
     """
 
     name: str
-
-
