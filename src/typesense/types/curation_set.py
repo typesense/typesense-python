@@ -30,10 +30,10 @@ class CurationRuleSchema(typing.TypedDict, total=False):
     Schema representing rule conditions for a curation item.
     """
 
-    query: str
-    match: typing.Literal["exact", "contains"]
-    filter_by: str
-    tags: typing.List[str]
+    query: typing.NotRequired[str]
+    match: typing.NotRequired[typing.Literal["exact", "contains"]]
+    filter_by: typing.NotRequired[str]
+    tags: typing.NotRequired[typing.List[str]]
 
 
 class CurationItemSchema(typing.TypedDict, total=False):
@@ -43,14 +43,14 @@ class CurationItemSchema(typing.TypedDict, total=False):
 
     id: str
     rule: CurationRuleSchema
-    includes: typing.List[CurationIncludeSchema]
-    excludes: typing.List[CurationExcludeSchema]
-    filter_by: str
-    sort_by: str
-    replace_query: str
-    remove_matched_tokens: bool
-    filter_curated_hits: bool
-    stop_processing: bool
+    includes: typing.NotRequired[typing.List[CurationIncludeSchema]]
+    excludes: typing.NotRequired[typing.List[CurationExcludeSchema]]
+    filter_by: typing.NotRequired[str]
+    sort_by: typing.NotRequired[str]
+    replace_query: typing.NotRequired[str]
+    remove_matched_tokens: typing.NotRequired[bool]
+    filter_curated_hits: typing.NotRequired[bool]
+    stop_processing: typing.NotRequired[bool]
     metadata: typing.Dict[str, typing.Any]
 
 

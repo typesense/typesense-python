@@ -12,7 +12,6 @@ class AnalyticsEvent(typing.TypedDict):
     """Schema for an analytics event to be created."""
 
     name: str
-    event_type: str
     data: typing.Dict[str, typing.Any]
 
 
@@ -24,13 +23,12 @@ class AnalyticsEventCreateResponse(typing.TypedDict):
 
 class _AnalyticsEventItem(typing.TypedDict, total=False):
     name: str
-    event_type: str
     collection: str
-    timestamp: int
+    timestamp: typing.NotRequired[int]
     user_id: str
-    doc_id: str
-    doc_ids: typing.List[str]
-    query: str
+    doc_id: typing.NotRequired[str]
+    doc_ids: typing.NotRequired[typing.List[str]]
+    query: typing.NotRequired[str]
 
 
 class AnalyticsEventsResponse(typing.TypedDict):
@@ -54,13 +52,13 @@ class AnalyticsStatus(typing.TypedDict, total=False):
 # Rules
 
 class AnalyticsRuleParams(typing.TypedDict, total=False):
-    destination_collection: str
-    limit: int
-    capture_search_requests: bool
-    meta_fields: typing.List[str]
-    expand_query: bool
-    counter_field: str
-    weight: int
+    destination_collection: typing.NotRequired[str]
+    limit: typing.NotRequired[int]
+    capture_search_requests: typing.NotRequired[bool]
+    meta_fields: typing.NotRequired[typing.List[str]]
+    expand_query: typing.NotRequired[bool]
+    counter_field: typing.NotRequired[str]
+    weight: typing.NotRequired[int]
 
 
 class AnalyticsRuleCreate(typing.TypedDict):
@@ -68,7 +66,7 @@ class AnalyticsRuleCreate(typing.TypedDict):
     type: str
     collection: str
     event_type: str
-    params: AnalyticsRuleParams
+    params: typing.NotRequired[AnalyticsRuleParams]
     rule_tag: typing.NotRequired[str]
 
 
