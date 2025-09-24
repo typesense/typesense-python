@@ -77,6 +77,7 @@ class CollectionFieldSchema(typing.Generic[_TType], typing.TypedDict, total=Fals
     optional: typing.NotRequired[bool]
     infix: typing.NotRequired[bool]
     stem: typing.NotRequired[bool]
+    stem_dictionary: typing.NotRequired[str]
     locale: typing.NotRequired[Locales]
     sort: typing.NotRequired[bool]
     store: typing.NotRequired[bool]
