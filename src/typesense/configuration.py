@@ -371,7 +371,7 @@ class ConfigurationValidations:
                 to check for deprecated fields.
         """
         if config_dict.get("timeout_seconds"):
-            logger.warn(
+            logger.warning(
                 " ".join(
                     [
                         "Deprecation warning: timeout_seconds is now renamed",
@@ -381,7 +381,7 @@ class ConfigurationValidations:
             )
 
         if config_dict.get("master_node"):
-            logger.warn(
+            logger.warning(
                 " ".join(
                     [
                         "Deprecation warning: master_node is now consolidated",
@@ -391,7 +391,7 @@ class ConfigurationValidations:
             )
 
         if config_dict.get("read_replica_nodes"):
-            logger.warn(
+            logger.warning(
                 " ".join(
                     [
                         "Deprecation warning: read_replica_nodes is now",
