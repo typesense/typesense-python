@@ -6,7 +6,6 @@ import logging
 import sys
 import time
 
-from isort import Config
 from pytest_mock import MockFixture
 
 if sys.version_info >= (3, 11):
