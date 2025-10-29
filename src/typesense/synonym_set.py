@@ -57,7 +57,9 @@ class SynonymSet:
             "offset": offset,
         }
         clean_params: typing.Dict[str, int] = {
-            k: v for k, v in params.items() if v is not None  # type: ignore[dict-item]
+            k: v
+            for k, v in params.items()
+            if v is not None
         }
         response: typing.List[SynonymItemSchema] = self.api_call.get(
             self._items_path,

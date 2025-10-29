@@ -8,14 +8,11 @@ else:
     import typing_extensions as typing
 
 from typesense.api_call import ApiCall
+from typesense.curation_set import CurationSet
 from typesense.types.curation_set import (
     CurationSetSchema,
-    CurationSetUpsertSchema,
     CurationSetsListResponseSchema,
-    CurationSetListItemResponseSchema,
-    CurationItemDeleteSchema,
-    CurationSetDeleteSchema,
-    CurationItemSchema,
+    CurationSetUpsertSchema,
 )
 
 
@@ -33,7 +30,7 @@ class CurationSets:
         )
         return response
 
-    def __getitem__(self, curation_set_name: str) -> "CurationSet":
+    def __getitem__(self, curation_set_name: str) -> CurationSet:
         from typesense.curation_set import CurationSet as PerSet
 
         return PerSet(self.api_call, curation_set_name)
@@ -49,5 +46,3 @@ class CurationSets:
             entity_type=CurationSetSchema,
         )
         return response
-
-

@@ -23,9 +23,9 @@ versions through the use of the typing_extensions library.
 
 from typesense.api_call import ApiCall
 from typesense.logger import logger
+from typesense.types.synonym import SynonymDeleteSchema, SynonymSchema
 
 _synonym_deprecation_warned = False
-from typesense.types.synonym import SynonymDeleteSchema, SynonymSchema
 
 
 class Synonym:

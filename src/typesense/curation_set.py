@@ -11,7 +11,6 @@ from typesense.api_call import ApiCall
 from typesense.types.curation_set import (
     CurationSetSchema,
     CurationSetDeleteSchema,
-    CurationSetUpsertSchema,
     CurationSetListItemResponseSchema,
     CurationItemSchema,
     CurationItemDeleteSchema,
@@ -61,7 +60,7 @@ class CurationSet:
         }
         # Filter out None values to avoid sending them
         clean_params: typing.Dict[str, int] = {
-            k: v for k, v in params.items() if v is not None  # type: ignore[dict-item]
+            k: v for k, v in params.items() if v is not None
         }
         response: CurationSetListItemResponseSchema = self.api_call.get(
             self._items_path,

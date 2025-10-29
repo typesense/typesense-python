@@ -8,10 +8,9 @@ else:
     import typing_extensions as typing
 
 from typesense.api_call import ApiCall
+from typesense.synonym_set import SynonymSet
 from typesense.types.synonym_set import (
     SynonymSetCreateSchema,
-    SynonymSetDeleteSchema,
-    SynonymSetRetrieveSchema,
     SynonymSetSchema,
 )
 
@@ -30,7 +29,7 @@ class SynonymSets:
         )
         return response
 
-    def __getitem__(self, synonym_set_name: str) -> "SynonymSet":
+    def __getitem__(self, synonym_set_name: str) -> SynonymSet:
         from typesense.synonym_set import SynonymSet as PerSet
 
         return PerSet(self.api_call, synonym_set_name)
@@ -46,5 +45,3 @@ class SynonymSets:
             entity_type=SynonymSetSchema,
         )
         return response
-
-

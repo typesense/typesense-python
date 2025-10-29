@@ -1,12 +1,5 @@
 """Per-rule client for Analytics rules operations."""
 
-import sys
-
-if sys.version_info >= (3, 11):
-    import typing
-else:
-    import typing_extensions as typing
-
 from typesense.api_call import ApiCall
 from typesense.types.analytics import AnalyticsRule
 
@@ -36,5 +29,3 @@ class AnalyticsRule:
             entity_type=AnalyticsRule,
         )
         return response
-
-
