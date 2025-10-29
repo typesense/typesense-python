@@ -70,6 +70,15 @@ def test_status(actual_client: Client, delete_all: None) -> None:
 def test_retrieve_events(
     actual_client: Client, delete_all: None, delete_all_analytics_rules: None
 ) -> None:
+    actual_client.collections.create(
+        {
+            "name": "companies",
+            "fields": [
+                {"name": "user_id", "type": "string"},
+            ],
+        }
+    )
+
     actual_client.analytics.rules.create(
         {
             "name": "company_analytics_rule",
