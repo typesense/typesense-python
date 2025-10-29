@@ -51,6 +51,7 @@ class AnalyticsStatus(typing.TypedDict, total=False):
 
 # Rules
 
+
 class AnalyticsRuleParams(typing.TypedDict, total=False):
     destination_collection: typing.NotRequired[str]
     limit: typing.NotRequired[int]
@@ -76,7 +77,5 @@ class AnalyticsRuleUpdate(typing.TypedDict, total=False):
     params: AnalyticsRuleParams
 
 
-class AnalyticsRule(AnalyticsRuleCreate, total=False):
+class AnalyticsRuleSchema(AnalyticsRuleCreate, total=False):
     pass
-
-

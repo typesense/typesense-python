@@ -1,7 +1,7 @@
 """Per-rule client for Analytics rules operations."""
 
 from typesense.api_call import ApiCall
-from typesense.types.analytics import AnalyticsRule
+from typesense.types.analytics import AnalyticsRuleSchema
 
 
 class AnalyticsRule:
@@ -15,7 +15,7 @@ class AnalyticsRule:
 
         return "/".join([AnalyticsRules.resource_path, self.rule_name])
 
-    def retrieve(self) -> AnalyticsRule:
+    def retrieve(self) -> AnalyticsRuleSchema:
         response: AnalyticsRule = self.api_call.get(
             self._endpoint_path,
             as_json=True,
@@ -23,7 +23,7 @@ class AnalyticsRule:
         )
         return response
 
-    def delete(self) -> AnalyticsRule:
+    def delete(self) -> AnalyticsRuleSchema:
         response: AnalyticsRule = self.api_call.delete(
             self._endpoint_path,
             entity_type=AnalyticsRule,
