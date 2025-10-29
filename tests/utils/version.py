@@ -10,8 +10,13 @@ def is_v30_or_above(client: Client) -> bool:
         if version == "nightly":
             return True
         try:
-            numbered = str(version).split("v")[1]
-            return int(numbered) >= 30
+            version_str = str(version)
+            if version_str.startswith("v"):
+                numbered = version_str.split("v", 1)[1]
+            else:
+                numbered = version_str
+            major_version = numbered.split(".", 1)[0]
+            return int(major_version) >= 30
         except Exception:
             return False
     except Exception:
