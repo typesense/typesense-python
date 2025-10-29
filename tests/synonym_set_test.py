@@ -10,6 +10,7 @@ from tests.utils.version import is_v30_or_above
 from typesense.api_call import ApiCall
 from typesense.client import Client
 from typesense.synonym_set import SynonymSet
+from typesense.synonym_sets import SynonymSets
 from typesense.types.synonym_set import SynonymSetDeleteSchema, SynonymSetRetrieveSchema
 
 
@@ -96,7 +97,7 @@ def test_delete(fake_synonym_set: SynonymSet) -> None:
 
 
 def test_actual_retrieve(
-    actual_synonym_sets: "SynonymSets",  # type: ignore[name-defined]
+    actual_synonym_sets: SynonymSets,
     delete_all_synonym_sets: None,
     create_synonym_set: None,
 ) -> None:
@@ -116,7 +117,7 @@ def test_actual_retrieve(
 
 
 def test_actual_delete(
-    actual_synonym_sets: "SynonymSets",  # type: ignore[name-defined]
+    actual_synonym_sets: SynonymSets,
     create_synonym_set: None,
 ) -> None:
     """Test that the SynonymSet object can delete a synonym set from Typesense Server."""
