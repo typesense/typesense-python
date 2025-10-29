@@ -85,11 +85,10 @@ class SynonymSet:
         )
         return response
 
-    def delete_item(self, item_id: str) -> typing.Dict[str, str]:
+    def delete_item(self, item_id: str) -> SynonymItemDeleteSchema:
         # API returns {"id": "..."} for delete; openapi defines SynonymItemDeleteResponse with name but for items it's id
         response: SynonymItemDeleteSchema = self.api_call.delete(
-            "/".join([self._items_path, item_id]),
-            entity_type=typing.Dict[str, str],
+            "/".join([self._items_path, item_id]), entity_type=SynonymItemDeleteSchema
         )
         return response
 
