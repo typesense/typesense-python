@@ -19,9 +19,7 @@ pytestmark = pytest.mark.skipif(
         Client(
             {
                 "api_key": "xyz",
-                "nodes": [
-                    {"host": "localhost", "port": 8108, "protocol": "http"}
-                ],
+                "nodes": [{"host": "localhost", "port": 8108, "protocol": "http"}],
             }
         )
     ),
@@ -68,8 +66,7 @@ def test_retrieve(fake_synonym_set: SynonymSet) -> None:
         assert len(mock.request_history) == 1
         assert mock.request_history[0].method == "GET"
         assert (
-            mock.request_history[0].url
-            == "http://nearest:8108/synonym_sets/test-set"
+            mock.request_history[0].url == "http://nearest:8108/synonym_sets/test-set"
         )
         assert response == json_response
 
@@ -90,8 +87,7 @@ def test_delete(fake_synonym_set: SynonymSet) -> None:
         assert len(mock.request_history) == 1
         assert mock.request_history[0].method == "DELETE"
         assert (
-            mock.request_history[0].url
-            == "http://nearest:8108/synonym_sets/test-set"
+            mock.request_history[0].url == "http://nearest:8108/synonym_sets/test-set"
         )
         assert response == json_response
 
@@ -112,7 +108,7 @@ def test_actual_retrieve(
                 "root": "",
                 "synonyms": ["companies", "corporations", "firms"],
             }
-        ]
+        ],
     }
 
 
@@ -124,5 +120,3 @@ def test_actual_delete(
     response = actual_synonym_sets["test-set"].delete()
 
     assert response == {"name": "test-set"}
-
-

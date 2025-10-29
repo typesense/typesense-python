@@ -66,6 +66,7 @@ def fake_analytics_rule_fixture(fake_api_call: ApiCall) -> AnalyticsRule:
     """Return an AnalyticsRule object with test values."""
     return AnalyticsRule(fake_api_call, "company_analytics_rule")
 
+
 @pytest.fixture(scope="function", name="create_query_collection")
 def create_query_collection_fixture() -> None:
     """Create a query collection for analytics rules in the Typesense server."""

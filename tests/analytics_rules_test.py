@@ -1,4 +1,5 @@
 """Tests for v30 Analytics Rules endpoints (client.analytics.rules)."""
+
 from __future__ import annotations
 
 import pytest
@@ -13,10 +14,12 @@ from typesense.types.analytics import AnalyticsRuleCreate
 
 pytestmark = pytest.mark.skipif(
     not is_v30_or_above(
-        Client({
-            "api_key": "xyz",
-            "nodes": [{"host": "localhost", "port": 8108, "protocol": "http"}],
-        })
+        Client(
+            {
+                "api_key": "xyz",
+                "nodes": [{"host": "localhost", "port": 8108, "protocol": "http"}],
+            }
+        )
     ),
     reason="Run v30 analytics tests only on v30+",
 )
@@ -130,5 +133,3 @@ def test_actual_retrieve(
     rules = actual_analytics_rules.retrieve()
     assert isinstance(rules, list)
     assert any(r.get("name") == "company_analytics_rule" for r in rules)
-
-

@@ -25,9 +25,7 @@ pytestmark = pytest.mark.skipif(
         Client(
             {
                 "api_key": "xyz",
-                "nodes": [
-                    {"host": "localhost", "port": 8108, "protocol": "http"}
-                ],
+                "nodes": [{"host": "localhost", "port": 8108, "protocol": "http"}],
             }
         )
     ),
@@ -109,9 +107,7 @@ def test_create(fake_synonym_sets: SynonymSets) -> None:
         assert mock.call_count == 1
         assert mock.called is True
         assert mock.last_request.method == "PUT"
-        assert (
-            mock.last_request.url == "http://nearest:8108/synonym_sets/test-set"
-        )
+        assert mock.last_request.url == "http://nearest:8108/synonym_sets/test-set"
         assert mock.last_request.json() == payload
 
 
@@ -159,5 +155,3 @@ def test_actual_retrieve(
             "name": "test-set",
         },
     )
-
-

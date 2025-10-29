@@ -21,5 +21,3 @@ def is_v30_or_above(client: Client) -> bool:
             return False
     except Exception:
         return False
-
-

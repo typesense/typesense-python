@@ -69,5 +69,3 @@ def fake_curation_sets_fixture(fake_api_call: ApiCall) -> CurationSets:
 def fake_curation_set_fixture(fake_api_call: ApiCall) -> CurationSet:
     """Return a CurationSet object with test values."""
     return CurationSet(fake_api_call, "products")
-
-

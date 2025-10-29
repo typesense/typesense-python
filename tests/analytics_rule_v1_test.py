@@ -1,4 +1,5 @@
 """Tests for the AnalyticsRuleV1 class."""
+
 from __future__ import annotations
 
 import pytest
@@ -14,13 +15,16 @@ from typesense.types.analytics_rule_v1 import RuleDeleteSchema, RuleSchemaForQue
 
 pytestmark = pytest.mark.skipif(
     is_v30_or_above(
-        Client({
-            "api_key": "xyz",
-            "nodes": [{"host": "localhost", "port": 8108, "protocol": "http"}],
-        })
+        Client(
+            {
+                "api_key": "xyz",
+                "nodes": [{"host": "localhost", "port": 8108, "protocol": "http"}],
+            }
+        )
     ),
-    reason="Skip AnalyticsV1 tests on v30+"
+    reason="Skip AnalyticsV1 tests on v30+",
 )
+
 
 def test_init(fake_api_call: ApiCall) -> None:
     """Test that the AnalyticsRuleV1 object is initialized correctly."""
@@ -40,7 +44,6 @@ def test_init(fake_api_call: ApiCall) -> None:
         analytics_rule._endpoint_path  # noqa: WPS437
         == "/analytics/rules/company_analytics_rule"
     )
-
 
 
 def test_retrieve(fake_analytics_rule: AnalyticsRuleV1) -> None:
@@ -73,7 +76,6 @@ def test_retrieve(fake_analytics_rule: AnalyticsRuleV1) -> None:
         assert response == json_response
 
 
-
 def test_delete(fake_analytics_rule: AnalyticsRuleV1) -> None:
     """Test that the AnalyticsRuleV1 object can delete an analytics_rule."""
     json_response: RuleDeleteSchema = {
@@ -94,7 +96,6 @@ def test_delete(fake_analytics_rule: AnalyticsRuleV1) -> None:
             == "http://nearest:8108/analytics/rules/company_analytics_rule"
         )
         assert response == json_response
-
 
 
 def test_actual_retrieve(
@@ -119,7 +120,6 @@ def test_actual_retrieve(
     assert response == expected
 
 
-
 def test_actual_delete(
     actual_analytics_rules: AnalyticsRulesV1,
     delete_all: None,
@@ -133,5 +133,3 @@ def test_actual_delete(
         "name": "company_analytics_rule",
     }
     assert response == expected
-
-

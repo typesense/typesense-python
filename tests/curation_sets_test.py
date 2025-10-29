@@ -16,15 +16,12 @@ from typesense.client import Client
 from typesense.curation_sets import CurationSets
 from typesense.types.curation_set import CurationSetSchema, CurationSetUpsertSchema
 
-
 pytestmark = pytest.mark.skipif(
     not is_v30_or_above(
         Client(
             {
                 "api_key": "xyz",
-                "nodes": [
-                    {"host": "localhost", "port": 8108, "protocol": "http"}
-                ],
+                "nodes": [{"host": "localhost", "port": 8108, "protocol": "http"}],
             }
         )
     ),
@@ -105,9 +102,7 @@ def test_upsert(fake_curation_sets: CurationSets) -> None:
         assert mock.call_count == 1
         assert mock.called is True
         assert mock.last_request.method == "PUT"
-        assert (
-            mock.last_request.url == "http://nearest:8108/curation_sets/products"
-        )
+        assert mock.last_request.url == "http://nearest:8108/curation_sets/products"
         assert mock.last_request.json() == payload
 
 

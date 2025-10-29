@@ -69,5 +69,3 @@ def fake_synonym_sets_fixture(fake_api_call: ApiCall) -> SynonymSets:
 def fake_synonym_set_fixture(fake_api_call: ApiCall) -> SynonymSet:
     """Return a SynonymSet object with test values."""
     return SynonymSet(fake_api_call, "test-set")
-
-

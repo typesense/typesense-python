@@ -66,5 +66,3 @@ def actual_analytics_rules_v1_fixture(actual_api_call: ApiCall) -> AnalyticsRule
 def fake_analytics_rule_v1_fixture(fake_api_call: ApiCall) -> AnalyticsRuleV1:
     """Return a AnalyticsRule object with test values."""
     return AnalyticsRuleV1(fake_api_call, "company_analytics_rule")
-
-

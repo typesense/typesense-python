@@ -18,13 +18,16 @@ from typesense.client import Client
 
 pytestmark = pytest.mark.skipif(
     is_v30_or_above(
-        Client({
-            "api_key": "xyz",
-            "nodes": [{"host": "localhost", "port": 8108, "protocol": "http"}],
-        })
+        Client(
+            {
+                "api_key": "xyz",
+                "nodes": [{"host": "localhost", "port": 8108, "protocol": "http"}],
+            }
+        )
     ),
     reason="Run override tests only on less than v30",
 )
+
 
 def test_init(fake_api_call: ApiCall) -> None:
     """Test that the Overrides object is initialized correctly."""

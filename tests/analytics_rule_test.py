@@ -1,4 +1,5 @@
 """Unit tests for per-rule AnalyticsRule operations."""
+
 from __future__ import annotations
 
 import pytest
@@ -12,10 +13,12 @@ from typesense.analytics_rules import AnalyticsRules
 
 pytestmark = pytest.mark.skipif(
     not is_v30_or_above(
-        Client({
-            "api_key": "xyz",
-            "nodes": [{"host": "localhost", "port": 8108, "protocol": "http"}],
-        })
+        Client(
+            {
+                "api_key": "xyz",
+                "nodes": [{"host": "localhost", "port": 8108, "protocol": "http"}],
+            }
+        )
     ),
     reason="Run analytics tests only on v30+",
 )
@@ -63,5 +66,3 @@ def test_actual_rule_delete(
 ) -> None:
     resp = actual_analytics_rules["company_analytics_rule"].delete()
     assert resp["name"] == "company_analytics_rule"
-
-

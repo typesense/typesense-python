@@ -1,4 +1,5 @@
 """Tests for the AnalyticsRulesV1 class."""
+
 from __future__ import annotations
 
 import pytest
@@ -17,13 +18,16 @@ from typesense.types.analytics_rule_v1 import (
 
 pytestmark = pytest.mark.skipif(
     is_v30_or_above(
-        Client({
-            "api_key": "xyz",
-            "nodes": [{"host": "localhost", "port": 8108, "protocol": "http"}],
-        })
+        Client(
+            {
+                "api_key": "xyz",
+                "nodes": [{"host": "localhost", "port": 8108, "protocol": "http"}],
+            }
+        )
     ),
-    reason="Skip AnalyticsV1 tests on v30+"
+    reason="Skip AnalyticsV1 tests on v30+",
 )
+
 
 def test_init(fake_api_call: ApiCall) -> None:
     """Test that the AnalyticsRulesV1 object is initialized correctly."""
@@ -150,7 +154,6 @@ def test_create(fake_analytics_rules: AnalyticsRulesV1) -> None:
         }
 
 
-
 def test_actual_create(
     actual_analytics_rules: AnalyticsRulesV1,
     delete_all: None,
@@ -180,7 +183,6 @@ def test_actual_create(
             "destination": {"collection": "companies_queries"},
         },
     }
-
 
 
 def test_actual_update(
@@ -213,7 +215,6 @@ def test_actual_update(
     }
 
 
-
 def test_actual_retrieve(
     actual_analytics_rules: AnalyticsRulesV1,
     delete_all: None,
@@ -235,5 +236,3 @@ def test_actual_retrieve(
             "type": "nohits_queries",
         },
     )
-
-

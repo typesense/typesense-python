@@ -23,9 +23,7 @@ pytestmark = pytest.mark.skipif(
         Client(
             {
                 "api_key": "xyz",
-                "nodes": [
-                    {"host": "localhost", "port": 8108, "protocol": "http"}
-                ],
+                "nodes": [{"host": "localhost", "port": 8108, "protocol": "http"}],
             }
         )
     ),

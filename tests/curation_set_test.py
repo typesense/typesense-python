@@ -17,15 +17,12 @@ from typesense.types.curation_set import (
     CurationSetSchema,
 )
 
-
 pytestmark = pytest.mark.skipif(
     not is_v30_or_above(
         Client(
             {
                 "api_key": "xyz",
-                "nodes": [
-                    {"host": "localhost", "port": 8108, "protocol": "http"}
-                ],
+                "nodes": [{"host": "localhost", "port": 8108, "protocol": "http"}],
             }
         )
     ),

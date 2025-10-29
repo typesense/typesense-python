@@ -19,9 +19,7 @@ pytestmark = pytest.mark.skipif(
         Client(
             {
                 "api_key": "xyz",
-                "nodes": [
-                    {"host": "localhost", "port": 8108, "protocol": "http"}
-                ],
+                "nodes": [{"host": "localhost", "port": 8108, "protocol": "http"}],
             }
         )
     ),
@@ -81,5 +79,3 @@ def test_delete_item(fake_synonym_set: SynonymSet) -> None:
         )
         res = fake_synonym_set.delete_item("nike")
         assert res == json_response
-
-
