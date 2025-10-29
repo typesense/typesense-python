@@ -203,6 +203,7 @@ def test_actual_create(actual_collections: Collections, delete_all: None) -> Non
                 "infix": False,
                 "stem": False,
                 "stem_dictionary": "",
+                "truncate_len": 100,
                 "store": True,
             },
             {
@@ -216,6 +217,7 @@ def test_actual_create(actual_collections: Collections, delete_all: None) -> Non
                 "infix": False,
                 "stem": False,
                 "stem_dictionary": "",
+                "truncate_len": 100,
                 "store": True,
             },
         ],
@@ -273,6 +275,7 @@ def test_actual_retrieve(
                     "infix": False,
                     "stem": False,
                     "stem_dictionary": "",
+                    "truncate_len": 100,
                     "store": True,
                 },
                 {
@@ -286,6 +289,7 @@ def test_actual_retrieve(
                     "infix": False,
                     "stem": False,
                     "stem_dictionary": "",
+                    "truncate_len": 100,
                     "store": True,
                 },
             ],
