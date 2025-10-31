@@ -34,6 +34,9 @@ from typesense.types.synonym import (
     SynonymSchema,
     SynonymsRetrieveSchema,
 )
+from typesense.logger import logger
+
+_synonyms_deprecation_warned = False
 
 if sys.version_info >= (3, 11):
     import typing
@@ -98,6 +101,7 @@ class Synonyms:
         Returns:
             SynonymSchema: The created or updated synonym.
         """
+        self._maybe_warn_deprecation()
         response = self.api_call.put(
             self._endpoint_path(synonym_id),
             body=schema,
@@ -112,6 +116,7 @@ class Synonyms:
         Returns:
             SynonymsRetrieveSchema: The schema containing all synonyms.
         """
+        self._maybe_warn_deprecation()
         response = self.api_call.get(
             self._endpoint_path(),
             entity_type=SynonymsRetrieveSchema,
@@ -139,3 +144,12 @@ class Synonyms:
                 synonym_id,
             ],
         )
+
+    def _maybe_warn_deprecation(self) -> None:
+        global _synonyms_deprecation_warned
+        if not _synonyms_deprecation_warned:
+            logger.warning(
+                "The synonyms API (collections/{collection}/synonyms) is deprecated and will be "
+                "removed in a future release. Use synonym sets (synonym_sets) instead."
+            )
+            _synonyms_deprecation_warned = True

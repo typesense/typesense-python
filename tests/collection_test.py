@@ -57,6 +57,8 @@ def test_retrieve(fake_collection: Collection) -> None:
         "num_documents": 0,
         "symbols_to_index": [],
         "token_separators": [],
+        "synonym_sets": [],
+        "curation_sets": [],
     }
 
     with requests_mock.mock() as mock:
@@ -100,6 +102,8 @@ def test_update(fake_collection: Collection) -> None:
         "num_documents": 0,
         "symbols_to_index": [],
         "token_separators": [],
+        "synonym_sets": [],
+        "curation_sets": [],
     }
 
     with requests_mock.mock() as mock:
@@ -158,6 +162,8 @@ def test_delete(fake_collection: Collection) -> None:
         "num_documents": 0,
         "symbols_to_index": [],
         "token_separators": [],
+        "synonym_sets": [],
+        "curation_sets": [],
     }
 
     with requests_mock.mock() as mock:
@@ -198,6 +204,7 @@ def test_actual_retrieve(
                 "infix": False,
                 "stem": False,
                 "stem_dictionary": "",
+                "truncate_len": 100,
                 "store": True,
             },
             {
@@ -211,6 +218,7 @@ def test_actual_retrieve(
                 "infix": False,
                 "stem": False,
                 "stem_dictionary": "",
+                "truncate_len": 100,
                 "store": True,
             },
         ],
@@ -218,6 +226,8 @@ def test_actual_retrieve(
         "num_documents": 0,
         "symbols_to_index": [],
         "token_separators": [],
+        "synonym_sets": [],
+        "curation_sets": [],
     }
 
     response.pop("created_at")
@@ -237,10 +247,7 @@ def test_actual_update(
 
     expected: CollectionSchema = {
         "fields": [
-            {
-                "name": "num_locations",
-                "type": "int32",
-            },
+            {"name": "num_locations", "truncate_len": 100, "type": "int32"},
         ],
     }
 

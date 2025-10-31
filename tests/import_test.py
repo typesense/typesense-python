@@ -10,7 +10,7 @@ from pytest_mock import MockFixture
 
 typing_module_names = [
     "alias",
-    "analytics_rule",
+    "analytics_rule_v1",
     "collection",
     "conversations_model",
     "debug",
@@ -20,13 +20,14 @@ typing_module_names = [
     "operations",
     "override",
     "stopword",
+    "synonym_set",
     "synonym",
 ]
 
 module_names = [
     "aliases",
-    "analytics_rule",
-    "analytics_rules",
+    "analytics_rule_v1",
+    "analytics_rules_v1",
     "api_call",
     "client",
     "collection",
@@ -41,6 +42,8 @@ module_names = [
     "overrides",
     "operations",
     "synonyms",
+    "synonym_set",
+    "synonym_sets",
     "preprocess",
     "stopwords",
 ]

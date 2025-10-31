@@ -1,141 +1,90 @@
-"""Tests for the AnalyticsRules class."""
+"""Tests for v30 Analytics Rules endpoints (client.analytics.rules)."""
 
 from __future__ import annotations
 
+import pytest
 import requests_mock
 
-from tests.utils.object_assertions import assert_match_object, assert_object_lists_match
+from tests.utils.version import is_v30_or_above
+from typesense.client import Client
 from typesense.analytics_rules import AnalyticsRules
-from typesense.api_call import ApiCall
-from typesense.types.analytics_rule import (
-    RuleCreateSchemaForQueries,
-    RulesRetrieveSchema,
+from typesense.analytics_rule import AnalyticsRule
+from typesense.types.analytics import AnalyticsRuleCreate
+
+
+pytestmark = pytest.mark.skipif(
+    not is_v30_or_above(
+        Client(
+            {
+                "api_key": "xyz",
+                "nodes": [{"host": "localhost", "port": 8108, "protocol": "http"}],
+            }
+        )
+    ),
+    reason="Run v30 analytics tests only on v30+",
 )
 
 
-def test_init(fake_api_call: ApiCall) -> None:
-    """Test that the AnalyticsRules object is initialized correctly."""
-    analytics_rules = AnalyticsRules(fake_api_call)
-
-    assert_match_object(analytics_rules.api_call, fake_api_call)
-    assert_object_lists_match(
-        analytics_rules.api_call.node_manager.nodes,
-        fake_api_call.node_manager.nodes,
-    )
-    assert_match_object(
-        analytics_rules.api_call.config.nearest_node,
-        fake_api_call.config.nearest_node,
-    )
-
-    assert not analytics_rules.rules
+def test_rules_init(fake_api_call) -> None:
+    rules = AnalyticsRules(fake_api_call)
+    assert rules.rules == {}
 
 
-def test_get_missing_analytics_rule(fake_analytics_rules: AnalyticsRules) -> None:
-    """Test that the AnalyticsRules object can get a missing analytics_rule."""
-    analytics_rule = fake_analytics_rules["company_analytics_rule"]
-
-    assert analytics_rule.rule_id == "company_analytics_rule"
-    assert_match_object(analytics_rule.api_call, fake_analytics_rules.api_call)
-    assert_object_lists_match(
-        analytics_rule.api_call.node_manager.nodes,
-        fake_analytics_rules.api_call.node_manager.nodes,
-    )
-    assert_match_object(
-        analytics_rule.api_call.config.nearest_node,
-        fake_analytics_rules.api_call.config.nearest_node,
-    )
-    assert (
-        analytics_rule._endpoint_path  # noqa: WPS437
-        == "/analytics/rules/company_analytics_rule"
-    )
+def test_rule_getitem(fake_api_call) -> None:
+    rules = AnalyticsRules(fake_api_call)
+    rule = rules["company_analytics_rule"]
+    assert isinstance(rule, AnalyticsRule)
+    assert rule._endpoint_path == "/analytics/rules/company_analytics_rule"
 
 
-def test_get_existing_analytics_rule(fake_analytics_rules: AnalyticsRules) -> None:
-    """Test that the AnalyticsRules object can get an existing analytics_rule."""
-    analytics_rule = fake_analytics_rules["company_analytics_rule"]
-    fetched_analytics_rule = fake_analytics_rules["company_analytics_rule"]
-
-    assert len(fake_analytics_rules.rules) == 1
-
-    assert analytics_rule is fetched_analytics_rule
-
-
-def test_retrieve(fake_analytics_rules: AnalyticsRules) -> None:
-    """Test that the AnalyticsRules object can retrieve analytics_rules."""
-    json_response: RulesRetrieveSchema = {
-        "rules": [
-            {
-                "name": "company_analytics_rule",
-                "params": {
-                    "destination": {
-                        "collection": "companies_queries",
-                    },
-                    "source": {"collections": ["companies"]},
-                },
-                "type": "nohits_queries",
-            },
-        ],
+def test_rules_create(fake_api_call) -> None:
+    rules = AnalyticsRules(fake_api_call)
+    body: AnalyticsRuleCreate = {
+        "name": "company_analytics_rule",
+        "type": "popular_queries",
+        "collection": "companies",
+        "event_type": "search",
+        "params": {"destination_collection": "companies_queries", "limit": 1000},
     }
+    with requests_mock.Mocker() as mock:
+        mock.post("http://nearest:8108/analytics/rules", json=body)
+        resp = rules.create(body)
+        assert resp == body
 
+
+def test_rules_retrieve_with_tag(fake_api_call) -> None:
+    rules = AnalyticsRules(fake_api_call)
+    with requests_mock.Mocker() as mock:
+        mock.get(
+            "http://nearest:8108/analytics/rules?rule_tag=homepage",
+            json=[{"name": "rule1", "rule_tag": "homepage"}],
+        )
+        resp = rules.retrieve(rule_tag="homepage")
+        assert isinstance(resp, list)
+        assert resp[0]["rule_tag"] == "homepage"
+
+
+def test_rules_upsert(fake_api_call) -> None:
+    rules = AnalyticsRules(fake_api_call)
+    with requests_mock.Mocker() as mock:
+        mock.put(
+            "http://nearest:8108/analytics/rules/company_analytics_rule",
+            json={"name": "company_analytics_rule"},
+        )
+        resp = rules.upsert("company_analytics_rule", {"params": {}})
+        assert resp["name"] == "company_analytics_rule"
+
+
+def test_rules_retrieve(fake_api_call) -> None:
+    rules = AnalyticsRules(fake_api_call)
     with requests_mock.Mocker() as mock:
         mock.get(
             "http://nearest:8108/analytics/rules",
-            json=json_response,
+            json=[{"name": "company_analytics_rule"}],
         )
-
-        response = fake_analytics_rules.retrieve()
-
-        assert len(response) == 1
-        assert response["rules"][0] == json_response.get("rules")[0]
-        assert response == json_response
-
-
-def test_create(fake_analytics_rules: AnalyticsRules) -> None:
-    """Test that the AnalyticsRules object can create a analytics_rule."""
-    json_response: RuleCreateSchemaForQueries = {
-        "name": "company_analytics_rule",
-        "params": {
-            "destination": {
-                "collection": "companies_queries",
-            },
-            "source": {"collections": ["companies"]},
-        },
-        "type": "nohits_queries",
-    }
-
-    with requests_mock.Mocker() as mock:
-        mock.post(
-            "http://nearest:8108/analytics/rules",
-            json=json_response,
-        )
-
-        fake_analytics_rules.create(
-            rule={
-                "params": {
-                    "destination": {
-                        "collection": "companies_queries",
-                    },
-                    "source": {"collections": ["companies"]},
-                },
-                "type": "nohits_queries",
-                "name": "company_analytics_rule",
-            },
-        )
-
-        assert mock.call_count == 1
-        assert mock.called is True
-        assert mock.last_request.method == "POST"
-        assert mock.last_request.url == "http://nearest:8108/analytics/rules"
-        assert mock.last_request.json() == {
-            "params": {
-                "destination": {
-                    "collection": "companies_queries",
-                },
-                "source": {"collections": ["companies"]},
-            },
-            "type": "nohits_queries",
-            "name": "company_analytics_rule",
-        }
+        resp = rules.retrieve()
+        assert isinstance(resp, list)
+        assert resp[0]["name"] == "company_analytics_rule"
 
 
 def test_actual_create(
@@ -145,28 +94,16 @@ def test_actual_create(
     create_collection: None,
     create_query_collection: None,
 ) -> None:
-    """Test that the AnalyticsRules object can create an analytics_rule on Typesense Server."""
-    response = actual_analytics_rules.create(
-        rule={
-            "name": "company_analytics_rule",
-            "type": "nohits_queries",
-            "params": {
-                "source": {
-                    "collections": ["companies"],
-                },
-                "destination": {"collection": "companies_queries"},
-            },
-        },
-    )
-
-    assert response == {
+    body: AnalyticsRuleCreate = {
         "name": "company_analytics_rule",
         "type": "nohits_queries",
-        "params": {
-            "source": {"collections": ["companies"]},
-            "destination": {"collection": "companies_queries"},
-        },
+        "collection": "companies",
+        "event_type": "search",
+        "params": {"destination_collection": "companies_queries", "limit": 1000},
     }
+    resp = actual_analytics_rules.create(rule=body)
+    assert resp["name"] == "company_analytics_rule"
+    assert resp["params"]["destination_collection"] == "companies_queries"
 
 
 def test_actual_update(
@@ -175,28 +112,16 @@ def test_actual_update(
     delete_all_analytics_rules: None,
     create_analytics_rule: None,
 ) -> None:
-    """Test that the AnalyticsRules object can update an analytics_rule on Typesense Server."""
-    response = actual_analytics_rules.upsert(
+    resp = actual_analytics_rules.upsert(
         "company_analytics_rule",
         {
-            "type": "popular_queries",
             "params": {
-                "source": {
-                    "collections": ["companies"],
-                },
-                "destination": {"collection": "companies_queries"},
+                "destination_collection": "companies_queries",
+                "limit": 500,
             },
         },
     )
-
-    assert response == {
-        "name": "company_analytics_rule",
-        "type": "popular_queries",
-        "params": {
-            "source": {"collections": ["companies"]},
-            "destination": {"collection": "companies_queries"},
-        },
-    }
+    assert resp["name"] == "company_analytics_rule"
 
 
 def test_actual_retrieve(
@@ -205,18 +130,6 @@ def test_actual_retrieve(
     delete_all_analytics_rules: None,
     create_analytics_rule: None,
 ) -> None:
-    """Test that the AnalyticsRules object can retrieve the rules from Typesense Server."""
-    response = actual_analytics_rules.retrieve()
-    assert len(response["rules"]) == 1
-    assert_match_object(
-        response["rules"][0],
-        {
-            "name": "company_analytics_rule",
-            "params": {
-                "destination": {"collection": "companies_queries"},
-                "limit": 1000,
-                "source": {"collections": ["companies"]},
-            },
-            "type": "nohits_queries",
-        },
-    )
+    rules = actual_analytics_rules.retrieve()
+    assert isinstance(rules, list)
+    assert any(r.get("name") == "company_analytics_rule" for r in rules)

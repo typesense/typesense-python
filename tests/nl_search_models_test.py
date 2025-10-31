@@ -8,9 +8,9 @@ import sys
 import pytest
 
 if sys.version_info >= (3, 11):
-    import typing
+    pass
 else:
-    import typing_extensions as typing
+    pass
 
 from tests.utils.object_assertions import (
     assert_match_object,
@@ -20,7 +20,6 @@ from tests.utils.object_assertions import (
 )
 from typesense.api_call import ApiCall
 from typesense.nl_search_models import NLSearchModels
-from typesense.types.nl_search_model import NLSearchModelSchema
 
 
 def test_init(fake_api_call: ApiCall) -> None:

@@ -86,6 +86,7 @@ def test_retrieve(fake_collections: Collections) -> None:
             "num_documents": 0,
             "symbols_to_index": [],
             "token_separators": [],
+            "synonym_sets": [],
         },
         {
             "created_at": 1619711488,
@@ -105,6 +106,7 @@ def test_retrieve(fake_collections: Collections) -> None:
             "num_documents": 0,
             "symbols_to_index": [],
             "token_separators": [],
+            "synonym_sets": [],
         },
     ]
     with requests_mock.Mocker() as mock:
@@ -138,6 +140,7 @@ def test_create(fake_collections: Collections) -> None:
         "num_documents": 0,
         "symbols_to_index": [],
         "token_separators": [],
+        "synonym_sets": [],
     }
 
     with requests_mock.Mocker() as mock:
@@ -200,6 +203,7 @@ def test_actual_create(actual_collections: Collections, delete_all: None) -> Non
                 "infix": False,
                 "stem": False,
                 "stem_dictionary": "",
+                "truncate_len": 100,
                 "store": True,
             },
             {
@@ -213,6 +217,7 @@ def test_actual_create(actual_collections: Collections, delete_all: None) -> Non
                 "infix": False,
                 "stem": False,
                 "stem_dictionary": "",
+                "truncate_len": 100,
                 "store": True,
             },
         ],
@@ -220,6 +225,8 @@ def test_actual_create(actual_collections: Collections, delete_all: None) -> Non
         "num_documents": 0,
         "symbols_to_index": [],
         "token_separators": [],
+        "synonym_sets": [],
+        "curation_sets": [],
     }
 
     response = actual_collections.create(
@@ -268,6 +275,7 @@ def test_actual_retrieve(
                     "infix": False,
                     "stem": False,
                     "stem_dictionary": "",
+                    "truncate_len": 100,
                     "store": True,
                 },
                 {
@@ -281,6 +289,7 @@ def test_actual_retrieve(
                     "infix": False,
                     "stem": False,
                     "stem_dictionary": "",
+                    "truncate_len": 100,
                     "store": True,
                 },
             ],
@@ -288,6 +297,8 @@ def test_actual_retrieve(
             "num_documents": 0,
             "symbols_to_index": [],
             "token_separators": [],
+            "synonym_sets": [],
+            "curation_sets": [],
         },
     ]
 

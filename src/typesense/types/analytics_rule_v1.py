@@ -1,4 +1,4 @@
-"""Analytics Rule types for Typesense Python Client."""
+"""Analytics Rule V1 types for Typesense Python Client."""
 
 import sys
 
@@ -201,3 +201,5 @@ class RulesRetrieveSchema(typing.TypedDict):
     """
 
     rules: typing.List[typing.Union[RuleSchemaForQueries, RuleSchemaForCounters]]
+
+
