@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
 import requests_mock
 
@@ -51,11 +53,11 @@ def test_cache_clear(actual_operations: Operations) -> None:
     assert response["success"]
 
 
-def test_snapshot(actual_operations: Operations) -> None:
+def test_snapshot(actual_operations: Operations, tmp_path: Path) -> None:
     """Test that the Operations object can perform the snapshot operation."""
     response = actual_operations.perform(
         "snapshot",
-        {"snapshot_path": "/tmp"},  # noqa: S108
+        {"snapshot_path": str(tmp_path)},
     )
 
     assert response["success"]
