@@ -10,6 +10,22 @@ else:
 
 _TType = typing.TypeVar("_TType")
 
+_CreateFieldT = typing.TypeVar(
+    "_CreateFieldT",
+    bound=typing.Union[
+        "RegularCollectionFieldSchema", "ReferenceCollectionFieldSchema"
+    ],
+)
+
+_UpdateFieldT = typing.TypeVar(
+    "_UpdateFieldT",
+    bound=typing.Union[
+        "RegularCollectionFieldSchema",
+        "ReferenceCollectionFieldSchema",
+        "DropCollectionFieldSchema",
+    ],
+)
+
 _FieldType = typing.Literal[
     "string",
     "int32",
@@ -151,15 +167,14 @@ class VoiceQueryModelSchema(typing.TypedDict):
     model_name: str
 
 
-class CollectionCreateSchema(typing.TypedDict):
+class CollectionCreateSchema(typing.Generic[_CreateFieldT], typing.TypedDict):
     """
     The schema for the request of the Collections.create method.
 
     Attributes:
         name (str): The name of the collection.
 
-        fields (list[RegularCollectionFieldSchema | ReferenceCollectionFieldSchema]): The fields
-            of the collection.
+        fields (list[_CreateFieldT]): The fields of the collection.
 
         default_sorting_field (str): The default sorting field of the collection.
 
@@ -173,9 +188,7 @@ class CollectionCreateSchema(typing.TypedDict):
     """
 
     name: str
-    fields: typing.List[
-        typing.Union[RegularCollectionFieldSchema, ReferenceCollectionFieldSchema]
-    ]
+    fields: typing.List[_CreateFieldT]
     default_sorting_field: typing.NotRequired[str]
     symbols_to_index: typing.NotRequired[typing.List[str]]
     token_separators: typing.NotRequired[typing.List[str]]
@@ -184,7 +197,7 @@ class CollectionCreateSchema(typing.TypedDict):
     synonym_sets: typing.NotRequired[typing.List[typing.List[str]]]
 
 
-class CollectionSchema(CollectionCreateSchema):
+class CollectionSchema(CollectionCreateSchema[_CreateFieldT]):
     """
     The schema for the response of the Collections.create method.
 
@@ -197,8 +210,7 @@ class CollectionSchema(CollectionCreateSchema):
 
         name (str): The name of the collection.
 
-        fields (list[RegularCollectionFieldSchema | ReferenceCollectionFieldSchema]): The fields
-            of the collection.
+        fields (list[_CreateFieldT]): The fields of the collection.
 
         default_sorting_field (str): The default sorting field of the collection.
 
@@ -216,19 +228,29 @@ class CollectionSchema(CollectionCreateSchema):
     num_memory_shards: int
 
 
-class CollectionUpdateSchema(typing.TypedDict):
+# Type alias for backward compatibility
+CollectionSchemaCompat = CollectionSchema[
+    typing.Union[RegularCollectionFieldSchema, ReferenceCollectionFieldSchema]
+]
+
+
+class CollectionUpdateSchema(typing.Generic[_UpdateFieldT], typing.TypedDict):
     """
     The schema for the request of the Collection.update method.
 
     Attributes:
-        fields (list): The fields of the collection.
+        fields (list[_UpdateFieldT]): The fields of the collection.
 
     """
 
-    fields: typing.List[
-        typing.Union[
-            RegularCollectionFieldSchema,
-            ReferenceCollectionFieldSchema,
-            DropCollectionFieldSchema,
-        ]
+    fields: typing.List[_UpdateFieldT]
+
+
+# Type alias for backward compatibility
+CollectionUpdateSchemaCompat = CollectionUpdateSchema[
+    typing.Union[
+        RegularCollectionFieldSchema,
+        ReferenceCollectionFieldSchema,
+        DropCollectionFieldSchema,
     ]
+]

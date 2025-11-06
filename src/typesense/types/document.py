@@ -187,6 +187,33 @@ class ImportResponseFail(typing.Generic[TDoc], typing.TypedDict):
     document: TDoc
 
 
+_DocumentImportParamsT = typing.TypeVar(
+    "_DocumentImportParamsT",
+    bound=typing.Union[
+        "DocumentWriteParameters",
+        "DocumentImportParametersReturnId",
+        "DocumentImportParametersReturnDoc",
+        "DocumentImportParametersReturnDocAndId",
+    ],
+)
+
+_ImportResponseT = typing.TypeVar(
+    "_ImportResponseT",
+    bound=typing.Union[
+        "ImportResponseSuccess",
+        "ImportResponseWithDoc[typing.Any]",
+        "ImportResponseWithId",
+        "ImportResponseWithDocAndId[typing.Any]",
+        "ImportResponseFail[typing.Any]",
+    ],
+)
+
+_StringOrListT = typing.TypeVar(
+    "_StringOrListT",
+    bound=typing.Union[str, typing.List[str]],
+)
+
+
 ImportResponse: typing.TypeAlias = typing.Union[
     typing.List[typing.Union[ImportResponseWithDoc[TDoc], ImportResponseFail[TDoc]]],
     typing.List[typing.Union[ImportResponseWithId, ImportResponseFail[TDoc]]],
@@ -298,6 +325,16 @@ class DocumentImportParametersReturnDocAndId(DocumentWriteParameters):
     return_doc: typing.Literal[True]
     return_id: typing.Literal[True]
 
+
+DocumentImportParametersGeneric = typing.TypeVar(
+    "DocumentImportParametersGeneric",
+    bound=typing.Union[
+        DocumentWriteParameters,
+        DocumentImportParametersReturnId,
+        DocumentImportParametersReturnDoc,
+        DocumentImportParametersReturnDocAndId,
+    ],
+)
 
 DocumentImportParameters: typing.TypeAlias = typing.Union[
     DocumentWriteParameters,
