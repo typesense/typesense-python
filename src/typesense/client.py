@@ -74,7 +74,7 @@ class Client:
         keys (Keys): Instance for managing API keys.
         aliases (Aliases): Instance for managing collection aliases.
         analyticsV1 (AnalyticsV1): Instance for analytics operations (V1).
-        analytics (AnalyticsV30): Instance for analytics operations (v30).
+        analytics (Analytics): Instance for analytics operations (v30).
         curation_sets (CurationSets): Instance for Curation Sets (v30+)
         stemming (Stemming): Instance for stemming dictionary operations.
         operations (Operations): Instance for various Typesense operations.
@@ -95,8 +95,10 @@ class Client:
         Example:
             >>> config = {
             ...     "api_key": "your_api_key",
-            ...     "nodes": [{"host": "localhost", "port": "8108", "protocol": "http"}],
-            ...     "connection_timeout_seconds": 2
+            ...     "nodes": [
+            ...         {"host": "localhost", "port": "8108", "protocol": "http"}
+            ...     ],
+            ...     "connection_timeout_seconds": 2,
             ... }
             >>> client = Client(config)
         """
@@ -143,7 +145,6 @@ class Client:
             >>> class Company(DocumentSchema):
             ...     name: str
             ...     num_employees: int
-            ...
             >>> client = Client(config)
             >>> companies_collection = client.typed_collection(model=Company)
             # This is equivalent to:
