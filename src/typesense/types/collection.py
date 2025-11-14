@@ -225,10 +225,15 @@ class CollectionUpdateSchema(typing.TypedDict):
 
     """
 
-    fields: typing.List[
-        typing.Union[
-            RegularCollectionFieldSchema,
-            ReferenceCollectionFieldSchema,
-            DropCollectionFieldSchema,
+    fields: typing.NotRequired[
+        typing.List[
+            typing.Union[
+                RegularCollectionFieldSchema,
+                ReferenceCollectionFieldSchema,
+                DropCollectionFieldSchema,
+            ]
         ]
     ]
+    synonym_sets: typing.NotRequired[typing.List[str]]
+    curation_sets: typing.NotRequired[typing.List[str]]
+
