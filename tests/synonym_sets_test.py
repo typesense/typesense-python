@@ -19,7 +19,6 @@ from typesense.types.synonym_set import (
     SynonymSetSchema,
 )
 
-
 pytestmark = pytest.mark.skipif(
     not is_v30_or_above(
         Client(
@@ -102,7 +101,7 @@ def test_create(fake_synonym_sets: SynonymSets) -> None:
                 }
             ]
         }
-        fake_synonym_sets.upsert("test-set", payload)
+        fake_synonym_sets["test-set"].upsert(payload)
 
         assert mock.call_count == 1
         assert mock.called is True
@@ -116,8 +115,7 @@ def test_actual_create(
     delete_all_synonym_sets: None,
 ) -> None:
     """Test that the SynonymSets object can create a synonym set on Typesense Server."""
-    response = actual_synonym_sets.upsert(
-        "test-set",
+    response = actual_synonym_sets["test-set"].upsert(
         {
             "items": [
                 {

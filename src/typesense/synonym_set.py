@@ -9,10 +9,11 @@ else:
 
 from typesense.api_call import ApiCall
 from typesense.types.synonym_set import (
+    SynonymItemDeleteSchema,
+    SynonymItemSchema,
+    SynonymSetCreateSchema,
     SynonymSetDeleteSchema,
     SynonymSetRetrieveSchema,
-    SynonymItemSchema,
-    SynonymItemDeleteSchema,
 )
 
 
@@ -35,13 +36,21 @@ class SynonymSet:
         )
         return response
 
+    def upsert(self, set: SynonymSetCreateSchema) -> SynonymSetCreateSchema:
+        response: SynonymSetCreateSchema = self.api_call.put(
+            self._endpoint_path,
+            entity_type=SynonymSetCreateSchema,
+            body=set,
+        )
+        return response
+
     def delete(self) -> SynonymSetDeleteSchema:
         response: SynonymSetDeleteSchema = self.api_call.delete(
             self._endpoint_path,
             entity_type=SynonymSetDeleteSchema,
         )
         return response
-    
+
     @property
     def _items_path(self) -> str:
         return "/".join([self._endpoint_path, "items"])  # /synonym_sets/{name}/items
@@ -57,9 +66,7 @@ class SynonymSet:
             "offset": offset,
         }
         clean_params: typing.Dict[str, int] = {
-            k: v
-            for k, v in params.items()
-            if v is not None
+            k: v for k, v in params.items() if v is not None
         }
         response: typing.List[SynonymItemSchema] = self.api_call.get(
             self._items_path,
@@ -91,5 +98,3 @@ class SynonymSet:
             "/".join([self._items_path, item_id]), entity_type=SynonymItemDeleteSchema
         )
         return response
-
-
