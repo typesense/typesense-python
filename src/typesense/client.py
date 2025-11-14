@@ -43,6 +43,7 @@ from typesense.collection import Collection
 from typesense.collections import Collections
 from typesense.configuration import ConfigDict, Configuration
 from typesense.conversations_models import ConversationsModels
+from typesense.curation_sets import CurationSets
 from typesense.debug import Debug
 from typesense.keys import Keys
 from typesense.metrics import Metrics
@@ -74,6 +75,7 @@ class Client:
         aliases (Aliases): Instance for managing collection aliases.
         analyticsV1 (AnalyticsV1): Instance for analytics operations (V1).
         analytics (AnalyticsV30): Instance for analytics operations (v30).
+        curation_sets (CurationSets): Instance for Curation Sets (v30+)
         stemming (Stemming): Instance for stemming dictionary operations.
         operations (Operations): Instance for various Typesense operations.
         debug (Debug): Instance for debug operations.
@@ -107,6 +109,7 @@ class Client:
         self.analyticsV1 = AnalyticsV1(self.api_call)
         self.analytics = Analytics(self.api_call)
         self.stemming = Stemming(self.api_call)
+        self.curation_sets = CurationSets(self.api_call)
         self.operations = Operations(self.api_call)
         self.debug = Debug(self.api_call)
         self.stopwords = Stopwords(self.api_call)
