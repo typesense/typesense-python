@@ -28,6 +28,8 @@ Note: This module uses conditional imports to support both Python 3.11+ and earl
 
 import sys
 
+from typing_extensions import deprecated
+
 from typesense.types.document import DocumentSchema
 
 if sys.version_info >= (3, 11):
@@ -36,8 +38,8 @@ else:
     import typing_extensions as typing
 
 from typesense.aliases import Aliases
-from typesense.analytics_v1 import AnalyticsV1
 from typesense.analytics import Analytics
+from typesense.analytics_v1 import AnalyticsV1
 from typesense.api_call import ApiCall
 from typesense.collection import Collection
 from typesense.collections import Collections
@@ -108,7 +110,7 @@ class Client:
         self.multi_search = MultiSearch(self.api_call)
         self.keys = Keys(self.api_call)
         self.aliases = Aliases(self.api_call)
-        self.analyticsV1 = AnalyticsV1(self.api_call)
+        self._analyticsV1 = AnalyticsV1(self.api_call)
         self.analytics = Analytics(self.api_call)
         self.stemming = Stemming(self.api_call)
         self.curation_sets = CurationSets(self.api_call)
@@ -119,6 +121,14 @@ class Client:
         self.metrics = Metrics(self.api_call)
         self.conversations_models = ConversationsModels(self.api_call)
         self.nl_search_models = NLSearchModels(self.api_call)
+
+    @property
+    @deprecated(
+        "AnalyticsV1 is deprecated on v30+. Use client.analytics instead.",
+        category=None,
+    )
+    def analyticsV1(self) -> AnalyticsV1:
+        return self._analyticsV1
 
     def typed_collection(
         self,

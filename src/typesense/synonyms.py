@@ -27,6 +27,8 @@ versions through the use of the typing_extensions library.
 
 import sys
 
+from typing_extensions import deprecated
+
 from typesense.api_call import ApiCall
 from typesense.logger import warn_deprecation
 from typesense.synonym import Synonym
@@ -42,6 +44,7 @@ else:
     import typing_extensions as typing
 
 
+@deprecated("Synonyms is deprecated on v30+. Use client.synonym_sets instead.")
 class Synonyms:
     """
     Class for managing synonyms in a Typesense collection.
@@ -58,12 +61,12 @@ class Synonyms:
 
     resource_path: typing.Final[str] = "synonyms"
 
-    @warn_deprecation(
+    @warn_deprecation( # type: ignore[misc]
         "The synonyms API (collections/{collection}/synonyms) is deprecated is removed on v30+. "
         "Use synonym sets (synonym_sets) instead.",
         flag_name="synonyms_deprecation",
     )
-    def __init__(self, api_call: ApiCall, collection_name: str):
+    def __init__(self, api_call: ApiCall, collection_name: str) -> None:  
         """
         Initialize the Synonyms object.
 

@@ -29,6 +29,8 @@ from __future__ import annotations
 
 import sys
 
+from typing_extensions import deprecated
+
 from typesense.api_call import ApiCall
 from typesense.logger import warn_deprecation
 from typesense.override import Override
@@ -44,6 +46,7 @@ else:
     import typing_extensions as typing
 
 
+@deprecated("Overrides is deprecated on v30+. Use client.curation_sets instead.")
 class Overrides:
     """
     Class for managing overrides in a Typesense collection.
@@ -60,7 +63,7 @@ class Overrides:
 
     resource_path: typing.Final[str] = "overrides"
 
-    @warn_deprecation(
+    @warn_deprecation( # type: ignore[misc]
         "Overrides is deprecated on v30+. Use client.curation_sets instead.",
         flag_name="overrides_deprecation",
     )
@@ -68,7 +71,7 @@ class Overrides:
         self,
         api_call: ApiCall,
         collection_name: str,
-    ) -> None:
+    ) -> None:  
         """
         Initialize the Overrides object.
 

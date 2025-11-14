@@ -20,6 +20,8 @@ Note: This module uses conditional imports to support both Python 3.11+ and earl
 
 import sys
 
+from typing_extensions import deprecated
+
 from typesense.types.collection import CollectionSchema, CollectionUpdateSchema
 
 if sys.version_info >= (3, 11):
@@ -63,8 +65,24 @@ class Collection(typing.Generic[TDoc]):
         self.name = name
         self.api_call = api_call
         self.documents: Documents[TDoc] = Documents(api_call, name)
-        self.overrides = Overrides(api_call, name)
-        self.synonyms = Synonyms(api_call, name)
+        self._overrides = Overrides(api_call, name)
+        self._synonyms = Synonyms(api_call, name)
+
+    @property
+    @deprecated(
+        "Synonyms is deprecated on v30+. Use client.synonym_sets instead.",
+        category=None,
+    )
+    def synonyms(self) -> Synonyms:
+        return self._synonyms
+
+    @property
+    @deprecated(
+        "Overrides is deprecated on v30+. Use client.curation_sets instead.",
+        category=None,
+    )
+    def overrides(self) -> Overrides:
+        return self._overrides
 
     def retrieve(self) -> CollectionSchema:
         """

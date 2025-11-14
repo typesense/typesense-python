@@ -39,7 +39,7 @@ class Synonym:
         synonym_id (str): The ID of the synonym.
     """
 
-    @warn_deprecation(
+    @warn_deprecation(  # type: ignore[misc]
         "The synonym API (collections/{collection}/synonyms/{synonym_id}) is deprecated is removed on v30+. "
         "Use synonym sets (synonym_sets) instead.",
         flag_name="synonyms_deprecation",

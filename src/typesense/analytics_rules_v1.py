@@ -65,7 +65,7 @@ class AnalyticsRulesV1(object):
 
     resource_path: typing.Final[str] = "/analytics/rules"
 
-    @warn_deprecation(
+    @warn_deprecation(  # type: ignore[misc]
         "AnalyticsRulesV1 is deprecated on v30+. Use client.analytics instead.",
         flag_name="analytics_rules_v1_deprecation",
     )
@@ -167,5 +167,3 @@ class AnalyticsRulesV1(object):
             entity_type=RulesRetrieveSchema,
         )
         return response
-
-
