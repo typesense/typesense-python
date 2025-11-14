@@ -27,16 +27,16 @@ versions through the use of the typing_extensions library.
 
 import sys
 
+from typing_extensions import deprecated
+
 from typesense.api_call import ApiCall
+from typesense.logger import warn_deprecation
 from typesense.synonym import Synonym
 from typesense.types.synonym import (
     SynonymCreateSchema,
     SynonymSchema,
     SynonymsRetrieveSchema,
 )
-from typesense.logger import logger
-
-_synonyms_deprecation_warned = False
 
 if sys.version_info >= (3, 11):
     import typing
@@ -44,6 +44,7 @@ else:
     import typing_extensions as typing
 
 
+@deprecated("Synonyms is deprecated on v30+. Use client.synonym_sets instead.")
 class Synonyms:
     """
     Class for managing synonyms in a Typesense collection.
@@ -60,7 +61,12 @@ class Synonyms:
 
     resource_path: typing.Final[str] = "synonyms"
 
-    def __init__(self, api_call: ApiCall, collection_name: str):
+    @warn_deprecation( # type: ignore[misc]
+        "The synonyms API (collections/{collection}/synonyms) is deprecated is removed on v30+. "
+        "Use synonym sets (synonym_sets) instead.",
+        flag_name="synonyms_deprecation",
+    )
+    def __init__(self, api_call: ApiCall, collection_name: str) -> None:  
         """
         Initialize the Synonyms object.
 
@@ -101,7 +107,6 @@ class Synonyms:
         Returns:
             SynonymSchema: The created or updated synonym.
         """
-        self._maybe_warn_deprecation()
         response = self.api_call.put(
             self._endpoint_path(synonym_id),
             body=schema,
@@ -116,7 +121,6 @@ class Synonyms:
         Returns:
             SynonymsRetrieveSchema: The schema containing all synonyms.
         """
-        self._maybe_warn_deprecation()
         response = self.api_call.get(
             self._endpoint_path(),
             entity_type=SynonymsRetrieveSchema,
@@ -144,12 +148,3 @@ class Synonyms:
                 synonym_id,
             ],
         )
-
-    def _maybe_warn_deprecation(self) -> None:
-        global _synonyms_deprecation_warned
-        if not _synonyms_deprecation_warned:
-            logger.warning(
-                "The synonyms API (collections/{collection}/synonyms) is deprecated and will be "
-                "removed in a future release. Use synonym sets (synonym_sets) instead."
-            )
-            _synonyms_deprecation_warned = True

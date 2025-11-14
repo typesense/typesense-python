@@ -21,10 +21,14 @@ This module uses type hinting and is compatible with Python 3.11+ as well as ear
 versions through the use of the typing_extensions library.
 """
 
+from typing_extensions import deprecated
+
 from typesense.api_call import ApiCall
+from typesense.logger import warn_deprecation
 from typesense.types.override import OverrideDeleteSchema, OverrideSchema
 
 
+@deprecated("Override is deprecated on v30+. Use client.curation_sets instead.")
 class Override:
     """
     Class for managing individual overrides in a Typesense collection.
@@ -38,6 +42,11 @@ class Override:
         override_id (str): The ID of the override.
     """
 
+    @warn_deprecation(  # type: ignore[misc]
+        "The override API (collections/{collection}/overrides/{override_id}) is deprecated is removed on v30+. "
+        "Use curation sets (curation_sets) instead.",
+        flag_name="overrides_deprecation",
+    )
     def __init__(
         self,
         api_call: ApiCall,

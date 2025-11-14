@@ -16,7 +16,7 @@ classifiers = [
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
 ]
-dependencies = ["requests"]
+dependencies = ["requests", "typing-extensions"]
 dynamic = ["version"]
 
 [project.urls]

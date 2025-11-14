@@ -10,7 +10,6 @@ else:
 from typesense.api_call import ApiCall
 from typesense.synonym_set import SynonymSet
 from typesense.types.synonym_set import (
-    SynonymSetCreateSchema,
     SynonymSetSchema,
 )
 
@@ -33,15 +32,3 @@ class SynonymSets:
         from typesense.synonym_set import SynonymSet as PerSet
 
         return PerSet(self.api_call, synonym_set_name)
-
-    def upsert(
-        self,
-        synonym_set_name: str,
-        payload: SynonymSetCreateSchema,
-    ) -> SynonymSetSchema:
-        response: SynonymSetSchema = self.api_call.put(
-            "/".join([SynonymSets.resource_path, synonym_set_name]),
-            body=payload,
-            entity_type=SynonymSetSchema,
-        )
-        return response

@@ -17,13 +17,13 @@ This module uses type hinting and is compatible with Python 3.11+ as well as ear
 versions through the use of the typing_extensions library.
 """
 
+from typing_extensions import deprecated
+
 from typesense.analytics_rules_v1 import AnalyticsRulesV1
 from typesense.api_call import ApiCall
-from typesense.logger import logger
-
-_analytics_v1_deprecation_warned = False
 
 
+@deprecated("AnalyticsV1 is deprecated on v30+. Use client.analytics instead.")
 class AnalyticsV1(object):
     """
     Class for managing analytics in Typesense (V1).
@@ -46,13 +46,6 @@ class AnalyticsV1(object):
 
     @property
     def rules(self) -> AnalyticsRulesV1:
-        global _analytics_v1_deprecation_warned
-        if not _analytics_v1_deprecation_warned:
-            logger.warning(
-                "AnalyticsV1 is deprecated and will be removed in a future release. "
-                "Use client.analytics instead."
-            )
-            _analytics_v1_deprecation_warned = True
         return self._rules
 
 

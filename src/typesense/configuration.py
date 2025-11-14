@@ -80,6 +80,8 @@ class ConfigDict(typing.TypedDict):
             dictionaries or URLs that represent the read replica nodes.
 
         connection_timeout_seconds (float): The connection timeout in seconds.
+
+        suppress_deprecation_warnings (bool): Whether to suppress deprecation warnings.
     """
 
     nodes: typing.List[typing.Union[str, NodeConfigDict]]
@@ -96,6 +98,7 @@ class ConfigDict(typing.TypedDict):
         typing.List[typing.Union[str, NodeConfigDict]]
     ]  # deprecated
     connection_timeout_seconds: typing.NotRequired[float]
+    suppress_deprecation_warnings: typing.NotRequired[bool]
 
 
 class Node:
@@ -220,6 +223,7 @@ class Configuration:
         )
         self.verify = config_dict.get("verify", True)
         self.additional_headers = config_dict.get("additional_headers", {})
+        self.suppress_deprecation_warnings = config_dict.get("suppress_deprecation_warnings", False)
 
     def _handle_nearest_node(
         self,
@@ -371,7 +375,7 @@ class ConfigurationValidations:
                 to check for deprecated fields.
         """
         if config_dict.get("timeout_seconds"):
-            logger.warn(
+            logger.warning(
                 " ".join(
                     [
                         "Deprecation warning: timeout_seconds is now renamed",
@@ -381,7 +385,7 @@ class ConfigurationValidations:
             )
 
         if config_dict.get("master_node"):
-            logger.warn(
+            logger.warning(
                 " ".join(
                     [
                         "Deprecation warning: master_node is now consolidated",
@@ -391,7 +395,7 @@ class ConfigurationValidations:
             )
 
         if config_dict.get("read_replica_nodes"):
-            logger.warn(
+            logger.warning(
                 " ".join(
                     [
                         "Deprecation warning: read_replica_nodes is now",

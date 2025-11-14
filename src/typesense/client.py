@@ -28,6 +28,8 @@ Note: This module uses conditional imports to support both Python 3.11+ and earl
 
 import sys
 
+from typing_extensions import deprecated
+
 from typesense.types.document import DocumentSchema
 
 if sys.version_info >= (3, 11):
@@ -36,13 +38,14 @@ else:
     import typing_extensions as typing
 
 from typesense.aliases import Aliases
-from typesense.analytics_v1 import AnalyticsV1
 from typesense.analytics import Analytics
+from typesense.analytics_v1 import AnalyticsV1
 from typesense.api_call import ApiCall
 from typesense.collection import Collection
 from typesense.collections import Collections
 from typesense.configuration import ConfigDict, Configuration
 from typesense.conversations_models import ConversationsModels
+from typesense.curation_sets import CurationSets
 from typesense.debug import Debug
 from typesense.keys import Keys
 from typesense.metrics import Metrics
@@ -73,7 +76,8 @@ class Client:
         keys (Keys): Instance for managing API keys.
         aliases (Aliases): Instance for managing collection aliases.
         analyticsV1 (AnalyticsV1): Instance for analytics operations (V1).
-        analytics (AnalyticsV30): Instance for analytics operations (v30).
+        analytics (Analytics): Instance for analytics operations (v30).
+        curation_sets (CurationSets): Instance for Curation Sets (v30+)
         stemming (Stemming): Instance for stemming dictionary operations.
         operations (Operations): Instance for various Typesense operations.
         debug (Debug): Instance for debug operations.
@@ -93,8 +97,10 @@ class Client:
         Example:
             >>> config = {
             ...     "api_key": "your_api_key",
-            ...     "nodes": [{"host": "localhost", "port": "8108", "protocol": "http"}],
-            ...     "connection_timeout_seconds": 2
+            ...     "nodes": [
+            ...         {"host": "localhost", "port": "8108", "protocol": "http"}
+            ...     ],
+            ...     "connection_timeout_seconds": 2,
             ... }
             >>> client = Client(config)
         """
@@ -104,9 +110,10 @@ class Client:
         self.multi_search = MultiSearch(self.api_call)
         self.keys = Keys(self.api_call)
         self.aliases = Aliases(self.api_call)
-        self.analyticsV1 = AnalyticsV1(self.api_call)
+        self._analyticsV1 = AnalyticsV1(self.api_call)
         self.analytics = Analytics(self.api_call)
         self.stemming = Stemming(self.api_call)
+        self.curation_sets = CurationSets(self.api_call)
         self.operations = Operations(self.api_call)
         self.debug = Debug(self.api_call)
         self.stopwords = Stopwords(self.api_call)
@@ -114,6 +121,14 @@ class Client:
         self.metrics = Metrics(self.api_call)
         self.conversations_models = ConversationsModels(self.api_call)
         self.nl_search_models = NLSearchModels(self.api_call)
+
+    @property
+    @deprecated(
+        "AnalyticsV1 is deprecated on v30+. Use client.analytics instead.",
+        category=None,
+    )
+    def analyticsV1(self) -> AnalyticsV1:
+        return self._analyticsV1
 
     def typed_collection(
         self,
@@ -140,7 +155,6 @@ class Client:
             >>> class Company(DocumentSchema):
             ...     name: str
             ...     num_employees: int
-            ...
             >>> client = Client(config)
             >>> companies_collection = client.typed_collection(model=Company)
             # This is equivalent to:

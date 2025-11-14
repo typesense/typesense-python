@@ -9,11 +9,12 @@ else:
 
 from typesense.api_call import ApiCall
 from typesense.types.curation_set import (
-    CurationSetSchema,
+    CurationItemDeleteSchema,
+    CurationItemSchema,
     CurationSetDeleteSchema,
     CurationSetListItemResponseSchema,
-    CurationItemSchema,
-    CurationItemDeleteSchema,
+    CurationSetSchema,
+    CurationSetUpsertSchema,
 )
 
 
@@ -40,6 +41,17 @@ class CurationSet:
         response: CurationSetDeleteSchema = self.api_call.delete(
             self._endpoint_path,
             entity_type=CurationSetDeleteSchema,
+        )
+        return response
+
+    def upsert(
+        self,
+        payload: CurationSetUpsertSchema,
+    ) -> CurationSetSchema:
+        response: CurationSetSchema = self.api_call.put(
+            "/".join([self._endpoint_path]),
+            body=payload,
+            entity_type=CurationSetSchema,
         )
         return response
 
@@ -92,5 +104,3 @@ class CurationSet:
             entity_type=CurationItemDeleteSchema,
         )
         return response
-
-

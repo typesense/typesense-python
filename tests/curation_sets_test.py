@@ -96,7 +96,7 @@ def test_upsert(fake_curation_sets: CurationSets) -> None:
                 }
             ]
         }
-        response = fake_curation_sets.upsert("products", payload)
+        response = fake_curation_sets["products"].upsert(payload)
 
         assert response == json_response
         assert mock.call_count == 1
@@ -111,8 +111,7 @@ def test_actual_upsert(
     delete_all_curation_sets: None,
 ) -> None:
     """Test that the CurationSets object can upsert a curation set on Typesense Server."""
-    response = actual_curation_sets.upsert(
-        "products",
+    response = actual_curation_sets["products"].upsert(
         {
             "items": [
                 {

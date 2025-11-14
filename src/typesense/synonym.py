@@ -22,10 +22,8 @@ versions through the use of the typing_extensions library.
 """
 
 from typesense.api_call import ApiCall
-from typesense.logger import logger
+from typesense.logger import warn_deprecation
 from typesense.types.synonym import SynonymDeleteSchema, SynonymSchema
-
-_synonym_deprecation_warned = False
 
 
 class Synonym:
@@ -41,6 +39,11 @@ class Synonym:
         synonym_id (str): The ID of the synonym.
     """
 
+    @warn_deprecation(  # type: ignore[misc]
+        "The synonym API (collections/{collection}/synonyms/{synonym_id}) is deprecated is removed on v30+. "
+        "Use synonym sets (synonym_sets) instead.",
+        flag_name="synonyms_deprecation",
+    )
     def __init__(
         self,
         api_call: ApiCall,
@@ -66,7 +69,6 @@ class Synonym:
         Returns:
             SynonymSchema: The schema containing the synonym details.
         """
-        self._maybe_warn_deprecation()
         return self.api_call.get(self._endpoint_path(), entity_type=SynonymSchema)
 
     def delete(self) -> SynonymDeleteSchema:
@@ -76,7 +78,6 @@ class Synonym:
         Returns:
             SynonymDeleteSchema: The schema containing the deletion response.
         """
-        self._maybe_warn_deprecation()
         return self.api_call.delete(
             self._endpoint_path(),
             entity_type=SynonymDeleteSchema,
@@ -100,12 +101,3 @@ class Synonym:
                 self.synonym_id,
             ],
         )
-
-    def _maybe_warn_deprecation(self) -> None:
-        global _synonym_deprecation_warned
-        if not _synonym_deprecation_warned:
-            logger.warning(
-                "The synonyms API (collections/{collection}/synonyms) is deprecated and will be "
-                "removed in a future release. Use synonym sets (synonym_sets) instead."
-            )
-            _synonym_deprecation_warned = True
