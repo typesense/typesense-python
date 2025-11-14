@@ -10,9 +10,7 @@ else:
 from typesense.api_call import ApiCall
 from typesense.curation_set import CurationSet
 from typesense.types.curation_set import (
-    CurationSetSchema,
     CurationSetsListResponseSchema,
-    CurationSetUpsertSchema,
 )
 
 
@@ -34,15 +32,3 @@ class CurationSets:
         from typesense.curation_set import CurationSet as PerSet
 
         return PerSet(self.api_call, curation_set_name)
-
-    def upsert(
-        self,
-        curation_set_name: str,
-        payload: CurationSetUpsertSchema,
-    ) -> CurationSetSchema:
-        response: CurationSetSchema = self.api_call.put(
-            "/".join([CurationSets.resource_path, curation_set_name]),
-            body=payload,
-            entity_type=CurationSetSchema,
-        )
-        return response
