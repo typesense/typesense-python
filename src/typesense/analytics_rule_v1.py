@@ -28,6 +28,7 @@ else:
     import typing_extensions as typing
 
 from typesense.api_call import ApiCall
+from typesense.logger import warn_deprecation
 from typesense.types.analytics_rule_v1 import (
     RuleDeleteSchema,
     RuleSchemaForCounters,
@@ -47,6 +48,10 @@ class AnalyticsRuleV1:
         rule_id (str): The ID of the analytics rule.
     """
 
+    @warn_deprecation(
+        "AnalyticsRuleV1 is deprecated on v30+. Use client.analytics.rules[rule_id] instead.",
+        flag_name="analytics_rules_v1_deprecation",
+    )
     def __init__(self, api_call: ApiCall, rule_id: str):
         """
         Initialize the AnalyticsRuleV1 object.

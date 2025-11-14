@@ -30,6 +30,7 @@ from __future__ import annotations
 import sys
 
 from typesense.api_call import ApiCall
+from typesense.logger import warn_deprecation
 from typesense.override import Override
 from typesense.types.override import (
     OverrideCreateSchema,
@@ -59,6 +60,10 @@ class Overrides:
 
     resource_path: typing.Final[str] = "overrides"
 
+    @warn_deprecation(
+        "Overrides is deprecated on v30+. Use client.curation_sets instead.",
+        flag_name="overrides_deprecation",
+    )
     def __init__(
         self,
         api_call: ApiCall,

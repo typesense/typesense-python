@@ -27,6 +27,8 @@ versions through the use of the typing_extensions library.
 
 import sys
 
+from typesense.logger import warn_deprecation
+
 if sys.version_info >= (3, 11):
     import typing
 else:
@@ -63,6 +65,10 @@ class AnalyticsRulesV1(object):
 
     resource_path: typing.Final[str] = "/analytics/rules"
 
+    @warn_deprecation(
+        "AnalyticsRulesV1 is deprecated on v30+. Use client.analytics instead.",
+        flag_name="analytics_rules_v1_deprecation",
+    )
     def __init__(self, api_call: ApiCall):
         """
         Initialize the AnalyticsRulesV1 object.
