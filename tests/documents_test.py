@@ -206,6 +206,17 @@ def test_delete(
     assert response == {"num_deleted": 1}
 
 
+def test_truncate(
+    actual_documents: Documents[Companies],
+    delete_all: None,
+    create_collection: None,
+    create_document: None,
+) -> None:
+    """Test that the Documents object can delete a document from Typesense server."""
+    response = actual_documents.delete({"truncate": True})
+    assert response == {"num_deleted": 1}
+
+
 def test_delete_ignore_missing(
     actual_documents: Documents[Companies],
     delete_all: None,
