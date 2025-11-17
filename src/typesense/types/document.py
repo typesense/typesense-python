@@ -915,21 +915,40 @@ class DeleteSingleDocumentParameters(typing.TypedDict):
     ignore_not_found: typing.NotRequired[bool]
 
 
-class DeleteQueryParameters(typing.TypedDict):
+class TruncateDeleteParameters(typing.TypedDict):
     """
-    Parameters for deleting documents.
+    Parameters for truncating a collection (deleting all documents, keeping schema).
 
     Attributes:
-      truncate (str): Truncate the collection, keeping just the schema.
+      truncate (bool): Truncate the collection, keeping just the schema.
+    """
+
+    truncate: bool
+
+
+class FilterDeleteParameters(typing.TypedDict):
+    """
+    Parameters for deleting documents by filter.
+
+    Attributes:
       filter_by (str): Filter to apply to documents.
       batch_size (int): Batch size for deleting documents.
       ignore_not_found (bool): Ignore not found documents.
     """
 
-    truncate: typing.NotRequired[bool]
     filter_by: str
     batch_size: typing.NotRequired[int]
     ignore_not_found: typing.NotRequired[bool]
+
+
+DeleteQueryParameters = typing.Union[TruncateDeleteParameters, FilterDeleteParameters]
+"""
+Discriminated union of parameters for deleting documents.
+
+Either:
+  - TruncateDeleteParameters: Use truncate to delete all documents, keeping the schema.
+  - FilterDeleteParameters: Use filter_by (and optionally batch_size, ignore_not_found) to delete specific documents.
+"""
 
 
 class DeleteResponse(typing.TypedDict):
