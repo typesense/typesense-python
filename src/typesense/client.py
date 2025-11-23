@@ -133,7 +133,7 @@ class Client:
     def typed_collection(
         self,
         *,
-        model: typing.Type[TDoc],
+        model: type[TDoc],
         name: typing.Union[str, None] = None,
     ) -> Collection[TDoc]:
         """

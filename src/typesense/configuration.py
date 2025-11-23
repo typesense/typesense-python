@@ -44,7 +44,7 @@ class NodeConfigDict(typing.TypedDict):
     host: str
     port: int
     path: typing.NotRequired[str]
-    protocol: typing.Union[typing.Literal["http", "https"], str]
+    protocol: typing.Literal["http", "https"] | str
 
 
 class ConfigDict(typing.TypedDict):
@@ -84,18 +84,18 @@ class ConfigDict(typing.TypedDict):
         suppress_deprecation_warnings (bool): Whether to suppress deprecation warnings.
     """
 
-    nodes: typing.List[typing.Union[str, NodeConfigDict]]
-    nearest_node: typing.NotRequired[typing.Union[str, NodeConfigDict]]
+    nodes: typing.List[str | NodeConfigDict]
+    nearest_node: typing.NotRequired[str | NodeConfigDict]
     api_key: str
     num_retries: typing.NotRequired[int]
     interval_seconds: typing.NotRequired[int]
     healthcheck_interval_seconds: typing.NotRequired[int]
     verify: typing.NotRequired[bool]
     timeout_seconds: typing.NotRequired[int]  # deprecated
-    master_node: typing.NotRequired[typing.Union[str, NodeConfigDict]]  # deprecated
+    master_node: typing.NotRequired[str | NodeConfigDict]  # deprecated
     additional_headers: typing.NotRequired[typing.Dict[str, str]]
     read_replica_nodes: typing.NotRequired[
-        typing.List[typing.Union[str, NodeConfigDict]]
+        typing.List[str | NodeConfigDict]
     ]  # deprecated
     connection_timeout_seconds: typing.NotRequired[float]
     suppress_deprecation_warnings: typing.NotRequired[bool]
@@ -116,9 +116,9 @@ class Node:
     def __init__(
         self,
         host: str,
-        port: typing.Union[str, int],
+        port: str | int,
         path: str,
-        protocol: typing.Union[typing.Literal["http", "https"], str],
+        protocol: typing.Literal["http", "https"] | str,
     ) -> None:
         """
         Initialize a Node object with the specified host, port, path, and protocol.
@@ -141,7 +141,7 @@ class Node:
         self.last_access_ts: int = int(time.time())
 
     @classmethod
-    def from_url(cls, url: str) -> "Node":
+    def from_url(cls, url: str) -> Node:
         """
         Initialize a Node object from a URL string.
 
@@ -227,8 +227,8 @@ class Configuration:
 
     def _handle_nearest_node(
         self,
-        nearest_node: typing.Union[str, NodeConfigDict, None],
-    ) -> typing.Union[Node, None]:
+        nearest_node: str | NodeConfigDict | None,
+    ) -> Node | None:
         """
         Handle the nearest node configuration.
 
@@ -244,7 +244,7 @@ class Configuration:
 
     def _initialize_nodes(
         self,
-        node: typing.Union[str, NodeConfigDict],
+        node: str | NodeConfigDict,
     ) -> Node:
         """
         Handle the initialization of a node.
@@ -305,7 +305,7 @@ class ConfigurationValidations:
             raise ConfigError("`api_key` is not defined.")
 
     @staticmethod
-    def validate_nodes(nodes: typing.List[typing.Union[str, NodeConfigDict]]) -> None:
+    def validate_nodes(nodes: typing.List[str | NodeConfigDict]) -> None:
         """
         Validate the nodes in the configuration dictionary.
 
@@ -328,7 +328,7 @@ class ConfigurationValidations:
                 )
 
     @staticmethod
-    def validate_nearest_node(nearest_node: typing.Union[str, NodeConfigDict]) -> None:
+    def validate_nearest_node(nearest_node: str | NodeConfigDict) -> None:
         """
         Validate the nearest node in the configuration dictionary.
 
@@ -350,7 +350,7 @@ class ConfigurationValidations:
             )
 
     @staticmethod
-    def validate_node_fields(node: typing.Union[str, NodeConfigDict]) -> bool:
+    def validate_node_fields(node: str | NodeConfigDict) -> bool:
         """
         Validate the fields of a node in the configuration dictionary.
 

@@ -27,7 +27,7 @@ from typesense.api_call import ApiCall
 from typesense.stemming_dictionaries import StemmingDictionaries
 
 
-class Stemming(object):
+class Stemming:
     """
     Class for managing stemming dictionaries in Typesense.
 

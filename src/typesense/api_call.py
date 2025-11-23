@@ -59,14 +59,14 @@ TEntityDict = typing.TypeVar("TEntityDict")
 
 _SERVER_ERRORS: typing.Final[
     typing.Tuple[
-        typing.Type[requests.exceptions.Timeout],
-        typing.Type[requests.exceptions.ConnectionError],
-        typing.Type[requests.exceptions.HTTPError],
-        typing.Type[requests.exceptions.RequestException],
-        typing.Type[requests.exceptions.SSLError],
-        typing.Type[HTTPStatus0Error],
-        typing.Type[ServerError],
-        typing.Type[ServiceUnavailable],
+        type[requests.exceptions.Timeout],
+        type[requests.exceptions.ConnectionError],
+        type[requests.exceptions.HTTPError],
+        type[requests.exceptions.RequestException],
+        type[requests.exceptions.SSLError],
+        type[HTTPStatus0Error],
+        type[ServerError],
+        type[ServiceUnavailable],
     ]
 ] = (
     requests.exceptions.Timeout,
@@ -108,7 +108,7 @@ class ApiCall:
     def get(
         self,
         endpoint: str,
-        entity_type: typing.Type[TEntityDict],
+        entity_type: type[TEntityDict],
         as_json: typing.Literal[False],
         params: typing.Union[TParams, None] = None,
     ) -> str:
@@ -129,7 +129,7 @@ class ApiCall:
     def get(
         self,
         endpoint: str,
-        entity_type: typing.Type[TEntityDict],
+        entity_type: type[TEntityDict],
         as_json: typing.Literal[True],
         params: typing.Union[TParams, None] = None,
     ) -> TEntityDict:
@@ -149,7 +149,7 @@ class ApiCall:
     def get(
         self,
         endpoint: str,
-        entity_type: typing.Type[TEntityDict],
+        entity_type: type[TEntityDict],
         as_json: typing.Union[typing.Literal[True], typing.Literal[False]] = True,
         params: typing.Union[TParams, None] = None,
     ) -> typing.Union[TEntityDict, str]:
@@ -177,7 +177,7 @@ class ApiCall:
     def post(
         self,
         endpoint: str,
-        entity_type: typing.Type[TEntityDict],
+        entity_type: type[TEntityDict],
         as_json: typing.Literal[False],
         params: typing.Union[TParams, None] = None,
         body: typing.Union[TBody, None] = None,
@@ -199,7 +199,7 @@ class ApiCall:
     def post(
         self,
         endpoint: str,
-        entity_type: typing.Type[TEntityDict],
+        entity_type: type[TEntityDict],
         as_json: typing.Literal[True],
         params: typing.Union[TParams, None] = None,
         body: typing.Union[TBody, None] = None,
@@ -220,7 +220,7 @@ class ApiCall:
     def post(
         self,
         endpoint: str,
-        entity_type: typing.Type[TEntityDict],
+        entity_type: type[TEntityDict],
         as_json: typing.Union[typing.Literal[True], typing.Literal[False]] = True,
         params: typing.Union[TParams, None] = None,
         body: typing.Union[TBody, None] = None,
@@ -249,7 +249,7 @@ class ApiCall:
     def put(
         self,
         endpoint: str,
-        entity_type: typing.Type[TEntityDict],
+        entity_type: type[TEntityDict],
         body: TBody,
         params: typing.Union[TParams, None] = None,
     ) -> TEntityDict:
@@ -276,7 +276,7 @@ class ApiCall:
     def patch(
         self,
         endpoint: str,
-        entity_type: typing.Type[TEntityDict],
+        entity_type: type[TEntityDict],
         body: TBody,
         params: typing.Union[TParams, None] = None,
     ) -> TEntityDict:
@@ -303,7 +303,7 @@ class ApiCall:
     def delete(
         self,
         endpoint: str,
-        entity_type: typing.Type[TEntityDict],
+        entity_type: type[TEntityDict],
         params: typing.Union[TParams, None] = None,
     ) -> TEntityDict:
         """
@@ -330,7 +330,7 @@ class ApiCall:
         self,
         fn: typing.Callable[..., requests.models.Response],
         endpoint: str,
-        entity_type: typing.Type[TEntityDict],
+        entity_type: type[TEntityDict],
         as_json: typing.Literal[True],
         last_exception: typing.Union[None, Exception] = None,
         num_retries: int = 0,
@@ -369,7 +369,7 @@ class ApiCall:
         self,
         fn: typing.Callable[..., requests.models.Response],
         endpoint: str,
-        entity_type: typing.Type[TEntityDict],
+        entity_type: type[TEntityDict],
         as_json: typing.Literal[False],
         last_exception: typing.Union[None, Exception] = None,
         num_retries: int = 0,
@@ -407,7 +407,7 @@ class ApiCall:
         self,
         fn: typing.Callable[..., requests.models.Response],
         endpoint: str,
-        entity_type: typing.Type[TEntityDict],
+        entity_type: type[TEntityDict],
         as_json: typing.Union[typing.Literal[True], typing.Literal[False]] = True,
         last_exception: typing.Union[None, Exception] = None,
         num_retries: int = 0,
@@ -471,7 +471,7 @@ class ApiCall:
         self,
         fn: typing.Callable[..., requests.models.Response],
         url: str,
-        entity_type: typing.Type[TEntityDict],
+        entity_type: type[TEntityDict],
         as_json: bool,
         **kwargs: SessionFunctionKwargs[TParams, TBody],
     ) -> typing.Union[TEntityDict, str]:

@@ -24,7 +24,7 @@ from typesense.api_call import ApiCall
 from typesense.types.alias import AliasSchema
 
 
-class Alias(object):
+class Alias:
     """
     Class for managing individual aliases in Typesense.
 
