@@ -201,5 +201,3 @@ class RulesRetrieveSchema(typing.TypedDict):
     """
 
     rules: typing.List[typing.Union[RuleSchemaForQueries, RuleSchemaForCounters]]
-
-

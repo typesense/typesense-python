@@ -236,4 +236,3 @@ class CollectionUpdateSchema(typing.TypedDict):
     ]
     synonym_sets: typing.NotRequired[typing.List[str]]
     curation_sets: typing.NotRequired[typing.List[str]]
-

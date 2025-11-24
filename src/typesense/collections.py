@@ -72,7 +72,6 @@ class Collections(typing.Generic[TDoc]):
         """
         if collection_name in self.collections:
             try:  # noqa: WPS229, WPS529
-
                 self.collections[collection_name].retrieve()  # noqa: WPS529
                 return True
             except Exception:
@@ -100,7 +99,7 @@ class Collections(typing.Generic[TDoc]):
 
         Example:
             >>> collections = Collections(api_call)
-            >>> fruits_collection = collections['fruits']
+            >>> fruits_collection = collections["fruits"]
         """
         if not self.collections.get(collection_name):
             self.collections[collection_name] = Collection(
@@ -126,11 +125,11 @@ class Collections(typing.Generic[TDoc]):
             >>> schema = {
             ...     "name": "companies",
             ...     "fields": [
-            ...         {"name": "company_name", "type": "string" },
-            ...         {"name": "num_employees", "type": "int32" },
-            ...         {"name": "country", "type": "string", "facet": True }
+            ...         {"name": "company_name", "type": "string"},
+            ...         {"name": "num_employees", "type": "int32"},
+            ...         {"name": "country", "type": "string", "facet": True},
             ...     ],
-            ...     "default_sorting_field": "num_employees"
+            ...     "default_sorting_field": "num_employees",
             ... }
             >>> created_schema = collections.create(schema)
         """
@@ -154,7 +153,7 @@ class Collections(typing.Generic[TDoc]):
             >>> collections = Collections(api_call)
             >>> all_collections = collections.retrieve()
             >>> for collection in all_collections:
-            ...     print(collection['name'])
+            ...     print(collection["name"])
         """
         call: typing.List[CollectionSchema] = self.api_call.get(
             endpoint=Collections.resource_path,

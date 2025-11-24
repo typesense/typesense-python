@@ -69,5 +69,3 @@ class AnalyticsEvents:
             entity_type=AnalyticsStatus,
         )
         return response
-
-
