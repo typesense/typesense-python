@@ -61,12 +61,12 @@ class Synonyms:
 
     resource_path: typing.Final[str] = "synonyms"
 
-    @warn_deprecation( # type: ignore[misc]
+    @warn_deprecation(  # type: ignore[misc]
         "The synonyms API (collections/{collection}/synonyms) is deprecated is removed on v30+. "
         "Use synonym sets (synonym_sets) instead.",
         flag_name="synonyms_deprecation",
     )
-    def __init__(self, api_call: ApiCall, collection_name: str) -> None:  
+    def __init__(self, api_call: ApiCall, collection_name: str) -> None:
         """
         Initialize the Synonyms object.
 

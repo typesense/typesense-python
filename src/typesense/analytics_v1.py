@@ -47,5 +47,3 @@ class AnalyticsV1(object):
     @property
     def rules(self) -> AnalyticsRulesV1:
         return self._rules
-
-

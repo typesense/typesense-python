@@ -126,5 +126,3 @@ class CurationSetDeleteSchema(typing.TypedDict):
     """Response schema for deleting a curation set."""
 
     name: str
-
-

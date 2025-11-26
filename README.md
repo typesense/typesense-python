@@ -37,6 +37,3 @@ Bug reports and pull requests are welcome on GitHub at [https://github.com/types
 ## License
 
 `typesense-python` is distributed under the Apache 2 license.
-
-
-

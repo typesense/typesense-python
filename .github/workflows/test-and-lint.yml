@@ -47,6 +47,7 @@ jobs:
     - name: Lint with Ruff
       run: |
         uv run ruff check src/typesense
+        uv run ruff format src/typesense
 
     - name: Check types with mypy
       run: |
