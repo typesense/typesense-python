@@ -50,7 +50,7 @@ _RuleParams = typing.Union[
 ]
 
 
-class AnalyticsRulesV1(object):
+class AnalyticsRulesV1:
     """
     Class for managing analytics rules in Typesense (V1).
 

@@ -43,7 +43,7 @@ else:
 from typesense.conversation_model import ConversationModel
 
 
-class ConversationsModels(object):
+class ConversationsModels:
     """
     Class for managing conversation models in Typesense.
 

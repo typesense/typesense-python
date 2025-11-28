@@ -50,7 +50,7 @@ TEntityDict = typing.TypeVar("TEntityDict")
 TParams = typing.TypeVar("TParams")
 TBody = typing.TypeVar("TBody")
 
-_ERROR_CODE_MAP: typing.Mapping[str, typing.Type[TypesenseClientError]] = (
+_ERROR_CODE_MAP: typing.Mapping[str, type[TypesenseClientError]] = (
     MappingProxyType(
         {
             "0": HTTPStatus0Error,
@@ -118,7 +118,7 @@ class RequestHandler:
         self,
         fn: typing.Callable[..., requests.models.Response],
         url: str,
-        entity_type: typing.Type[TEntityDict],
+        entity_type: type[TEntityDict],
         as_json: typing.Literal[False],
         **kwargs: typing.Unpack[SessionFunctionKwargs[TParams, TBody]],
     ) -> str:
@@ -151,7 +151,7 @@ class RequestHandler:
         self,
         fn: typing.Callable[..., requests.models.Response],
         url: str,
-        entity_type: typing.Type[TEntityDict],
+        entity_type: type[TEntityDict],
         as_json: typing.Literal[True],
         **kwargs: typing.Unpack[SessionFunctionKwargs[TParams, TBody]],
     ) -> TEntityDict:
@@ -180,7 +180,7 @@ class RequestHandler:
         self,
         fn: typing.Callable[..., requests.models.Response],
         url: str,
-        entity_type: typing.Type[TEntityDict],
+        entity_type: type[TEntityDict],
         as_json: typing.Union[typing.Literal[True], typing.Literal[False]] = True,
         **kwargs: typing.Unpack[SessionFunctionKwargs[TParams, TBody]],
     ) -> typing.Union[TEntityDict, str]:
@@ -267,7 +267,7 @@ class RequestHandler:
         return "API error."
 
     @staticmethod
-    def _get_exception(http_code: int) -> typing.Type[TypesenseClientError]:
+    def _get_exception(http_code: int) -> type[TypesenseClientError]:
         """
         Map an HTTP status code to the appropriate exception type.
 
