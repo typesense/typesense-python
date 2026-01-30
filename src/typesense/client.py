@@ -110,7 +110,7 @@ class Client:
         self.multi_search = MultiSearch(self.api_call)
         self.keys = Keys(self.api_call)
         self.aliases = Aliases(self.api_call)
-        self._analyticsV1 = AnalyticsV1(self.api_call)
+        self._analyticsV1: typing.Optional[AnalyticsV1] = None
         self.analytics = Analytics(self.api_call)
         self.stemming = Stemming(self.api_call)
         self.curation_sets = CurationSets(self.api_call)
@@ -128,6 +128,8 @@ class Client:
         category=None,
     )
     def analyticsV1(self) -> AnalyticsV1:
+        if self._analyticsV1 is None:
+            self._analyticsV1 = AnalyticsV1(self.api_call)
         return self._analyticsV1
 
     def typed_collection(

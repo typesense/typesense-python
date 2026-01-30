@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import time
 
 import requests_mock
@@ -15,6 +16,7 @@ from typesense.api_call import ApiCall
 from typesense.collection import Collection
 from typesense.collections import Collections
 from typesense.types.collection import CollectionSchema
+import typesense.logger as typesense_logger
 
 
 def test_init(fake_api_call: ApiCall) -> None:
@@ -31,7 +33,8 @@ def test_init(fake_api_call: ApiCall) -> None:
         collection.api_call.config.nearest_node,
         fake_api_call.config.nearest_node,
     )
-    assert collection.overrides.collection_name == "companies"
+    assert collection._overrides is None
+    assert collection._synonyms is None
     assert collection._endpoint_path == "/collections/companies"  # noqa: WPS437
 
 
@@ -252,3 +255,42 @@ def test_actual_update(
     }
 
     assert_to_contain_object(response.get("fields")[0], expected.get("fields")[0])
+
+
+def test_deprecated_resources_not_logged_on_init(
+    fake_api_call: ApiCall,
+    caplog,
+) -> None:
+    """Test that deprecated resources are not logged on collection init."""
+    typesense_logger._deprecation_warnings.clear()
+    caplog.set_level(logging.WARNING, logger="typesense")
+
+    Collection(fake_api_call, "companies")
+
+    assert "Deprecation warning:" not in caplog.text
+
+
+def test_deprecated_resources_logged_once_on_use(
+    fake_api_call: ApiCall,
+    caplog,
+) -> None:
+    """Test that deprecated resources are logged once when used."""
+    typesense_logger._deprecation_warnings.clear()
+    caplog.set_level(logging.WARNING, logger="typesense")
+
+    collection = Collection(fake_api_call, "companies")
+    _ = collection.synonyms
+    _ = collection.synonyms
+    _ = collection.overrides
+    _ = collection.overrides
+
+    synonyms_message = (
+        "Deprecation warning: The synonyms API (collections/{collection}/synonyms) "
+        "is deprecated is removed on v30+. Use synonym sets (synonym_sets) instead."
+    )
+    overrides_message = (
+        "Deprecation warning: Overrides is deprecated on v30+. "
+        "Use client.curation_sets instead."
+    )
+    assert caplog.text.count(synonyms_message) == 1
+    assert caplog.text.count(overrides_message) == 1

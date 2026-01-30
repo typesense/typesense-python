@@ -65,8 +65,8 @@ class Collection(typing.Generic[TDoc]):
         self.name = name
         self.api_call = api_call
         self.documents: Documents[TDoc] = Documents(api_call, name)
-        self._overrides = Overrides(api_call, name)
-        self._synonyms = Synonyms(api_call, name)
+        self._overrides: typing.Optional[Overrides] = None
+        self._synonyms: typing.Optional[Synonyms] = None
 
     @property
     @deprecated(
@@ -74,6 +74,8 @@ class Collection(typing.Generic[TDoc]):
         category=None,
     )
     def synonyms(self) -> Synonyms:
+        if self._synonyms is None:
+            self._synonyms = Synonyms(self.api_call, self.name)
         return self._synonyms
 
     @property
@@ -82,6 +84,8 @@ class Collection(typing.Generic[TDoc]):
         category=None,
     )
     def overrides(self) -> Overrides:
+        if self._overrides is None:
+            self._overrides = Overrides(self.api_call, self.name)
         return self._overrides
 
     def retrieve(self) -> CollectionSchema:
