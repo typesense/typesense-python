@@ -40,7 +40,7 @@ else:
 from typesense.nl_search_model import NLSearchModel
 
 
-class NLSearchModels(object):
+class NLSearchModels:
     """
     Class for managing NL search models in Typesense.
 

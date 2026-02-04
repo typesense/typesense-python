@@ -16,7 +16,7 @@ from typesense.types.analytics import (
 )
 
 
-class AnalyticsRules(object):
+class AnalyticsRules:
     resource_path: typing.Final[str] = "/analytics/rules"
 
     def __init__(self, api_call: ApiCall) -> None:

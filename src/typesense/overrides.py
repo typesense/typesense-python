@@ -133,7 +133,7 @@ class Overrides:
         )
         return response
 
-    def _endpoint_path(self, override_id: typing.Union[str, None] = None) -> str:
+    def _endpoint_path(self, override_id: str | None = None) -> str:
         """
         Construct the API endpoint path for override operations.
 

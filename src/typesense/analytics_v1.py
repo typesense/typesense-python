@@ -24,7 +24,7 @@ from typesense.api_call import ApiCall
 
 
 @deprecated("AnalyticsV1 is deprecated on v30+. Use client.analytics instead.")
-class AnalyticsV1(object):
+class AnalyticsV1:
     """
     Class for managing analytics in Typesense (V1).
 
