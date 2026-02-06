@@ -32,6 +32,7 @@ by other components of the library.
 """
 
 import asyncio
+import json
 import sys
 from types import MappingProxyType, TracebackType
 
@@ -59,6 +60,14 @@ from typesense.http_backend import (
 )
 from typesense.node_manager import NodeManager
 from typesense.request_handler import RequestHandler
+from typesense.stream_handlers import (
+    JSONDict,
+    StreamChunk,
+    combine_stream_chunks,
+    is_message_chunk,
+    parse_sse_line,
+)
+from typesense.types.document import StreamConfig
 
 if sys.version_info >= (3, 11):
     import typing
@@ -225,6 +234,8 @@ class AsyncApiCall:
         entity_type: typing.Type[TEntityDict],
         as_json: typing.Literal[False],
         params: typing.Union[TParams, None] = None,
+        stream_config: StreamConfig[TEntityDict] | None = None,
+        is_streaming_request: bool = False,
     ) -> str:
         """
         Execute an async GET request to the Typesense API.
@@ -246,6 +257,8 @@ class AsyncApiCall:
         entity_type: typing.Type[TEntityDict],
         as_json: typing.Literal[True] = True,
         params: typing.Union[TParams, None] = None,
+        stream_config: StreamConfig[TEntityDict] | None = None,
+        is_streaming_request: bool = False,
     ) -> TEntityDict:
         """
         Execute an async GET request to the Typesense API.
@@ -266,6 +279,8 @@ class AsyncApiCall:
         entity_type: typing.Type[TEntityDict],
         as_json: typing.Union[typing.Literal[True], typing.Literal[False]] = True,
         params: typing.Union[TParams, None] = None,
+        stream_config: StreamConfig[TEntityDict] | None = None,
+        is_streaming_request: bool = False,
     ) -> typing.Union[TEntityDict, str]:
         """
         Execute an async GET request to the Typesense API.
@@ -285,6 +300,8 @@ class AsyncApiCall:
             entity_type,
             as_json,
             params=params,
+            stream_config=stream_config,
+            is_streaming_request=is_streaming_request,
         )
 
     @typing.overload
@@ -453,6 +470,8 @@ class AsyncApiCall:
         as_json: typing.Literal[True],
         last_exception: typing.Union[None, Exception] = None,
         num_retries: int = 0,
+        stream_config: StreamConfig[TEntityDict] | None = None,
+        is_streaming_request: bool = False,
         **kwargs: typing.Unpack[SessionFunctionKwargs[TParams, TBody]],
     ) -> TEntityDict:
         """Execute an async request with retry logic."""
@@ -466,6 +485,8 @@ class AsyncApiCall:
         as_json: typing.Literal[False],
         last_exception: typing.Union[None, Exception] = None,
         num_retries: int = 0,
+        stream_config: StreamConfig[TEntityDict] | None = None,
+        is_streaming_request: bool = False,
         **kwargs: typing.Unpack[SessionFunctionKwargs[TParams, TBody]],
     ) -> str:
         """Execute an async request with retry logic."""
@@ -478,6 +499,8 @@ class AsyncApiCall:
         as_json: typing.Union[typing.Literal[True], typing.Literal[False]] = True,
         last_exception: typing.Union[None, Exception] = None,
         num_retries: int = 0,
+        stream_config: StreamConfig[TEntityDict] | None = None,
+        is_streaming_request: bool = False,
         **kwargs: typing.Unpack[SessionFunctionKwargs[TParams, TBody]],
     ) -> typing.Union[TEntityDict, str]:
         """
@@ -509,6 +532,10 @@ class AsyncApiCall:
         node, url, request_kwargs = self._prepare_request_params(endpoint, **kwargs)
 
         try:
+            if is_streaming_request and method == "GET":
+                return await self._handle_streaming_get(
+                    url, entity_type, stream_config, **request_kwargs
+                )
             return await self._make_request_and_process_response(
                 method,
                 node,
@@ -521,6 +548,13 @@ class AsyncApiCall:
             raise
         except _SERVER_ERRORS as server_error:
             self.node_manager.set_node_health(node, is_healthy=False)
+            if is_streaming_request and stream_config:
+                on_error = stream_config.get("on_error")
+                if on_error:
+                    try:
+                        on_error(server_error)
+                    except Exception:
+                        pass
             if num_retries < self.config.num_retries:
                 await asyncio.sleep(self.config.retry_interval_seconds)
             return await self._execute_request(
@@ -530,6 +564,8 @@ class AsyncApiCall:
                 as_json,
                 last_exception=server_error,
                 num_retries=num_retries + 1,
+                stream_config=stream_config,
+                is_streaming_request=is_streaming_request,
                 **kwargs,
             )
 
@@ -558,6 +594,73 @@ class AsyncApiCall:
             if as_json
             else typing.cast(str, request_response)
         )
+
+    async def _handle_streaming_get(
+        self,
+        url: str,
+        entity_type: typing.Type[TEntityDict],
+        stream_config: StreamConfig[TEntityDict] | None,
+        **kwargs: typing.Unpack[SessionFunctionKwargs[TParams, TBody]],
+    ) -> TEntityDict:
+        """Perform an async streaming GET, parse SSE lines, invoke callbacks, return combined result."""
+        headers: typing.Dict[str, str] = {
+            self.request_handler.api_key_header_name: self.config.api_key,
+            "Accept": "text/event-stream",
+        }
+        headers.update(self.config.additional_headers)
+        extra_headers = kwargs.get("headers")
+        if extra_headers:
+            headers.update(extra_headers)
+
+        params = kwargs.get("params")
+        content: typing.Union[str, bytes, None] = None
+        if body := kwargs.get("data"):
+            if isinstance(body, (str, bytes)):
+                content = body
+            else:
+                content = json.dumps(body)
+
+        all_chunks: typing.List[StreamChunk] = []
+        async with self._client.stream(
+            "GET",
+            url,
+            params=params,
+            content=content,
+            headers=headers,
+            timeout=self.config.connection_timeout_seconds,
+        ) as response:
+            if response.status_code < 200 or response.status_code >= 300:
+                await response.aread()
+                error_message = self.request_handler._get_error_message(response)
+                raise self.request_handler._get_exception(response.status_code)(
+                    response.status_code,
+                    error_message,
+                )
+            async for line in response.aiter_lines():
+                chunk = parse_sse_line(line)
+                if chunk is not None:
+                    all_chunks.append(chunk)
+                    if stream_config and is_message_chunk(chunk):
+                        on_chunk = stream_config.get("on_chunk")
+                        if on_chunk:
+                            try:
+                                on_chunk(chunk)
+                            except Exception:
+                                pass
+
+        self.node_manager.set_node_health(
+            self.node_manager.get_node(),
+            is_healthy=True,
+        )
+        final: JSONDict = combine_stream_chunks(all_chunks)
+        if stream_config:
+            on_complete = stream_config.get("on_complete")
+            if on_complete:
+                try:
+                    on_complete(typing.cast(TEntityDict, final))
+                except Exception:
+                    pass
+        return typing.cast(TEntityDict, final)
 
     def _prepare_request_params(
         self,
