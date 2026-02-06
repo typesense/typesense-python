@@ -43,6 +43,7 @@ from typesense.types.document import (
     ImportResponseWithId,
     SearchParameters,
     SearchResponse,
+    StreamConfigBuilder,
     UpdateByFilterParameters,
     UpdateByFilterResponse,
 )
@@ -362,16 +363,25 @@ class Documents(typing.Generic[TDoc]):
 
         Args:
             search_parameters (SearchParameters): The search parameters.
+                Use conversation_stream=True and optionally stream_config (on_chunk,
+                on_complete, on_error) for conversational search streaming.
 
         Returns:
             SearchResponse[TDoc]: The search response containing matching documents.
         """
-        stringified_search_params = stringify_search_params(search_parameters)
+        params_for_api = dict(search_parameters)
+        stream_config = params_for_api.pop("stream_config", None)
+        if isinstance(stream_config, StreamConfigBuilder):
+            stream_config = stream_config.build()
+        conversation_stream = params_for_api.get("conversation_stream") is True
+        stringified_search_params = stringify_search_params(params_for_api)
         response: SearchResponse[TDoc] = self.api_call.get(
             self._endpoint_path("search"),
             params=stringified_search_params,
             entity_type=SearchResponse,
             as_json=True,
+            stream_config=stream_config,
+            is_streaming_request=conversation_stream,
         )
         return response
 
