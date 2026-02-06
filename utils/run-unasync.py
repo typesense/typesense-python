@@ -31,6 +31,8 @@ def collect_class_replacements(source_dir: Path) -> dict[str, str]:
     replacements["AsyncConcurrencyLimit"] = "ConcurrencyLimit"
     # Defined in the shared ``typesense.http_backend`` module, outside async_.
     replacements["ASYNC_CLIENT_TYPES"] = "CLIENT_TYPES"
+    replacements["aiter_lines"] = "iter_lines"
+    replacements["aread"] = "read"
     return replacements
 
 
