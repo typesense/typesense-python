@@ -1,6 +1,8 @@
 """Tests for the Operations class."""
 
 
+from pathlib import Path
+
 import pytest
 
 from tests.utils.object_assertions import assert_match_object, assert_object_lists_match
@@ -69,11 +71,11 @@ def test_cache_clear(actual_operations: Operations) -> None:
     assert response["success"]
 
 
-def test_snapshot(actual_operations: Operations) -> None:
+def test_snapshot(actual_operations: Operations, tmp_path: Path) -> None:
     """Test that the Operations object can perform the snapshot operation."""
     response = actual_operations.perform(
         "snapshot",
-        {"snapshot_path": "/tmp"},  # noqa: S108
+        {"snapshot_path": str(tmp_path)},
     )
 
     assert response["success"]
