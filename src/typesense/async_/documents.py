@@ -228,6 +228,7 @@ class AsyncDocuments(typing.Generic[TDoc]):
         documents: typing.List[TDoc],
         import_parameters: DocumentImportParametersReturnDocAndId,
         batch_size: typing.Union[int, None] = None,
+        client_batch_size: typing.Union[int, None] = None,
     ) -> typing.List[
         typing.Union[ImportResponseWithDocAndId[TDoc], ImportResponseFail[TDoc]]
     ]: ...
@@ -238,6 +239,7 @@ class AsyncDocuments(typing.Generic[TDoc]):
         documents: typing.List[TDoc],
         import_parameters: DocumentImportParametersReturnId,
         batch_size: typing.Union[int, None] = None,
+        client_batch_size: typing.Union[int, None] = None,
     ) -> typing.List[typing.Union[ImportResponseWithId, ImportResponseFail[TDoc]]]: ...
 
     @typing.overload
@@ -246,6 +248,7 @@ class AsyncDocuments(typing.Generic[TDoc]):
         documents: typing.List[TDoc],
         import_parameters: typing.Union[DocumentWriteParameters, None] = None,
         batch_size: typing.Union[int, None] = None,
+        client_batch_size: typing.Union[int, None] = None,
     ) -> typing.List[typing.Union[ImportResponseSuccess, ImportResponseFail[TDoc]]]: ...
 
     @typing.overload
@@ -254,6 +257,7 @@ class AsyncDocuments(typing.Generic[TDoc]):
         documents: typing.List[TDoc],
         import_parameters: DocumentImportParametersReturnDoc,
         batch_size: typing.Union[int, None] = None,
+        client_batch_size: typing.Union[int, None] = None,
     ) -> typing.List[
         typing.Union[ImportResponseWithDoc[TDoc], ImportResponseFail[TDoc]]
     ]: ...
@@ -264,6 +268,7 @@ class AsyncDocuments(typing.Generic[TDoc]):
         documents: typing.List[TDoc],
         import_parameters: _ImportParameters,
         batch_size: typing.Union[int, None] = None,
+        client_batch_size: typing.Union[int, None] = None,
     ) -> typing.List[ImportResponse[TDoc]]: ...
 
     @typing.overload
@@ -272,6 +277,7 @@ class AsyncDocuments(typing.Generic[TDoc]):
         documents: typing.Union[bytes, str],
         import_parameters: _ImportParameters = None,
         batch_size: typing.Union[int, None] = None,
+        client_batch_size: typing.Union[int, None] = None,
     ) -> str: ...
 
     async def import_(
@@ -279,6 +285,7 @@ class AsyncDocuments(typing.Generic[TDoc]):
         documents: typing.Union[bytes, str, typing.List[TDoc]],
         import_parameters: _ImportParameters = None,
         batch_size: typing.Union[int, None] = None,
+        client_batch_size: typing.Union[int, None] = None,
     ) -> typing.Union[ImportResponse[TDoc], str]:
         """
         Import documents into the collection.
@@ -289,7 +296,9 @@ class AsyncDocuments(typing.Generic[TDoc]):
         Args:
             documents: The documents to import.
             import_parameters: Parameters for the import operation.
-            batch_size: The size of each batch for batch imports.
+            batch_size: Typesense import `batch_size` sent as request query parameter.
+            client_batch_size: Client-side chunk size. When set, this method
+                splits the input list and performs multiple import requests.
 
         Returns:
             The import response, which can be a list of responses or a string.
@@ -297,13 +306,23 @@ class AsyncDocuments(typing.Generic[TDoc]):
         Raises:
             TypesenseClientError: If an empty list of documents is provided.
         """
+        merged_import_parameters: DocumentImportParameters = {}
+        if import_parameters:
+            merged_import_parameters.update(import_parameters)
+        if batch_size is not None:
+            merged_import_parameters["batch_size"] = batch_size
+
         if isinstance(documents, (str, bytes)):
-            return await self._import_raw(documents, import_parameters)
+            return await self._import_raw(documents, merged_import_parameters)
 
-        if batch_size:
-            return await self._batch_import(documents, import_parameters, batch_size)
+        if client_batch_size:
+            return await self._batch_import(
+                documents,
+                merged_import_parameters,
+                client_batch_size,
+            )
 
-        return await self._bulk_import(documents, import_parameters)
+        return await self._bulk_import(documents, merged_import_parameters)
 
     async def export(
         self,

@@ -296,7 +296,7 @@ def test_import_json_fail(
         actual_documents.import_(generate_companies)
 
 
-def test_import_batch_size(
+def test_import_client_batch_size(
     generate_companies: typing.List[Companies],
     actual_documents: Documents[Companies],
     actual_api_call: ApiCall,
@@ -304,18 +304,67 @@ def test_import_batch_size(
     create_collection: None,
     mocker: MockFixture,
 ) -> None:
-    """Test that the Documents object can import documents in batches."""
-    batch_size = 5
+    """Test that the Documents object can import documents in client-side batches."""
+    client_batch_size = 5
     import_spy = mocker.spy(actual_documents, "import_")
     batch_import_spy = mocker.spy(actual_documents, "_bulk_import")
     request_spy = mocker.spy(actual_api_call, "post")
-    response = actual_documents.import_(generate_companies, batch_size=batch_size)
+    response = actual_documents.import_(
+        generate_companies,
+        client_batch_size=client_batch_size,
+    )
 
     expected = [{"success": True} for _ in generate_companies]
     assert import_spy.call_count == 1
-    assert batch_import_spy.call_count == len(generate_companies) // batch_size
-    assert request_spy.call_count == len(generate_companies) // batch_size
+    assert batch_import_spy.call_count == len(generate_companies) // client_batch_size
+    assert request_spy.call_count == len(generate_companies) // client_batch_size
     assert response == expected
+
+
+def test_import_batch_size_query_parameter(
+    generate_companies: typing.List[Companies],
+    actual_documents: Documents[Companies],
+    actual_api_call: ApiCall,
+    delete_all: None,
+    create_collection: None,
+    mocker: MockFixture,
+) -> None:
+    """Test that batch_size arg is sent as an import query parameter."""
+    request_spy = mocker.spy(actual_api_call, "post")
+    response = actual_documents.import_(generate_companies, batch_size=42)
+
+    expected = [{"success": True} for _ in generate_companies]
+    assert response == expected
+    request_spy.assert_called_once_with(
+        "/collections/companies/documents/import",
+        body="\n".join([json.dumps(doc) for doc in generate_companies]),
+        params={"batch_size": 42},
+        entity_type=str,
+        as_json=False,
+    )
+
+
+def test_import_batch_size_query_parameter_from_import_parameters(
+    generate_companies: typing.List[Companies],
+    actual_documents: Documents[Companies],
+    actual_api_call: ApiCall,
+    delete_all: None,
+    create_collection: None,
+    mocker: MockFixture,
+) -> None:
+    """Test that import_parameters.batch_size is sent as an import query parameter."""
+    request_spy = mocker.spy(actual_api_call, "post")
+    response = actual_documents.import_(generate_companies, {"batch_size": 42})
+
+    expected = [{"success": True} for _ in generate_companies]
+    assert response == expected
+    request_spy.assert_called_once_with(
+        "/collections/companies/documents/import",
+        body="\n".join([json.dumps(doc) for doc in generate_companies]),
+        params={"batch_size": 42},
+        entity_type=str,
+        as_json=False,
+    )
 
 
 def test_import_return_docs(
@@ -522,6 +571,80 @@ async def test_upsert_async(
     response = await actual_async_documents.upsert(company)
 
     assert response == company
+
+
+async def test_import_batch_size_query_parameter_async(
+    generate_companies: typing.List[Companies],
+    actual_async_documents: AsyncDocuments[Companies],
+    actual_async_api_call: AsyncApiCall,
+    delete_all: None,
+    create_collection: None,
+    mocker: MockFixture,
+) -> None:
+    """Test that batch_size arg is sent as an import query parameter."""
+    request_spy = mocker.spy(actual_async_api_call, "post")
+    response = await actual_async_documents.import_(generate_companies, batch_size=42)
+
+    expected = [{"success": True} for _ in generate_companies]
+    assert response == expected
+    request_spy.assert_called_once_with(
+        "/collections/companies/documents/import",
+        body="\n".join([json.dumps(doc) for doc in generate_companies]),
+        params={"batch_size": 42},
+        entity_type=str,
+        as_json=False,
+    )
+
+
+async def test_import_batch_size_query_parameter_from_import_parameters_async(
+    generate_companies: typing.List[Companies],
+    actual_async_documents: AsyncDocuments[Companies],
+    actual_async_api_call: AsyncApiCall,
+    delete_all: None,
+    create_collection: None,
+    mocker: MockFixture,
+) -> None:
+    """Test that import_parameters.batch_size is sent as an import query parameter."""
+    request_spy = mocker.spy(actual_async_api_call, "post")
+    response = await actual_async_documents.import_(
+        generate_companies,
+        {"batch_size": 42},
+    )
+
+    expected = [{"success": True} for _ in generate_companies]
+    assert response == expected
+    request_spy.assert_called_once_with(
+        "/collections/companies/documents/import",
+        body="\n".join([json.dumps(doc) for doc in generate_companies]),
+        params={"batch_size": 42},
+        entity_type=str,
+        as_json=False,
+    )
+
+
+async def test_import_client_batch_size_async(
+    generate_companies: typing.List[Companies],
+    actual_async_documents: AsyncDocuments[Companies],
+    actual_async_api_call: AsyncApiCall,
+    delete_all: None,
+    create_collection: None,
+    mocker: MockFixture,
+) -> None:
+    """Test that AsyncDocuments can import documents in client-side batches."""
+    client_batch_size = 5
+    import_spy = mocker.spy(actual_async_documents, "import_")
+    batch_import_spy = mocker.spy(actual_async_documents, "_bulk_import")
+    request_spy = mocker.spy(actual_async_api_call, "post")
+    response = await actual_async_documents.import_(
+        generate_companies,
+        client_batch_size=client_batch_size,
+    )
+
+    expected = [{"success": True} for _ in generate_companies]
+    assert import_spy.call_count == 1
+    assert batch_import_spy.call_count == len(generate_companies) // client_batch_size
+    assert request_spy.call_count == len(generate_companies) // client_batch_size
+    assert response == expected
 
 
 async def test_export_async(

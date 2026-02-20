@@ -94,9 +94,12 @@ class DocumentWriteParameters(DirtyValuesParameters):
           If coercion fails, drop the particular field and index the rest of the document.
         - `drop`: Drop the particular field and index the rest of the document.
         - `reject`: Reject the write outright with an error message.
+
+      batch_size (int): Batch size to be sent as query param for the import endpoint.
     """
 
     action: typing.NotRequired[typing.Literal["create", "update", "upsert", "emplace"]]
+    batch_size: typing.NotRequired[int]
 
 
 class UpdateByFilterParameters(typing.TypedDict):
