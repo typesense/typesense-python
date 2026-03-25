@@ -1,6 +1,5 @@
 """Tests for the Collections class."""
 
-
 import sys
 
 from typesense.async_.api_call import AsyncApiCall
@@ -113,7 +112,6 @@ def test_actual_create(actual_collections: Collections, delete_all: None) -> Non
                 "infix": False,
                 "stem": False,
                 "stem_dictionary": "",
-                "truncate_len": 100,
                 "store": True,
             },
             {
@@ -127,7 +125,6 @@ def test_actual_create(actual_collections: Collections, delete_all: None) -> Non
                 "infix": False,
                 "stem": False,
                 "stem_dictionary": "",
-                "truncate_len": 100,
                 "store": True,
             },
         ],
@@ -135,8 +132,6 @@ def test_actual_create(actual_collections: Collections, delete_all: None) -> Non
         "num_documents": 0,
         "symbols_to_index": [],
         "token_separators": [],
-        "synonym_sets": [],
-        "curation_sets": [],
     }
 
     response = actual_collections.create(
@@ -185,7 +180,6 @@ def test_actual_retrieve(
                     "infix": False,
                     "stem": False,
                     "stem_dictionary": "",
-                    "truncate_len": 100,
                     "store": True,
                 },
                 {
@@ -199,7 +193,6 @@ def test_actual_retrieve(
                     "infix": False,
                     "stem": False,
                     "stem_dictionary": "",
-                    "truncate_len": 100,
                     "store": True,
                 },
             ],
@@ -207,8 +200,6 @@ def test_actual_retrieve(
             "num_documents": 0,
             "symbols_to_index": [],
             "token_separators": [],
-            "synonym_sets": [],
-            "curation_sets": [],
         },
     ]
 
@@ -250,7 +241,6 @@ async def test_actual_create_async(
                 "infix": False,
                 "stem": False,
                 "stem_dictionary": "",
-                "truncate_len": 100,
                 "store": True,
             },
             {
@@ -264,7 +254,6 @@ async def test_actual_create_async(
                 "infix": False,
                 "stem": False,
                 "stem_dictionary": "",
-                "truncate_len": 100,
                 "store": True,
             },
         ],
@@ -272,8 +261,6 @@ async def test_actual_create_async(
         "num_documents": 0,
         "symbols_to_index": [],
         "token_separators": [],
-        "synonym_sets": [],
-        "curation_sets": [],
     }
 
     response = await actual_async_collections.create(
@@ -322,7 +309,6 @@ async def test_actual_retrieve_async(
                     "infix": False,
                     "stem": False,
                     "stem_dictionary": "",
-                    "truncate_len": 100,
                     "store": True,
                 },
                 {
@@ -336,7 +322,6 @@ async def test_actual_retrieve_async(
                     "infix": False,
                     "stem": False,
                     "stem_dictionary": "",
-                    "truncate_len": 100,
                     "store": True,
                 },
             ],
@@ -344,8 +329,6 @@ async def test_actual_retrieve_async(
             "num_documents": 0,
             "symbols_to_index": [],
             "token_separators": [],
-            "synonym_sets": [],
-            "curation_sets": [],
         },
     ]
 
