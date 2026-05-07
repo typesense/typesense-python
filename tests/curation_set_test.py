@@ -62,6 +62,8 @@ def test_actual_retrieve(
                 "rule": {
                     "match": "contains",
                     "query": "shoe",
+                    "stem": False,
+                    "synonyms": False,
                 },
                 "stop_processing": True,
             },
@@ -108,6 +110,8 @@ def test_actual_list_items(
             "rule": {
                 "match": "contains",
                 "query": "shoe",
+                "stem": False,
+                "synonyms": False,
             },
             "stop_processing": True,
         },
@@ -140,6 +144,8 @@ def test_actual_get_item(
         "rule": {
             "match": "contains",
             "query": "shoe",
+            "stem": False,
+            "synonyms": False,
         },
         "stop_processing": True,
     }
@@ -218,6 +224,8 @@ async def test_actual_retrieve_async(
                 "rule": {
                     "match": "contains",
                     "query": "shoe",
+                    "stem": False,
+                    "synonyms": False,
                 },
                 "stop_processing": True,
             },
@@ -263,6 +271,8 @@ async def test_actual_list_items_async(
             "rule": {
                 "match": "contains",
                 "query": "shoe",
+                "stem": False,
+                "synonyms": False,
             },
             "stop_processing": True,
         },
@@ -295,6 +305,8 @@ async def test_actual_get_item_async(
         "rule": {
             "match": "contains",
             "query": "shoe",
+            "stem": False,
+            "synonyms": False,
         },
         "stop_processing": True,
     }

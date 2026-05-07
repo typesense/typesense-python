@@ -87,6 +87,8 @@ def test_actual_upsert(
                 "rule": {
                     "match": "contains",
                     "query": "shoe",
+                    "stem": False,
+                    "synonyms": False,
                 },
                 "stop_processing": True,
             },
@@ -150,6 +152,8 @@ async def test_actual_upsert_async(
                 "rule": {
                     "match": "contains",
                     "query": "shoe",
+                    "stem": False,
+                    "synonyms": False,
                 },
                 "stop_processing": True,
             },
