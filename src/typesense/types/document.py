@@ -727,14 +727,18 @@ class Highlight(typing.TypedDict):
     Schema for highlighting search results.
 
     Attributes:
-      matched_tokens (list[str]): List of matched tokens.
+      matched_tokens (list[str] | list[list[str]]): List of matched tokens.
       snippet (str): Snippet of the matched tokens.
+      snippets (list[str]): Snippets of the matched tokens (for array fields).
+      indices (list[int]): Indices of the matched tokens (for array fields).
       value (str): Value of the matched tokens.
     """
 
-    matched_tokens: typing.List[str]
-    snippet: str
-    value: str
+    matched_tokens: typing.Union[typing.List[str], typing.List[typing.List[str]]]
+    snippet: typing.NotRequired[str]
+    snippets: typing.NotRequired[typing.List[str]]
+    indices: typing.NotRequired[typing.List[int]]
+    value: typing.NotRequired[str]
 
 
 class HighlightExtended(Highlight):
