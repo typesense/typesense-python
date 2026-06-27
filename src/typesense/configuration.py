@@ -88,7 +88,7 @@ class ConfigDict(typing.TypedDict):
     num_retries: typing.NotRequired[int]
     interval_seconds: typing.NotRequired[int]
     healthcheck_interval_seconds: typing.NotRequired[int]
-    verify: typing.NotRequired[bool]
+    verify: typing.NotRequired[typing.Union[bool, str]]
     timeout_seconds: typing.NotRequired[int]  # deprecated
     master_node: typing.NotRequired[typing.Union[str, NodeConfigDict]]  # deprecated
     additional_headers: typing.NotRequired[typing.Dict[str, str]]
