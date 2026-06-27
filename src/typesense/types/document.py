@@ -722,19 +722,30 @@ class SearchResponseFacetCountSchema(typing.TypedDict):
     stats: FacetCountStats
 
 
-class Highlight(typing.TypedDict):
+class Highlight(typing.TypedDict, total=False):
     """
     Schema for highlighting search results.
 
+    For singular fields the API returns ``matched_tokens`` as a flat list of
+    strings and a single ``snippet``/``value``.  For array fields (e.g.
+    ``string[]``) it returns ``matched_tokens`` as a list of lists,
+    ``snippets`` (plural) as a list of strings, and ``indices`` indicating
+    which array elements matched.
+
     Attributes:
-      matched_tokens (list[str]): List of matched tokens.
-      snippet (str): Snippet of the matched tokens.
-      value (str): Value of the matched tokens.
+      matched_tokens: Matched tokens — ``List[str]`` for singular fields,
+          ``List[List[str]]`` for array fields.
+      snippet: Highlighted snippet (singular fields).
+      snippets: Highlighted snippets (array fields).
+      value: Full field value with highlight markup.
+      indices: Indices of matched array elements (array fields).
     """
 
-    matched_tokens: typing.List[str]
+    matched_tokens: typing.Union[typing.List[str], typing.List[typing.List[str]]]
     snippet: str
+    snippets: typing.List[str]
     value: str
+    indices: typing.List[int]
 
 
 class HighlightExtended(Highlight):
