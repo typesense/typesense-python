@@ -60,7 +60,9 @@ class ConfigDict(typing.TypedDict):
 
         num_retries (int): The number of retries to attempt before failing.
 
-        interval_seconds (int): The interval in seconds between retries.
+        retry_interval_seconds (float): The interval in seconds between retries.
+
+        interval_seconds (int): Deprecated alias of ``retry_interval_seconds``.
 
         healthcheck_interval_seconds (int): The interval in seconds between
             health checks.
@@ -86,7 +88,8 @@ class ConfigDict(typing.TypedDict):
     nearest_node: typing.NotRequired[typing.Union[str, NodeConfigDict]]
     api_key: str
     num_retries: typing.NotRequired[int]
-    interval_seconds: typing.NotRequired[int]
+    retry_interval_seconds: typing.NotRequired[float]
+    interval_seconds: typing.NotRequired[int]  # deprecated alias
     healthcheck_interval_seconds: typing.NotRequired[int]
     verify: typing.NotRequired[bool]
     timeout_seconds: typing.NotRequired[int]  # deprecated
@@ -214,7 +217,12 @@ class Configuration:
             3.0,
         )
         self.num_retries = config_dict.get("num_retries", 3)
-        self.retry_interval_seconds = config_dict.get("retry_interval_seconds", 1.0)
+        # ``interval_seconds`` is the historically documented key; ``retry_interval_seconds``
+        # is what this attribute is named. Honor both so the documented spelling works too.
+        self.retry_interval_seconds = config_dict.get(
+            "retry_interval_seconds",
+            config_dict.get("interval_seconds", 1.0),
+        )
         self.healthcheck_interval_seconds = config_dict.get(
             "healthcheck_interval_seconds",
             60,

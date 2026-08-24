@@ -23,6 +23,10 @@ def collect_class_replacements(source_dir: Path) -> dict[str, str]:
             async_name = match.group(1)
             replacements[async_name] = async_name[len("Async") :]
     replacements["aclose"] = "close"
+    # ``await asyncio.sleep`` in the async client becomes ``time.sleep`` in the sync
+    # client (unasync strips ``await``); map the module token so the import and call
+    # are rewritten too.
+    replacements["asyncio"] = "time"
     return replacements
 
 
