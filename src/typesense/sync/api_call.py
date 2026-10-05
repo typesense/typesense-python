@@ -192,6 +192,7 @@ class ApiCall:
                 max_connections=config.max_connections,
                 max_keepalive_connections=config.max_keepalive_connections,
             ),
+            verify=config.verify,
         )
 
     def __enter__(self) -> "ApiCall":

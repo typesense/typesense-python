@@ -192,6 +192,7 @@ class AsyncApiCall:
                 max_connections=config.max_connections,
                 max_keepalive_connections=config.max_keepalive_connections,
             ),
+            verify=config.verify,
         )
 
     async def __aenter__(self) -> "AsyncApiCall":
