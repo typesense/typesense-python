@@ -461,6 +461,25 @@ def test_selects_next_available_node_on_timeout(
         assert len(respx.calls) == 3
 
 
+def test_client_errors_do_not_mark_nodes_unhealthy(
+    fake_api_call: ApiCall,
+    mocker: MockerFixture,
+) -> None:
+    """Pool exhaustion is local to the client and must not trigger failover."""
+    node = fake_api_call.node_manager.get_node()
+    make_request = mocker.patch.object(
+        fake_api_call.request_handler,
+        "make_request",
+        side_effect=httpx.PoolTimeout("No connection available"),
+    )
+
+    with pytest.raises(httpx.PoolTimeout):
+        fake_api_call.get("/test", as_json=True, entity_type=typing.Dict[str, str])
+
+    assert node.healthy is True
+    make_request.assert_called_once()
+
+
 def test_get_node_no_healthy_nodes(
     fake_api_call: ApiCall,
     mocker: MockFixture,
