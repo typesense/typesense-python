@@ -309,10 +309,15 @@ class RequestHandler:
         """
         Map an HTTP status code to the appropriate exception type.
 
+        Any 5xx code without a dedicated exception (e.g. 502, 504 from a proxy
+        in front of a restarting node) maps to ServerError, so the request is
+        retried on another node.
+
         Args:
             http_code (int): The HTTP status code.
 
         Returns:
             Type[TypesenseClientError]: The exception type corresponding to the status code.
         """
-        return _ERROR_CODE_MAP.get(str(http_code), TypesenseClientError)
+        default = ServerError if 500 <= http_code <= 599 else TypesenseClientError
+        return _ERROR_CODE_MAP.get(str(http_code), default)
