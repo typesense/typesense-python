@@ -742,3 +742,73 @@ async def test_async_client_side_error_does_not_mark_node_unhealthy(
         assert not node0_route.called
 
     assert fake_async_api_call.config.nearest_node.healthy is True
+
+
+def test_round_robin_visits_each_node_in_turn(fake_api_call: ApiCall) -> None:
+    """Test that successful requests advance the round-robin by one node each."""
+    fake_api_call.config.nearest_node = None
+
+    with respx.mock:
+        for host in ("node0", "node1", "node2"):
+            respx.get(f"http://{host}:8108/").mock(
+                return_value=httpx.Response(200, json={"key": "value"}),
+            )
+
+        for _ in range(6):
+            fake_api_call.get("/", entity_type=typing.Dict[str, str])
+
+        assert [str(call.request.url) for call in respx.calls] == [
+            "http://node0:8108/",
+            "http://node1:8108/",
+            "http://node2:8108/",
+            "http://node0:8108/",
+            "http://node1:8108/",
+            "http://node2:8108/",
+        ]
+
+
+async def test_async_round_robin_visits_each_node_in_turn(
+    fake_async_api_call: AsyncApiCall,
+) -> None:
+    """Test that successful requests advance the round-robin by one node each (async)."""
+    fake_async_api_call.config.nearest_node = None
+
+    with respx.mock:
+        for host in ("node0", "node1", "node2"):
+            respx.get(f"http://{host}:8108/").mock(
+                return_value=httpx.Response(200, json={"key": "value"}),
+            )
+
+        for _ in range(6):
+            await fake_async_api_call.get("/", entity_type=typing.Dict[str, str])
+
+        assert [str(call.request.url) for call in respx.calls] == [
+            "http://node0:8108/",
+            "http://node1:8108/",
+            "http://node2:8108/",
+            "http://node0:8108/",
+            "http://node1:8108/",
+            "http://node2:8108/",
+        ]
+
+
+def test_success_marks_only_the_answering_node_healthy(
+    fake_api_call: ApiCall,
+) -> None:
+    """Test that a success refreshes the node that answered and no other."""
+    fake_api_call.config.nearest_node = None
+    answering_node, unhealthy_node, _ = fake_api_call.node_manager.nodes
+    answering_node.last_access_ts = 0
+    unhealthy_node.healthy = False
+    unhealthy_node.last_access_ts = int(time.time())
+
+    with respx.mock:
+        respx.get("http://node0:8108/").mock(
+            return_value=httpx.Response(200, json={"key": "value"}),
+        )
+
+        fake_api_call.get("/", entity_type=typing.Dict[str, str])
+
+    assert answering_node.healthy is True
+    assert answering_node.last_access_ts > 0
+    assert unhealthy_node.healthy is False
