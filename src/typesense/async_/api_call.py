@@ -135,6 +135,22 @@ _SERVER_ERRORS: typing.Final[
     ServiceUnavailable,
 )
 
+# Raised by httpx inside the client, so they say nothing about the node's
+# health. They subclass entries of _SERVER_ERRORS and must be caught first.
+_CLIENT_SIDE_ERRORS: typing.Final[
+    typing.Tuple[
+        typing.Type[httpx.PoolTimeout],
+        typing.Type[httpx.LocalProtocolError],
+        typing.Type[httpx.DecodingError],
+        typing.Type[httpx.TooManyRedirects],
+    ]
+] = (
+    httpx.PoolTimeout,
+    httpx.LocalProtocolError,
+    httpx.DecodingError,
+    httpx.TooManyRedirects,
+)
+
 
 class AsyncApiCall:
     """
@@ -478,6 +494,8 @@ class AsyncApiCall:
                 as_json,
                 **request_kwargs,
             )
+        except _CLIENT_SIDE_ERRORS:
+            raise
         except _SERVER_ERRORS as server_error:
             self.node_manager.set_node_health(node, is_healthy=False)
             if num_retries < self.config.num_retries:
