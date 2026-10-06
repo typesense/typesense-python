@@ -110,7 +110,9 @@ def process_param_list(
     return ",".join(stringified_list)
 
 
-def stringify_search_params(parameter_dict: ParamSchema) -> StringifiedParamSchema:
+def stringify_search_params(
+    parameter_dict: typing.Mapping[str, object],
+) -> StringifiedParamSchema:
     """
     Convert the search parameters to strings.
 
@@ -118,7 +120,8 @@ def stringify_search_params(parameter_dict: ParamSchema) -> StringifiedParamSche
     to their string representations. List values are converted to comma-separated strings.
 
     Args:
-        parameter_dict (ParamSchema): The search parameters.
+        parameter_dict (Mapping[str, object]): The search parameters, e.g. a
+            ``SearchParameters`` TypedDict or a ``ParamSchema`` dictionary.
 
     Returns:
         StringifiedParamSchema: The search parameters as strings.

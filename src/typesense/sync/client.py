@@ -164,5 +164,5 @@ class Client:
         """
         if name is None:
             name = model.__name__.lower()
-        collection: Collection[TDoc] = self.collections[name]
-        return collection
+        # ``collections`` is typed for the default DocumentSchema; narrow it to the model.
+        return typing.cast(Collection[TDoc], self.collections[name])

@@ -89,7 +89,7 @@ class AnalyticsRulesV1(object):
             self.rules[rule_id] = AnalyticsRuleV1(self.api_call, rule_id)
         return self.rules[rule_id]
 
-    @warn_deprecation(  # type: ignore[untyped-decorator]
+    @warn_deprecation(
         "SyncAnalyticsRulesV1 is deprecated on v30+. Use client.analytics instead.",
         flag_name="analytics_rules_v1_deprecation",
     )
@@ -115,21 +115,19 @@ class AnalyticsRulesV1(object):
                 The created rule. Returns RuleSchemaForCounters for counter rules
                 and RuleSchemaForQueries for query rules.
         """
-        response: typing.Union[
-            RuleSchemaForCounters, RuleSchemaForQueries
-        ] = self.api_call.post(
+        response = self.api_call.post(
             AnalyticsRulesV1.resource_path,
             body=rule,
             params=rule_parameters,
             as_json=True,
-            entity_type=dict,
+            entity_type=typing.Dict[str, typing.Any],
         )
         return typing.cast(
             typing.Union[RuleSchemaForCounters, RuleSchemaForQueries],
             response,
         )
 
-    @warn_deprecation(  # type: ignore[untyped-decorator]
+    @warn_deprecation(
         "SyncAnalyticsRulesV1 is deprecated on v30+. Use client.analytics instead.",
         flag_name="analytics_rules_v1_deprecation",
     )
@@ -148,19 +146,17 @@ class AnalyticsRulesV1(object):
         Returns:
             Union[RuleSchemaForCounters, RuleCreateSchemaForQueries]: The upserted rule.
         """
-        response: typing.Union[
-            RuleSchemaForCounters, RuleCreateSchemaForQueries
-        ] = self.api_call.put(
+        response = self.api_call.put(
             "/".join([self.resource_path, rule_id]),
             body=rule,
-            entity_type=dict,
+            entity_type=typing.Dict[str, typing.Any],
         )
         return typing.cast(
             typing.Union[RuleSchemaForCounters, RuleCreateSchemaForQueries],
             response,
         )
 
-    @warn_deprecation(  # type: ignore[untyped-decorator]
+    @warn_deprecation(
         "SyncAnalyticsRulesV1 is deprecated on v30+. Use client.analytics instead.",
         flag_name="analytics_rules_v1_deprecation",
     )

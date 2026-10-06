@@ -60,7 +60,7 @@ else:
     import typing_extensions as typing
 
 TEntityDict = typing.TypeVar("TEntityDict")
-TParams = typing.TypeVar("TParams", bound=typing.Dict[str, typing.Any])
+TParams = typing.TypeVar("TParams", bound=typing.Mapping[str, object])
 TBody = typing.TypeVar(
     "TBody", bound=typing.Union[str, bytes, typing.Mapping[str, typing.Any]]
 )
@@ -95,7 +95,7 @@ class SessionFunctionKwargs(typing.Generic[TParams, TBody], typing.TypedDict):
 
     params: typing.NotRequired[typing.Union[TParams, None]]
     data: typing.NotRequired[typing.Union[TBody, None]]
-    content: typing.NotRequired[typing.Union[TBody, str, None]]
+    content: typing.NotRequired[typing.Union[str, bytes, None]]
     headers: typing.NotRequired[typing.Dict[str, str]]
     timeout: typing.NotRequired[float]
 

@@ -60,8 +60,10 @@ class AsyncOperations:
         """
         self.api_call = api_call
 
+    # The generic ``str`` overload below also matches "schema_changes"; overloads are
+    # tried in order, so this one wins.
     @typing.overload
-    async def perform(
+    async def perform(  # type: ignore[overload-overlap]
         self,
         operation_name: typing.Literal["schema_changes"],
         query_params: None = None,
@@ -132,6 +134,23 @@ class AsyncOperations:
     @typing.overload
     async def perform(
         self,
+        operation_name: typing.Literal["snapshot"],
+        query_params: SnapshotParameters,
+    ) -> OperationResponse:
+        """
+        Perform a snapshot operation.
+
+        Args:
+            operation_name (Literal["snapshot"]): The name of the operation.
+            query_params (SnapshotParameters): Query parameters for the snapshot operation.
+
+        Returns:
+            OperationResponse: The response from the snapshot operation.
+        """
+
+    @typing.overload
+    async def perform(
+        self,
         operation_name: str,
         query_params: typing.Union[typing.Dict[str, str], None] = None,
     ) -> OperationResponse:
@@ -145,23 +164,6 @@ class AsyncOperations:
 
         Returns:
             OperationResponse: The response from the operation.
-        """
-
-    @typing.overload
-    async def perform(
-        self,
-        operation_name: typing.Literal["snapshot"],
-        query_params: SnapshotParameters,
-    ) -> OperationResponse:
-        """
-        Perform a snapshot operation.
-
-        Args:
-            operation_name (Literal["snapshot"]): The name of the operation.
-            query_params (SnapshotParameters): Query parameters for the snapshot operation.
-
-        Returns:
-            OperationResponse: The response from the snapshot operation.
         """
 
     async def perform(
@@ -181,7 +183,7 @@ class AsyncOperations:
             typing.Dict[str, str],
             None,
         ] = None,
-    ) -> OperationResponse:
+    ) -> typing.Union[OperationResponse, typing.List[SchemaChangesResponse]]:
         """
         Perform an operation on the Typesense API.
 
@@ -202,13 +204,16 @@ class AsyncOperations:
             >>> response = await operations.perform("vote")
             >>> health = await operations.is_healthy()
         """
-        response: OperationResponse = await self.api_call.post(
+        response = await self.api_call.post(
             self._endpoint_path(operation_name),
             params=query_params,
             as_json=True,
-            entity_type=OperationResponse,
+            entity_type=object,
         )
-        return response
+        return typing.cast(
+            typing.Union[OperationResponse, typing.List[SchemaChangesResponse]],
+            response,
+        )
 
     async def is_healthy(self) -> bool:
         """
@@ -222,16 +227,14 @@ class AsyncOperations:
             >>> healthy = await operations.is_healthy()
             >>> print(healthy)
         """
-        call_resp: HealthCheckResponse = await self.api_call.get(
+        call_resp: object = await self.api_call.get(
             AsyncOperations.health_path,
             as_json=True,
             entity_type=HealthCheckResponse,
         )
-        if isinstance(call_resp, typing.Dict):
-            is_ok: bool = call_resp.get("ok", False)
-        else:
-            is_ok = False
-        return is_ok
+        if isinstance(call_resp, dict):
+            return bool(call_resp.get("ok", False))
+        return False
 
     async def toggle_slow_request_log(
         self,

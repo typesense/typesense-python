@@ -87,7 +87,7 @@ class AsyncOverride:
         return response
 
     @property
-    @warn_deprecation(  # type: ignore[untyped-decorator]
+    @warn_deprecation(
         "The override API (collections/{collection}/overrides/{override_id}) is deprecated is removed on v30+. "
         "Use curation sets (curation_sets) instead.",
         flag_name="overrides_deprecation",

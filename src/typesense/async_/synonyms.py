@@ -124,7 +124,7 @@ class AsyncSynonyms:
         )
         return response
 
-    @warn_deprecation(  # type: ignore[untyped-decorator]
+    @warn_deprecation(
         "The synonyms API (collections/{collection}/synonyms) is deprecated is removed on v30+. "
         "Use synonym sets (synonym_sets) instead.",
         flag_name="synonyms_deprecation",

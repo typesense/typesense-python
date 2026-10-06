@@ -48,8 +48,23 @@ from typesense.exceptions import (
 )
 
 TEntityDict = typing.TypeVar("TEntityDict")
-TParams = typing.TypeVar("TParams", bound=typing.Dict[str, typing.Any])
-TBody = typing.TypeVar("TBody", bound=typing.Union[str, bytes])
+TParams = typing.TypeVar("TParams", bound=typing.Mapping[str, object])
+TBody = typing.TypeVar(
+    "TBody", bound=typing.Union[str, bytes, typing.Mapping[str, typing.Any]]
+)
+
+# The query parameter values httpx accepts, once booleans are normalized to strings.
+_QueryParams = typing.Mapping[
+    str,
+    typing.Union[
+        str,
+        int,
+        float,
+        bool,
+        None,
+        typing.Sequence[typing.Union[str, int, float, bool, None]],
+    ],
+]
 
 _ERROR_CODE_MAP: typing.Mapping[str, typing.Type[TypesenseClientError]] = (
     MappingProxyType(
@@ -99,7 +114,7 @@ class SessionFunctionKwargs(typing.Generic[TParams, TBody], typing.TypedDict):
     data: typing.NotRequired[
         typing.Union[TBody, str, typing.Dict[str, typing.Any], None]
     ]
-    content: typing.NotRequired[typing.Union[TBody, str, None]]
+    content: typing.NotRequired[typing.Union[str, bytes, None]]
     headers: typing.NotRequired[typing.Dict[str, str]]
     timeout: typing.NotRequired[float]
 
@@ -127,6 +142,30 @@ class RequestHandler:
             config (Configuration): The configuration object for the Typesense client.
         """
         self.config = config
+
+    @typing.overload
+    def make_request(
+        self,
+        *,
+        method: str,
+        url: str,
+        entity_type: typing.Type[TEntityDict],
+        as_json: typing.Union[typing.Literal[True], typing.Literal[False]] = True,
+        client: httpx.AsyncClient,
+        **kwargs: typing.Unpack[SessionFunctionKwargs[TParams, TBody]],
+    ) -> typing.Coroutine[typing.Any, typing.Any, typing.Union[TEntityDict, str]]: ...
+
+    @typing.overload
+    def make_request(
+        self,
+        *,
+        method: str,
+        url: str,
+        entity_type: typing.Type[TEntityDict],
+        as_json: typing.Union[typing.Literal[True], typing.Literal[False]] = True,
+        client: httpx.Client,
+        **kwargs: typing.Unpack[SessionFunctionKwargs[TParams, TBody]],
+    ) -> typing.Union[TEntityDict, str]: ...
 
     def make_request(
         self,
@@ -183,9 +222,9 @@ class RequestHandler:
             request_kwargs["params"] = params
 
         if body := kwargs.get("data"):
-            if not isinstance(body, (str, bytes)):
-                body = json.dumps(body)
-            request_kwargs["content"] = typing.cast(TBody, body)
+            request_kwargs["content"] = (
+                body if isinstance(body, (str, bytes)) else json.dumps(body)
+            )
 
         if isinstance(client, httpx.AsyncClient):
             return self._make_async_request(
@@ -207,13 +246,13 @@ class RequestHandler:
     ) -> typing.Union[TEntityDict, str]:
         """Make a synchronous HTTP request using httpx.Client."""
         params: typing.Union[TParams, None] = request_kwargs.get("params")
-        content: typing.Union[TBody, str, None] = request_kwargs.get("content")
+        content: typing.Union[str, bytes, None] = request_kwargs.get("content")
         headers: typing.Dict[str, str] = request_kwargs.get("headers", {})
 
         response = client.request(
             method,
             url,
-            params=params,
+            params=typing.cast(typing.Optional[_QueryParams], params),
             content=content,
             headers=headers,
         )
@@ -242,13 +281,13 @@ class RequestHandler:
     ) -> typing.Union[TEntityDict, str]:
         """Make an asynchronous HTTP request using httpx.AsyncClient."""
         params: typing.Union[TParams, None] = request_kwargs.get("params")
-        content: typing.Union[TBody, str, None] = request_kwargs.get("content")
+        content: typing.Union[str, bytes, None] = request_kwargs.get("content")
         headers: typing.Dict[str, str] = request_kwargs.get("headers", {})
 
         response = await client.request(
             method,
             url,
-            params=params,
+            params=typing.cast(typing.Optional[_QueryParams], params),
             content=content,
             headers=headers,
         )
@@ -267,17 +306,19 @@ class RequestHandler:
         return response.text
 
     @staticmethod
-    def normalize_params(params: typing.Dict[str, typing.Any]) -> None:
+    def normalize_params(params: typing.Mapping[str, object]) -> None:
         """
-        Normalize boolean parameters in the request.
+        Normalize boolean parameters in the request, in place.
 
         Args:
-            params (Dict[str, Any]): The parameters to normalize.
+            params (Mapping[str, object]): The parameters to normalize. They are
+                typed as read-only so TypedDict parameters are accepted, but must
+                be a ``dict`` at runtime.
 
         Raises:
             ValueError: If params is not a dictionary.
         """
-        if not isinstance(params, typing.Dict):
+        if not isinstance(params, dict):
             raise ValueError("Params must be a dictionary.")
         for key, parameter_value in params.items():
             if isinstance(parameter_value, bool):

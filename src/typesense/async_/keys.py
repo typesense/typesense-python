@@ -29,7 +29,6 @@ from typesense.types.key import (
     ApiKeyCreateResponseSchema,
     ApiKeyCreateSchema,
     ApiKeyRetrieveSchema,
-    ApiKeySchema,
 )
 
 if sys.version_info >= (3, 11):
@@ -103,11 +102,11 @@ class AsyncKeys:
             ...     }
             ... )
         """
-        response: ApiKeySchema = await self.api_call.post(
+        response: ApiKeyCreateResponseSchema = await self.api_call.post(
             AsyncKeys.resource_path,
             as_json=True,
             body=schema,
-            entity_type=ApiKeySchema,
+            entity_type=ApiKeyCreateResponseSchema,
         )
         return response
 

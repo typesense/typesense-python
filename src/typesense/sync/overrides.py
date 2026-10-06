@@ -129,7 +129,7 @@ class Overrides:
         )
         return response
 
-    @warn_deprecation(  # type: ignore[untyped-decorator]
+    @warn_deprecation(
         "SyncOverrides is deprecated on v30+. Use client.curation_sets instead.",
         flag_name="overrides_deprecation",
     )

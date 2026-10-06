@@ -164,5 +164,5 @@ class AsyncClient:
         """
         if name is None:
             name = model.__name__.lower()
-        collection: AsyncCollection[TDoc] = self.collections[name]
-        return collection
+        # ``collections`` is typed for the default DocumentSchema; narrow it to the model.
+        return typing.cast(AsyncCollection[TDoc], self.collections[name])
