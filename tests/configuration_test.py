@@ -207,3 +207,46 @@ def test_configuration_invalid_nearest_node_url() -> None:
         match="Node URL does not contain the port.",
     ):
         Configuration(config)
+
+
+def test_configuration_connection_pool_defaults() -> None:
+    """Test the connection pool defaults, with the pool timeout following the connection timeout."""
+    configuration = Configuration(
+        {
+            "nodes": [DEFAULT_NODE],
+            "api_key": "xyz",
+            "connection_timeout_seconds": 7.0,
+        },
+    )
+
+    expected = {
+        "pool_timeout_seconds": 7.0,
+        "max_connections": 100,
+        "max_keepalive_connections": 20,
+        "max_concurrent_requests": None,
+    }
+
+    assert_to_contain_object(configuration, expected)
+
+
+def test_configuration_connection_pool_explicit() -> None:
+    """Test the connection pool settings with explicit values."""
+    configuration = Configuration(
+        {
+            "nodes": [DEFAULT_NODE],
+            "api_key": "xyz",
+            "pool_timeout_seconds": 1.5,
+            "max_connections": 200,
+            "max_keepalive_connections": 50,
+            "max_concurrent_requests": 150,
+        },
+    )
+
+    expected = {
+        "pool_timeout_seconds": 1.5,
+        "max_connections": 200,
+        "max_keepalive_connections": 50,
+        "max_concurrent_requests": 150,
+    }
+
+    assert_to_contain_object(configuration, expected)

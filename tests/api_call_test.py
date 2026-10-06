@@ -1,8 +1,11 @@
 """Unit Tests for the ApiCall class."""
 
+import asyncio
 import logging
 import sys
+import threading
 import time
+from concurrent.futures import ThreadPoolExecutor
 
 from pytest_mock import MockFixture
 
@@ -812,3 +815,131 @@ def test_success_marks_only_the_answering_node_healthy(
     assert answering_node.healthy is True
     assert answering_node.last_access_ts > 0
     assert unhealthy_node.healthy is False
+
+
+def test_client_uses_connection_pool_settings(
+    fake_config: Configuration,
+    mocker: MockerFixture,
+) -> None:
+    """Test that the httpx client is built from the connection pool settings."""
+    client_mock = mocker.patch("typesense.sync.api_call.httpx.Client")
+    fake_config.connection_timeout_seconds = 3.0
+    fake_config.pool_timeout_seconds = 1.5
+    fake_config.max_connections = 200
+    fake_config.max_keepalive_connections = 50
+
+    ApiCall(fake_config)
+
+    client_mock.assert_called_once_with(
+        timeout=httpx.Timeout(3.0, pool=1.5),
+        limits=httpx.Limits(max_connections=200, max_keepalive_connections=50),
+    )
+
+
+def test_async_client_uses_connection_pool_settings(
+    fake_config: Configuration,
+    mocker: MockerFixture,
+) -> None:
+    """Test that the httpx async client is built from the connection pool settings."""
+    client_mock = mocker.patch("typesense.async_.api_call.httpx.AsyncClient")
+    fake_config.connection_timeout_seconds = 3.0
+    fake_config.pool_timeout_seconds = 1.5
+    fake_config.max_connections = 200
+    fake_config.max_keepalive_connections = 50
+
+    AsyncApiCall(fake_config)
+
+    client_mock.assert_called_once_with(
+        timeout=httpx.Timeout(3.0, pool=1.5),
+        limits=httpx.Limits(max_connections=200, max_keepalive_connections=50),
+    )
+
+
+def _count_requests_in_flight(
+    concurrent_requests: int,
+    max_concurrent_requests: typing.Optional[int],
+    fake_config: Configuration,
+) -> int:
+    """Send requests from several threads and return the peak number in flight."""
+    fake_config.max_concurrent_requests = max_concurrent_requests
+    api_call = ApiCall(fake_config)
+    lock = threading.Lock()
+    in_flight = 0
+    peak = 0
+
+    def slow_response(request: httpx.Request) -> httpx.Response:
+        nonlocal in_flight, peak
+        with lock:
+            in_flight += 1
+            peak = max(peak, in_flight)
+        time.sleep(0.05)
+        with lock:
+            in_flight -= 1
+        return httpx.Response(200, json={"key": "value"})
+
+    with respx.mock:
+        respx.get("http://nearest:8108/").mock(side_effect=slow_response)
+        with ThreadPoolExecutor(max_workers=concurrent_requests) as executor:
+            for _ in range(concurrent_requests):
+                executor.submit(api_call.get, "/", entity_type=typing.Dict[str, str])
+
+    return peak
+
+
+def test_max_concurrent_requests_caps_requests_in_flight(
+    fake_config: Configuration,
+) -> None:
+    """Test that no more than ``max_concurrent_requests`` requests are in flight."""
+    assert _count_requests_in_flight(6, 2, fake_config) == 2
+
+
+def test_requests_in_flight_are_unlimited_by_default(
+    fake_config: Configuration,
+) -> None:
+    """Test that requests are not capped when ``max_concurrent_requests`` is unset."""
+    assert _count_requests_in_flight(6, None, fake_config) == 6
+
+
+async def _async_count_requests_in_flight(
+    concurrent_requests: int,
+    max_concurrent_requests: typing.Optional[int],
+    fake_config: Configuration,
+) -> int:
+    """Send concurrent async requests and return the peak number in flight."""
+    fake_config.max_concurrent_requests = max_concurrent_requests
+    api_call = AsyncApiCall(fake_config)
+    in_flight = 0
+    peak = 0
+
+    async def slow_response(request: httpx.Request) -> httpx.Response:
+        nonlocal in_flight, peak
+        in_flight += 1
+        peak = max(peak, in_flight)
+        await asyncio.sleep(0.01)
+        in_flight -= 1
+        return httpx.Response(200, json={"key": "value"})
+
+    with respx.mock:
+        respx.get("http://nearest:8108/").mock(side_effect=slow_response)
+        await asyncio.gather(
+            *(
+                api_call.get("/", entity_type=typing.Dict[str, str])
+                for _ in range(concurrent_requests)
+            ),
+        )
+
+    return peak
+
+
+async def test_async_max_concurrent_requests_caps_requests_in_flight(
+    fake_config: Configuration,
+) -> None:
+    """Test that no more than ``max_concurrent_requests`` requests are in flight (async)."""
+    assert await _async_count_requests_in_flight(6, 2, fake_config) == 2
+
+
+async def test_async_requests_in_flight_are_unlimited_by_default(
+    fake_config: Configuration,
+) -> None:
+    """Test that async requests are not capped when ``max_concurrent_requests`` is unset."""
+    assert await _async_count_requests_in_flight(6, None, fake_config) == 6
