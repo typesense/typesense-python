@@ -55,6 +55,7 @@ from .stemming import Stemming
 from .stopwords import Stopwords
 from .synonym_sets import SynonymSets
 from typesense.configuration import ConfigDict, Configuration
+from typesense.http_backend import SyncClientType
 
 TDoc = typing.TypeVar("TDoc", bound=DocumentSchema)
 
@@ -86,13 +87,23 @@ class Client:
         conversations_models (ConversationsModels): Instance for managing conversation models.
     """
 
-    def __init__(self, config_dict: ConfigDict) -> None:
+    def __init__(
+        self,
+        config_dict: ConfigDict,
+        http_client: typing.Optional[SyncClientType] = None,
+    ) -> None:
         """
         Initialize the Client instance.
 
         Args:
             config_dict (ConfigDict):
                 A dictionary containing the configuration for the Typesense client.
+
+            http_client (httpx.Client | httpx2.Client, optional):
+                A client to send requests with instead of the default httpx client,
+                e.g. an ``httpx2.Client`` (``pip install typesense[httpx2]``).
+                The connection pool settings in ``config_dict`` are not applied to
+                it, and the Typesense client does not close it.
 
         Example:
             >>> config = {
@@ -105,7 +116,7 @@ class Client:
             >>> client = Client(config)
         """
         self.config = Configuration(config_dict)
-        self.api_call = ApiCall(self.config)
+        self.api_call = ApiCall(self.config, http_client)
         self.collections: Collections[DocumentSchema] = Collections(
             self.api_call
         )

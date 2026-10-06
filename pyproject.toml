@@ -27,6 +27,10 @@ dependencies = [
 ]
 dynamic = ["version"]
 
+[project.optional-dependencies]
+# Maintained continuation of httpx; fixes the httpcore pool leak in encode/httpcore#1093.
+httpx2 = ["httpx2>=2.6.0; python_version >= '3.10'"]
+
 [project.urls]
 Documentation = "https://typesense.org/"
 Source = "https://github.com/typesense/typesense-python"

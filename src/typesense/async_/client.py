@@ -55,6 +55,7 @@ from .stemming import AsyncStemming
 from .stopwords import AsyncStopwords
 from .synonym_sets import AsyncSynonymSets
 from typesense.configuration import ConfigDict, Configuration
+from typesense.http_backend import AsyncClientType
 
 TDoc = typing.TypeVar("TDoc", bound=DocumentSchema)
 
@@ -86,13 +87,23 @@ class AsyncClient:
         conversations_models (ConversationsModels): Instance for managing conversation models.
     """
 
-    def __init__(self, config_dict: ConfigDict) -> None:
+    def __init__(
+        self,
+        config_dict: ConfigDict,
+        http_client: typing.Optional[AsyncClientType] = None,
+    ) -> None:
         """
         Initialize the Client instance.
 
         Args:
             config_dict (ConfigDict):
                 A dictionary containing the configuration for the Typesense client.
+
+            http_client (httpx.AsyncClient | httpx2.AsyncClient, optional):
+                A client to send requests with instead of the default httpx client,
+                e.g. an ``httpx2.AsyncClient`` (``pip install typesense[httpx2]``).
+                The connection pool settings in ``config_dict`` are not applied to
+                it, and the Typesense client does not close it.
 
         Example:
             >>> config = {
@@ -105,7 +116,7 @@ class AsyncClient:
             >>> client = Client(config)
         """
         self.config = Configuration(config_dict)
-        self.api_call = AsyncApiCall(self.config)
+        self.api_call = AsyncApiCall(self.config, http_client)
         self.collections: AsyncCollections[DocumentSchema] = AsyncCollections(
             self.api_call
         )
