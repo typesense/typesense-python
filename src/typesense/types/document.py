@@ -586,6 +586,114 @@ class NLLanguageParameters(typing.TypedDict):
     nl_query_debug: typing.NotRequired[bool]
 
 
+TFinal = typing.TypeVar("TFinal")
+
+
+class ConversationParameters(typing.TypedDict):
+    """
+    Parameters for [conversational search](https://typesense.org/docs/29.0/api/conversational-search-rag.html).
+
+    Attributes:
+      conversation (bool): Whether to answer the query with an LLM.
+      conversation_model_id (str): The ID of the conversation model to answer with.
+      conversation_id (str): The ID of an earlier conversation to continue.
+      conversation_stream (bool): Whether to stream the answer as server-sent
+        events. Use ``search_stream`` to iterate over the answer as it arrives.
+      stream_config (StreamConfig | StreamConfigBuilder): Callbacks to run while
+        a ``conversation_stream`` search streams. Not sent to the server.
+    """
+
+    conversation: typing.NotRequired[bool]
+    conversation_model_id: typing.NotRequired[str]
+    conversation_id: typing.NotRequired[str]
+    conversation_stream: typing.NotRequired[bool]
+    stream_config: typing.NotRequired[
+        typing.Union["StreamConfig[typing.Any]", "StreamConfigBuilder[typing.Any]"]
+    ]
+
+
+class MessageChunk(typing.TypedDict):
+    """
+    A piece of a streamed conversation answer.
+
+    Attributes:
+      conversation_id (str): The ID of the conversation.
+      message (str): The next piece of the answer.
+    """
+
+    conversation_id: str
+    message: str
+
+
+OnChunkCallback = typing.Callable[[MessageChunk], None]
+OnErrorCallback = typing.Callable[[BaseException], None]
+
+
+class StreamConfig(typing.Generic[TFinal], typing.TypedDict, total=False):
+    """
+    Callbacks for a streamed conversation search.
+
+    Attributes:
+      on_chunk: Called with each piece of the answer.
+      on_complete: Called with the full search response once the stream ends.
+      on_error: Called with the error if the search fails; the error is then raised.
+    """
+
+    on_chunk: OnChunkCallback
+    on_complete: typing.Callable[[TFinal], None]
+    on_error: OnErrorCallback
+
+
+class StreamConfigBuilder(typing.Generic[TFinal]):
+    """
+    Build a ``StreamConfig`` by registering callbacks with decorators.
+
+    Example:
+        >>> stream = StreamConfigBuilder()
+        >>>
+        >>> @stream.on_chunk
+        ... def handle_chunk(chunk: MessageChunk) -> None:
+        ...     print(chunk["message"], end="", flush=True)
+        >>>
+        >>> response = client.collections["docs"].documents.search(
+        ...     {
+        ...         "q": "query",
+        ...         "query_by": "content",
+        ...         "conversation": True,
+        ...         "conversation_model_id": "conv-model",
+        ...         "conversation_stream": True,
+        ...         "stream_config": stream,
+        ...     }
+        ... )
+    """
+
+    def __init__(self) -> None:
+        """Initialize a builder with no callbacks."""
+        self._config: StreamConfig[TFinal] = {}
+
+    def on_chunk(self, func: OnChunkCallback) -> OnChunkCallback:
+        """Register ``func`` to be called with each piece of the answer."""
+        self._config["on_chunk"] = func
+        return func
+
+    def on_complete(
+        self,
+        func: typing.Callable[[TFinal], None],
+    ) -> typing.Callable[[TFinal], None]:
+        """Register ``func`` to be called with the full search response."""
+        self._config["on_complete"] = func
+        return func
+
+    def on_error(self, func: OnErrorCallback) -> OnErrorCallback:
+        """Register ``func`` to be called with the error if the search fails."""
+        self._config["on_error"] = func
+        return func
+
+    def build(self) -> StreamConfig[TFinal]:
+        """Return the registered callbacks as a ``StreamConfig``."""
+        return self._config.copy()
+
+
 class SearchParameters(
     RequiredSearchParameters,
     QueryParameters,
@@ -598,6 +706,7 @@ class SearchParameters(
     TypoToleranceParameters,
     CachingParameters,
     NLLanguageParameters,
+    ConversationParameters,
 ):
     """Parameters for searching documents."""
 
@@ -626,6 +735,7 @@ class MultiSearchCommonParameters(
     ResultsParameters,
     TypoToleranceParameters,
     CachingParameters,
+    ConversationParameters,
 ):
     """
     [Query parameters](https://typesense.org/docs/26.0/api/federated-multi-search.html#multi-search-parameters) for multi-search.

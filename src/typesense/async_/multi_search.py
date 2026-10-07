@@ -19,6 +19,12 @@ Note: This module uses conditional imports to support both Python 3.11+ and earl
 import sys
 
 from .api_call import AsyncApiCall
+from .stream import (
+    AsyncSearchStream,
+    consume_stream,
+    notify_error,
+    resolve_stream_config,
+)
 from typesense.preprocess import stringify_search_params
 from typesense.types.document import MultiSearchCommonParameters
 from typesense.types.multi_search import MultiSearchRequestSchema, MultiSearchResponse
@@ -89,20 +95,93 @@ class AsyncMultiSearch:
             ...         ],
             ...     }
             ... )
+
+        With ``conversation_stream`` enabled in ``common_params``, the LLM's answer
+        is streamed and the callbacks in ``stream_config`` run as it arrives. To
+        iterate over the answer instead, use ``perform_stream``.
         """
-        stringified_search_params = [
-            stringify_search_params(search_params)
-            for search_params in search_queries.get("searches")
-        ]
-        search_body = {
-            "searches": stringified_search_params,
-            "union": search_queries.get("union", False),
-        }
+        if common_params and common_params.get("conversation_stream"):
+            stream_config = resolve_stream_config(common_params.get("stream_config"))
+            try:
+                search_stream = await self.perform_stream(search_queries, common_params)
+                streamed_response: MultiSearchResponse = await consume_stream(
+                    search_stream,
+                    stream_config,
+                )
+            except Exception as error:
+                notify_error(stream_config, error)
+                raise
+            return streamed_response
+
         response: MultiSearchResponse = await self.api_call.post(
             AsyncMultiSearch.resource_path,
-            body=search_body,
-            params=common_params,
+            body=self._search_body(search_queries),
+            params=_without_stream_config(common_params) if common_params else None,
             as_json=True,
             entity_type=MultiSearchResponse,
         )
         return response
+
+    async def perform_stream(
+        self,
+        search_queries: MultiSearchRequestSchema,
+        common_params: typing.Union[MultiSearchCommonParameters, None] = None,
+    ) -> AsyncSearchStream[MultiSearchResponse]:
+        """
+        Perform a multi-search, streaming the LLM's answer as it is generated.
+
+        The searches' hits are combined into one context for a single answer, sent
+        in the response's top-level ``conversation``. Iterate over the returned
+        stream for the pieces of the answer, then call its ``get_final_response``
+        for the multi-search response. Use the stream as a context manager so the
+        connection is released if you stop early.
+
+        ``conversation`` and ``conversation_stream`` are enabled for you; pass
+        ``q`` and the ``conversation_model_id`` in ``common_params``, since
+        Typesense reads them from the query string. ``stream_config`` is ignored.
+
+        Args:
+            search_queries (MultiSearchRequestSchema): The searches to perform.
+            common_params (Union[MultiSearchCommonParameters, None], optional):
+                Parameters for every search, including the conversation parameters.
+
+        Returns:
+            AsyncSearchStream[MultiSearchResponse]: The open stream.
+        """
+        stream_params: typing.Dict[str, object] = {
+            "conversation": True,
+            **_without_stream_config(common_params or {}),
+            "conversation_stream": True,
+        }
+        return await self.api_call.stream(
+            "POST",
+            AsyncMultiSearch.resource_path,
+            entity_type=MultiSearchResponse,
+            params=stream_params,
+            body=self._search_body(search_queries),
+        )
+
+    @staticmethod
+    def _search_body(
+        search_queries: MultiSearchRequestSchema,
+    ) -> typing.Dict[str, object]:
+        """Build the request body, with every search's parameters stringified."""
+        stringified_search_params = [
+            stringify_search_params(search_params)
+            for search_params in search_queries.get("searches")
+        ]
+        return {
+            "searches": stringified_search_params,
+            "union": search_queries.get("union", False),
+        }
+
+
+def _without_stream_config(
+    common_params: MultiSearchCommonParameters,
+) -> typing.Dict[str, object]:
+    """Return the parameters to send, leaving out the client-side ``stream_config``."""
+    return {
+        param: param_value
+        for param, param_value in common_params.items()
+        if param != "stream_config"
+    }

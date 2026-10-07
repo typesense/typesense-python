@@ -33,6 +33,7 @@ by other components of the library.
 
 import asyncio
 import sys
+from contextlib import AsyncExitStack
 from types import MappingProxyType, TracebackType
 
 import httpx
@@ -54,11 +55,13 @@ from typesense.exceptions import (
 from typesense.http_backend import (
     ASYNC_CLIENT_TYPES,
     AsyncClientType,
+    ResponseType,
     backend_errors,
     verify_option,
 )
+from .stream import AsyncSearchStream
 from typesense.node_manager import NodeManager
-from typesense.request_handler import RequestHandler
+from typesense.request_handler import RequestHandler, _QueryParams
 
 if sys.version_info >= (3, 11):
     import typing
@@ -558,6 +561,130 @@ class AsyncApiCall:
             if as_json
             else typing.cast(str, request_response)
         )
+
+    async def stream(
+        self,
+        method: str,
+        endpoint: str,
+        entity_type: typing.Type[TEntityDict],
+        params: typing.Union[TParams, None] = None,
+        body: typing.Union[TBody, None] = None,
+    ) -> AsyncSearchStream[TEntityDict]:
+        """
+        Open a streaming request to the Typesense API.
+
+        Failing nodes are retried like any other request until the response
+        headers arrive. Errors after that are raised while reading the stream and
+        are not retried, since part of the answer has already been read.
+
+        Args:
+            method (str): The HTTP method to use.
+            endpoint (str): The API endpoint to call.
+            entity_type (Type[TEntityDict]): The type of the final response.
+            params (Union[TParams, None], optional): Query parameters for the request.
+            body (Union[TBody, None], optional): The request body.
+
+        Returns:
+            AsyncSearchStream[TEntityDict]: The open stream.
+        """
+        return await self._execute_stream_request(
+            method,
+            endpoint,
+            entity_type,
+            params=params,
+            data=body,
+        )
+
+    async def _execute_stream_request(
+        self,
+        method: str,
+        endpoint: str,
+        entity_type: typing.Type[TEntityDict],
+        last_exception: typing.Union[None, Exception] = None,
+        num_retries: int = 0,
+        **kwargs: typing.Unpack[SessionFunctionKwargs[TParams, TBody]],
+    ) -> AsyncSearchStream[TEntityDict]:
+        """Open a streaming request, failing over to other nodes like ``_execute_request``."""
+        if num_retries > self.config.num_retries:
+            if last_exception:
+                raise last_exception
+            raise TypesenseClientError("All nodes are unhealthy")
+
+        node, url, request_kwargs = self._prepare_request_params(endpoint, **kwargs)
+
+        try:
+            return await self._open_stream(
+                method, node, url, entity_type, **request_kwargs
+            )
+        except _CLIENT_ERRORS:
+            raise
+        except _SERVER_ERRORS as server_error:
+            self.node_manager.set_node_health(node, is_healthy=False)
+            if num_retries < self.config.num_retries:
+                await asyncio.sleep(self.config.retry_interval_seconds)
+            return await self._execute_stream_request(
+                method,
+                endpoint,
+                entity_type,
+                last_exception=server_error,
+                num_retries=num_retries + 1,
+                **kwargs,
+            )
+
+    async def _open_stream(
+        self,
+        method: str,
+        node: Node,
+        url: str,
+        entity_type: typing.Type[TEntityDict],
+        **kwargs: typing.Unpack[SessionFunctionKwargs[TParams, TBody]],
+    ) -> AsyncSearchStream[TEntityDict]:
+        """
+        Send a streaming request to `node` and return the stream once headers arrive.
+
+        The stream holds a concurrency slot until it is closed. Reads use
+        ``stream_read_timeout_seconds``, since the first piece of an answer only
+        arrives once the LLM starts generating it.
+        """
+        request_kwargs = self.request_handler.build_request_kwargs(**kwargs)
+        headers = request_kwargs.get("headers", {})
+        headers["Accept"] = "text/event-stream"
+        timeout = self._client.timeout
+        # Annotated so httpx and httpx2 responses unify as ``ResponseType``.
+        response_context: typing.AsyncContextManager[ResponseType] = (
+            self._client.stream(
+                method,
+                url,
+                params=typing.cast(
+                    typing.Optional[_QueryParams],
+                    request_kwargs.get("params"),
+                ),
+                content=request_kwargs.get("content"),
+                headers=headers,
+                timeout=(
+                    timeout.connect,
+                    self.config.stream_read_timeout_seconds,
+                    timeout.write,
+                    timeout.pool,
+                ),
+            )
+        )
+
+        # Owns the concurrency slot and the response until the stream is closed.
+        exit_stack = AsyncExitStack()
+        await self._concurrency_limit.acquire()
+        exit_stack.callback(self._concurrency_limit.release)
+        try:
+            response = await exit_stack.enter_async_context(response_context)
+            if response.status_code < 200 or response.status_code >= 300:
+                await response.aread()
+                self.request_handler.raise_for_status(response)
+        except BaseException:
+            await exit_stack.aclose()
+            raise
+
+        self.node_manager.set_node_health(node, is_healthy=True)
+        return AsyncSearchStream(response, exit_stack)
 
     def _prepare_request_params(
         self,

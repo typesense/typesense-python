@@ -224,6 +224,7 @@ def test_configuration_connection_pool_defaults() -> None:
         "max_connections": 100,
         "max_keepalive_connections": 20,
         "max_concurrent_requests": None,
+        "stream_read_timeout_seconds": 60.0,
     }
 
     assert_to_contain_object(configuration, expected)
@@ -239,6 +240,7 @@ def test_configuration_connection_pool_explicit() -> None:
             "max_connections": 200,
             "max_keepalive_connections": 50,
             "max_concurrent_requests": 150,
+            "stream_read_timeout_seconds": 120.0,
         },
     )
 
@@ -247,6 +249,7 @@ def test_configuration_connection_pool_explicit() -> None:
         "max_connections": 200,
         "max_keepalive_connections": 50,
         "max_concurrent_requests": 150,
+        "stream_read_timeout_seconds": 120.0,
     }
 
     assert_to_contain_object(configuration, expected)

@@ -216,27 +216,7 @@ class RequestHandler:
         Raises:
             TypesenseClientError: If the API returns an error response.
         """
-        headers = {
-            self.api_key_header_name: self.config.api_key,
-        }
-        headers.update(self.config.additional_headers)
-
-        request_kwargs: SessionFunctionKwargs[TParams, TBody] = typing.cast(
-            SessionFunctionKwargs[TParams, TBody],
-            {
-                "headers": headers,
-                "timeout": self.config.connection_timeout_seconds,
-            },
-        )
-
-        if params := kwargs.get("params"):
-            self.normalize_params(params)
-            request_kwargs["params"] = params
-
-        if body := kwargs.get("data"):
-            request_kwargs["content"] = (
-                body if isinstance(body, (str, bytes)) else json.dumps(body)
-            )
+        request_kwargs = self.build_request_kwargs(**kwargs)
 
         if isinstance(client, ASYNC_CLIENT_TYPES):
             return self._make_async_request(
@@ -270,12 +250,7 @@ class RequestHandler:
             headers=headers,
         )
 
-        if response.status_code < 200 or response.status_code >= 300:
-            error_message = self._get_error_message(response)
-            raise self._get_exception(response.status_code)(
-                response.status_code,
-                error_message,
-            )
+        self.raise_for_status(response)
 
         if as_json:
             res: TEntityDict = typing.cast(TEntityDict, response.json())
@@ -305,18 +280,69 @@ class RequestHandler:
             headers=headers,
         )
 
-        if response.status_code < 200 or response.status_code >= 300:
-            error_message = self._get_error_message(response)
-            raise self._get_exception(response.status_code)(
-                response.status_code,
-                error_message,
-            )
+        self.raise_for_status(response)
 
         if as_json:
             res: TEntityDict = typing.cast(TEntityDict, response.json())
             return res
 
         return response.text
+
+    def build_request_kwargs(
+        self,
+        **kwargs: typing.Unpack[SessionFunctionKwargs[TParams, TBody]],
+    ) -> SessionFunctionKwargs[TParams, TBody]:
+        """
+        Build the headers, query parameters and body for a request.
+
+        Args:
+            kwargs: The request's ``params`` and ``data``.
+
+        Returns:
+            SessionFunctionKwargs: The ``headers``, ``params`` and ``content`` to send.
+        """
+        headers = {
+            self.api_key_header_name: self.config.api_key,
+        }
+        headers.update(self.config.additional_headers)
+
+        request_kwargs: SessionFunctionKwargs[TParams, TBody] = typing.cast(
+            SessionFunctionKwargs[TParams, TBody],
+            {
+                "headers": headers,
+                "timeout": self.config.connection_timeout_seconds,
+            },
+        )
+
+        if params := kwargs.get("params"):
+            self.normalize_params(params)
+            request_kwargs["params"] = params
+
+        if body := kwargs.get("data"):
+            request_kwargs["content"] = (
+                body if isinstance(body, (str, bytes)) else json.dumps(body)
+            )
+
+        return request_kwargs
+
+    def raise_for_status(self, response: ResponseType) -> None:
+        """
+        Raise the client error matching a non-2xx response.
+
+        The response body must already be read.
+
+        Args:
+            response (httpx.Response | httpx2.Response): The API response.
+
+        Raises:
+            TypesenseClientError: If the response status is not 2xx.
+        """
+        if response.status_code < 200 or response.status_code >= 300:
+            error_message = self._get_error_message(response)
+            raise self._get_exception(response.status_code)(
+                response.status_code,
+                error_message,
+            )
 
     @staticmethod
     def normalize_params(params: typing.Mapping[str, object]) -> None:

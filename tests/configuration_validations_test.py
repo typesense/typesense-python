@@ -218,6 +218,11 @@ def test_validate_config_dict_with_wrong_nearest_node() -> None:
             "`max_concurrent_requests` must be greater than 0.",
         ),
         (
+            "stream_read_timeout_seconds",
+            0,
+            "`stream_read_timeout_seconds` must be greater than 0.",
+        ),
+        (
             "max_keepalive_connections",
             -1,
             "`max_keepalive_connections` must not be negative.",

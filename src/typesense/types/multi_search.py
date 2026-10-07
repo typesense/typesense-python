@@ -2,7 +2,11 @@
 
 import sys
 
-from typesense.types.document import MultiSearchParameters, SearchResponse
+from typesense.types.document import (
+    Conversation,
+    MultiSearchParameters,
+    SearchResponse,
+)
 
 if sys.version_info >= (3, 11):
     import typing
@@ -16,9 +20,11 @@ class MultiSearchResponse(typing.TypedDict):
 
     Attributes:
         results (list[SearchResponse]): The search results.
+        conversation (Conversation): The LLM's answer, for a conversational search.
     """
 
     results: typing.List[SearchResponse[typing.Any]]  # noqa: WPS110
+    conversation: typing.NotRequired[Conversation]
 
 
 class MultiSearchRequestSchema(typing.TypedDict):

@@ -102,6 +102,12 @@ class ConfigDict(typing.TypedDict):
             once; further requests wait for a slot. Keep it below
             ``max_connections`` so a burst of slow requests cannot exhaust the pool.
             Defaults to no limit.
+
+        stream_read_timeout_seconds (float): How long a streaming conversation
+            search waits for the next chunk before raising ``httpx.ReadTimeout``.
+            Replaces the read timeout for streaming requests only, since the first
+            chunk arrives only once the LLM starts answering. Defaults to 60, the
+            server's own limit for an LLM response.
     """
 
     nodes: typing.List[typing.Union[str, NodeConfigDict]]
@@ -124,6 +130,7 @@ class ConfigDict(typing.TypedDict):
     max_connections: typing.NotRequired[int]
     max_keepalive_connections: typing.NotRequired[int]
     max_concurrent_requests: typing.NotRequired[int]
+    stream_read_timeout_seconds: typing.NotRequired[float]
 
 
 class Node:
@@ -216,6 +223,7 @@ class Configuration:
         max_connections (int): The maximum number of connections in the pool.
         max_keepalive_connections (int): The maximum number of idle pooled connections.
         max_concurrent_requests (int | None): The maximum number of requests in flight.
+        stream_read_timeout_seconds (float): How long a stream waits for its next chunk.
     """
 
     def __init__(
@@ -271,6 +279,10 @@ class Configuration:
         )
         self.max_concurrent_requests: typing.Optional[int] = config_dict.get(
             "max_concurrent_requests",
+        )
+        self.stream_read_timeout_seconds = config_dict.get(
+            "stream_read_timeout_seconds",
+            60.0,
         )
 
     def _handle_nearest_node(
@@ -352,6 +364,9 @@ class ConfigurationValidations:
             "pool_timeout_seconds": config_dict.get("pool_timeout_seconds"),
             "max_connections": config_dict.get("max_connections"),
             "max_concurrent_requests": config_dict.get("max_concurrent_requests"),
+            "stream_read_timeout_seconds": config_dict.get(
+                "stream_read_timeout_seconds"
+            ),
         }
         for key, config_value in positive_settings.items():
             if config_value is not None and config_value <= 0:
