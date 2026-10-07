@@ -487,6 +487,7 @@ class ApiCall:
         try:
             return self._make_request_and_process_response(
                 method,
+                node,
                 url,
                 entity_type,
                 as_json,
@@ -511,12 +512,13 @@ class ApiCall:
     def _make_request_and_process_response(
         self,
         method: str,
+        node: Node,
         url: str,
         entity_type: typing.Type[TEntityDict],
         as_json: bool,
         **kwargs: typing.Unpack[SessionFunctionKwargs[TParams, TBody]],
     ) -> typing.Union[TEntityDict, str]:
-        """Make the async API request and process the response."""
+        """Make the async API request to `node` and process the response."""
         request_response = self.request_handler.make_request(
             method=method,
             url=url,
@@ -525,10 +527,7 @@ class ApiCall:
             client=self._client,
             **kwargs,
         )
-        self.node_manager.set_node_health(
-            self.node_manager.get_node(),
-            is_healthy=True,
-        )
+        self.node_manager.set_node_health(node, is_healthy=True)
         return (
             typing.cast(TEntityDict, request_response)
             if as_json
