@@ -51,7 +51,12 @@ from typesense.exceptions import (
     ServiceUnavailable,
     TypesenseClientError,
 )
-from typesense.http_backend import ASYNC_CLIENT_TYPES, AsyncClientType, backend_errors
+from typesense.http_backend import (
+    ASYNC_CLIENT_TYPES,
+    AsyncClientType,
+    backend_errors,
+    verify_option,
+)
 from typesense.node_manager import NodeManager
 from typesense.request_handler import RequestHandler
 
@@ -163,8 +168,8 @@ class AsyncApiCall:
             config (Configuration): The configuration object for the Typesense client.
             http_client (httpx.AsyncClient | httpx2.AsyncClient, optional): A client
                 to send requests with instead of the default httpx client. The
-                connection pool settings in ``config`` are not applied to it, and it
-                is not closed by ``aclose``.
+                connection pool and ``verify`` settings in ``config`` are not
+                applied to it, and it is not closed by ``aclose``.
 
         Raises:
             TypeError: If ``http_client`` is not an httpx or httpx2 async client.
@@ -192,6 +197,7 @@ class AsyncApiCall:
                 max_connections=config.max_connections,
                 max_keepalive_connections=config.max_keepalive_connections,
             ),
+            verify=verify_option(config.verify),
         )
 
     async def __aenter__(self) -> "AsyncApiCall":

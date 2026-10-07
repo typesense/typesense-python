@@ -865,6 +865,7 @@ def test_client_uses_connection_pool_settings(
     client_mock.assert_called_once_with(
         timeout=httpx.Timeout(3.0, pool=1.5),
         limits=httpx.Limits(max_connections=200, max_keepalive_connections=50),
+        verify=True,
     )
 
 
@@ -884,6 +885,7 @@ def test_async_client_uses_connection_pool_settings(
     client_mock.assert_called_once_with(
         timeout=httpx.Timeout(3.0, pool=1.5),
         limits=httpx.Limits(max_connections=200, max_keepalive_connections=50),
+        verify=True,
     )
 
 

@@ -13,6 +13,7 @@ builds those type tuples once, including ``httpx2`` only when it is installed.
 """
 
 import importlib
+import ssl
 import sys
 from types import ModuleType
 
@@ -59,6 +60,26 @@ def backend_errors(name: str) -> typing.Tuple[typing.Type[Exception], ...]:
         Tuple[Type[Exception], ...]: The matching classes, for ``except`` clauses.
     """
     return tuple(getattr(backend, name) for backend in _BACKENDS)
+
+
+def verify_option(
+    verify: typing.Union[bool, str, ssl.SSLContext],
+) -> typing.Union[bool, ssl.SSLContext]:
+    """
+    Return the ``verify`` value to build an httpx client with.
+
+    httpx deprecates CA bundle paths as ``verify`` values, so a path is loaded
+    into an SSL context here instead.
+
+    Args:
+        verify (bool | str | ssl.SSLContext): The configured ``verify`` setting.
+
+    Returns:
+        bool | ssl.SSLContext: ``verify`` with a CA bundle path loaded.
+    """
+    if isinstance(verify, str):
+        return ssl.create_default_context(cafile=verify)
+    return verify
 
 
 # Declared precisely for type checkers so ``isinstance`` narrows to the client

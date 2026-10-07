@@ -14,6 +14,7 @@ Exceptions:
     - ConfigError: Custom exception for configuration-related errors.
 """
 
+import ssl
 import sys
 import time
 
@@ -67,7 +68,9 @@ class ConfigDict(typing.TypedDict):
         healthcheck_interval_seconds (int): The interval in seconds between
             health checks.
 
-        verify (bool): Whether to verify the SSL certificate.
+        verify (bool | str | ssl.SSLContext): Whether to verify the SSL
+            certificate. Pass a CA bundle path or an ``ssl.SSLContext`` to verify
+            against custom certificates. Defaults to ``True``.
 
         timeout_seconds (int, deprecated): The connection timeout in seconds.
 
@@ -108,7 +111,7 @@ class ConfigDict(typing.TypedDict):
     retry_interval_seconds: typing.NotRequired[float]
     interval_seconds: typing.NotRequired[int]  # deprecated alias
     healthcheck_interval_seconds: typing.NotRequired[int]
-    verify: typing.NotRequired[typing.Union[bool, str]]
+    verify: typing.NotRequired[typing.Union[bool, str, ssl.SSLContext]]
     timeout_seconds: typing.NotRequired[int]  # deprecated
     master_node: typing.NotRequired[typing.Union[str, NodeConfigDict]]  # deprecated
     additional_headers: typing.NotRequired[typing.Dict[str, str]]
@@ -208,7 +211,7 @@ class Configuration:
         num_retries (int): The number of retries to attempt before failing.
         retry_interval_seconds (float): The interval in seconds between retries.
         healthcheck_interval_seconds (int): The interval in seconds between health checks.
-        verify (bool): Whether to verify the SSL certificate.
+        verify (bool | str | ssl.SSLContext): Whether to verify the SSL certificate.
         pool_timeout_seconds (float): How long to wait for a free pooled connection.
         max_connections (int): The maximum number of connections in the pool.
         max_keepalive_connections (int): The maximum number of idle pooled connections.
