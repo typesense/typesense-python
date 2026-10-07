@@ -1,6 +1,12 @@
 """Tests for the ConfigurationValidations class."""
 
+import sys
 import types
+
+if sys.version_info >= (3, 11):
+    import typing
+else:
+    import typing_extensions as typing
 
 import pytest
 
@@ -198,4 +204,35 @@ def test_validate_config_dict_with_wrong_nearest_node() -> None:
                 },
                 "api_key": "xyz",
             },
+        )
+
+
+@pytest.mark.parametrize(
+    ("key", "config_value", "message"),
+    [
+        ("pool_timeout_seconds", 0, "`pool_timeout_seconds` must be greater than 0."),
+        ("max_connections", 0, "`max_connections` must be greater than 0."),
+        (
+            "max_concurrent_requests",
+            -1,
+            "`max_concurrent_requests` must be greater than 0.",
+        ),
+        (
+            "max_keepalive_connections",
+            -1,
+            "`max_keepalive_connections` must not be negative.",
+        ),
+    ],
+)
+def test_validate_config_dict_with_invalid_connection_pool(
+    key: str,
+    config_value: float,
+    message: str,
+) -> None:
+    """Test validate_config_dict with out-of-range connection pool settings."""
+    config_dict = {"nodes": [DEFAULT_NODE], "api_key": "xyz", key: config_value}
+
+    with pytest.raises(ConfigError, match=message):
+        ConfigurationValidations.validate_config_dict(
+            typing.cast(ConfigDict, config_dict),
         )

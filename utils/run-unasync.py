@@ -27,6 +27,8 @@ def collect_class_replacements(source_dir: Path) -> dict[str, str]:
     # client (unasync strips ``await``); map the module token so the import and call
     # are rewritten too.
     replacements["asyncio"] = "time"
+    # Defined in the shared ``typesense.concurrency_limit`` module, outside async_.
+    replacements["AsyncConcurrencyLimit"] = "ConcurrencyLimit"
     return replacements
 
 

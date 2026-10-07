@@ -37,6 +37,7 @@ from types import MappingProxyType, TracebackType
 
 import httpx
 
+from typesense.concurrency_limit import ConcurrencyLimit
 from typesense.configuration import Configuration, Node
 from typesense.exceptions import (
     HTTPStatus0Error,
@@ -174,7 +175,17 @@ class ApiCall:
         self.node_manager = NodeManager(config)
         self.request_handler = RequestHandler(config)
         self._client = httpx.Client(
-            timeout=config.connection_timeout_seconds,
+            timeout=httpx.Timeout(
+                config.connection_timeout_seconds,
+                pool=config.pool_timeout_seconds,
+            ),
+            limits=httpx.Limits(
+                max_connections=config.max_connections,
+                max_keepalive_connections=config.max_keepalive_connections,
+            ),
+        )
+        self._concurrency_limit = ConcurrencyLimit(
+            config.max_concurrent_requests,
         )
 
     def __enter__(self) -> "ApiCall":
@@ -519,14 +530,15 @@ class ApiCall:
         **kwargs: typing.Unpack[SessionFunctionKwargs[TParams, TBody]],
     ) -> typing.Union[TEntityDict, str]:
         """Make the async API request to `node` and process the response."""
-        request_response = self.request_handler.make_request(
-            method=method,
-            url=url,
-            as_json=as_json,
-            entity_type=entity_type,
-            client=self._client,
-            **kwargs,
-        )
+        with self._concurrency_limit:
+            request_response = self.request_handler.make_request(
+                method=method,
+                url=url,
+                as_json=as_json,
+                entity_type=entity_type,
+                client=self._client,
+                **kwargs,
+            )
         self.node_manager.set_node_health(node, is_healthy=True)
         return (
             typing.cast(TEntityDict, request_response)
