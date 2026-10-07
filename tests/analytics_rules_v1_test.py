@@ -45,7 +45,7 @@ def test_get_missing_analytics_rule(fake_analytics_rules: AnalyticsRulesV1) -> N
     """Test that the AnalyticsRulesV1 object can get a missing analytics_rule."""
     analytics_rule = fake_analytics_rules["company_analytics_rule"]
 
-    assert analytics_rule.rule_id == "company_analytics_rule"
+    assert analytics_rule.rule_name == "company_analytics_rule"
     assert_match_object(analytics_rule.api_call, fake_analytics_rules.api_call)
     assert_object_lists_match(
         analytics_rule.api_call.node_manager.nodes,

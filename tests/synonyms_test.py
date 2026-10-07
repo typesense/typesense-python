@@ -62,7 +62,7 @@ def test_get_missing_synonym(fake_synonyms: Synonyms) -> None:
     )
     assert synonym.collection_name == "companies"
     assert (
-        synonym._endpoint_path()  # noqa: WPS437
+        synonym._endpoint_path  # noqa: WPS437
         == "/collections/companies/synonyms/company_synonym"
     )
 
@@ -174,7 +174,7 @@ def test_get_missing_synonym_async(fake_async_synonyms) -> None:
     )
     assert synonym.collection_name == "companies"
     assert (
-        synonym._endpoint_path()  # noqa: WPS437
+        synonym._endpoint_path  # noqa: WPS437
         == "/collections/companies/synonyms/company_synonym"
     )
 

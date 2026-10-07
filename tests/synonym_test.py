@@ -45,7 +45,7 @@ def test_init(fake_api_call: ApiCall) -> None:
         fake_api_call.config.nearest_node,
     )
     assert (
-        synonym._endpoint_path()  # noqa: WPS437
+        synonym._endpoint_path  # noqa: WPS437
         == "/collections/companies/synonyms/company_synonym"
     )
 
@@ -99,7 +99,7 @@ def test_init_async(fake_async_api_call: AsyncApiCall) -> None:
         fake_async_api_call.config.nearest_node,
     )
     assert (
-        synonym._endpoint_path()  # noqa: WPS437
+        synonym._endpoint_path  # noqa: WPS437
         == "/collections/companies/synonyms/company_synonym"
     )
 

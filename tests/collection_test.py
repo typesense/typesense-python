@@ -5,10 +5,22 @@ from tests.utils.object_assertions import (
     assert_object_lists_match,
     assert_to_contain_object,
 )
+from tests.utils.version import is_v30_or_above
 from typesense.sync.api_call import ApiCall
+from typesense.sync.client import Client
 from typesense.sync.collection import Collection
 from typesense.sync.collections import Collections
 from typesense.types.collection import CollectionSchema
+
+
+is_v30_or_above_server = is_v30_or_above(
+    Client(
+        {
+            "api_key": "xyz",
+            "nodes": [{"host": "localhost", "port": 8108, "protocol": "http"}],
+        }
+    )
+)
 
 
 def test_init(fake_api_call: ApiCall) -> None:
@@ -52,7 +64,6 @@ def test_actual_retrieve(
                 "infix": False,
                 "stem": False,
                 "stem_dictionary": "",
-                "truncate_len": 100,
                 "store": True,
             },
             {
@@ -66,7 +77,6 @@ def test_actual_retrieve(
                 "infix": False,
                 "stem": False,
                 "stem_dictionary": "",
-                "truncate_len": 100,
                 "store": True,
             },
         ],
@@ -74,9 +84,12 @@ def test_actual_retrieve(
         "num_documents": 0,
         "symbols_to_index": [],
         "token_separators": [],
-        "synonym_sets": [],
-        "curation_sets": [],
     }
+    if is_v30_or_above_server:
+        expected["synonym_sets"] = []
+        expected["curation_sets"] = []
+        expected["fields"][0]["truncate_len"] = 100
+        expected["fields"][1]["truncate_len"] = 100
 
     response.pop("created_at")
 
@@ -93,10 +106,8 @@ def test_actual_update(
         {"fields": [{"name": "num_locations", "type": "int32"}]},
     )
 
-    expected: CollectionSchema = {
-        "fields": [
-            {"name": "num_locations", "truncate_len": 100, "type": "int32"},
-        ],
-    }
+    expected_field = {"name": "num_locations", "type": "int32"}
+    if is_v30_or_above_server:
+        expected_field["truncate_len"] = 100
 
-    assert_to_contain_object(response.get("fields")[0], expected.get("fields")[0])
+    assert_to_contain_object(response.get("fields")[0], expected_field)

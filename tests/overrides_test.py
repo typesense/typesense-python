@@ -61,7 +61,7 @@ def test_get_missing_override(fake_overrides: Overrides) -> None:
     )
     assert override.collection_name == "companies"
     assert (
-        override._endpoint_path()  # noqa: WPS437
+        override._endpoint_path  # noqa: WPS437
         == "/collections/companies/overrides/company_override"
     )
 
@@ -186,7 +186,7 @@ def test_get_missing_override_async(fake_async_overrides) -> None:
     )
     assert override.collection_name == "companies"
     assert (
-        override._endpoint_path()  # noqa: WPS437
+        override._endpoint_path  # noqa: WPS437
         == "/collections/companies/overrides/company_override"
     )
 
