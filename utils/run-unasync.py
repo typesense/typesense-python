@@ -35,6 +35,9 @@ def collect_class_replacements(source_dir: Path) -> dict[str, str]:
     # Defined in the shared ``typesense.sse`` module, outside async_.
     replacements["aiter_events"] = "iter_events"
     replacements["aiter_bytes"] = "iter_bytes"
+    replacements["AsyncExitStack"] = "ExitStack"
+    replacements["AsyncContextManager"] = "ContextManager"
+    replacements["enter_async_context"] = "enter_context"
     # ``AsyncGenerator`` takes two type arguments, but ``Generator`` needs three
     # before Python 3.13.
     replacements["Generator[MessageChunk, None]"] = "Generator[MessageChunk, None, None]"

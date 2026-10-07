@@ -14,6 +14,7 @@ the final event as the search response, returned by ``get_final_response``.
 """
 
 import sys
+from contextlib import ExitStack
 from types import TracebackType
 
 from typesense.exceptions import TypesenseClientError
@@ -46,7 +47,7 @@ class SearchStream(typing.Generic[TFinal]):
     def __init__(
         self,
         response: ResponseType,
-        on_close: typing.Callable[[], None],
+        exit_stack: ExitStack,
     ) -> None:
         """
         Initialize the stream.
@@ -54,11 +55,11 @@ class SearchStream(typing.Generic[TFinal]):
         Args:
             response (httpx.Response | httpx2.Response): A successful response
                 opened with ``stream=True``.
-            on_close (Callable[[], None]): Called once when the stream is closed,
-                to release the request's concurrency slot.
+            exit_stack (ExitStack): Closes the response and releases the
+                request's concurrency slot when the stream is closed.
         """
         self.response = response
-        self._on_close = on_close
+        self._exit_stack = exit_stack
         self._closed = False
         self._final: typing.Optional[TFinal] = None
         self._decoder = SSEDecoder()
@@ -112,14 +113,11 @@ class SearchStream(typing.Generic[TFinal]):
         self._close_response()
 
     def _close_response(self) -> None:
-        """Close the response once, then run ``on_close``."""
+        """Close the response and release its concurrency slot, once."""
         if self._closed:
             return
         self._closed = True
-        try:
-            self.response.close()
-        finally:
-            self._on_close()
+        self._exit_stack.close()
 
     def _iter_chunks(self) -> typing.Generator[MessageChunk, None, None]:
         """Yield the answer pieces and keep the final search response."""

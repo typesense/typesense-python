@@ -33,6 +33,7 @@ by other components of the library.
 
 import asyncio
 import sys
+from contextlib import AsyncExitStack
 from types import MappingProxyType, TracebackType
 
 import httpx
@@ -54,6 +55,7 @@ from typesense.exceptions import (
 from typesense.http_backend import (
     ASYNC_CLIENT_TYPES,
     AsyncClientType,
+    ResponseType,
     backend_errors,
     verify_option,
 )
@@ -648,38 +650,41 @@ class AsyncApiCall:
         headers = request_kwargs.get("headers", {})
         headers["Accept"] = "text/event-stream"
         timeout = self._client.timeout
-        request = self._client.build_request(
-            method,
-            url,
-            params=typing.cast(
-                typing.Optional[_QueryParams],
-                request_kwargs.get("params"),
-            ),
-            content=request_kwargs.get("content"),
-            headers=headers,
-            timeout=(
-                timeout.connect,
-                self.config.stream_read_timeout_seconds,
-                timeout.write,
-                timeout.pool,
-            ),
+        # Annotated so httpx and httpx2 responses unify as ``ResponseType``.
+        response_context: typing.AsyncContextManager[ResponseType] = (
+            self._client.stream(
+                method,
+                url,
+                params=typing.cast(
+                    typing.Optional[_QueryParams],
+                    request_kwargs.get("params"),
+                ),
+                content=request_kwargs.get("content"),
+                headers=headers,
+                timeout=(
+                    timeout.connect,
+                    self.config.stream_read_timeout_seconds,
+                    timeout.write,
+                    timeout.pool,
+                ),
+            )
         )
 
+        # Owns the concurrency slot and the response until the stream is closed.
+        exit_stack = AsyncExitStack()
         await self._concurrency_limit.acquire()
+        exit_stack.callback(self._concurrency_limit.release)
         try:
-            response = await self._client.send(request, stream=True)
+            response = await exit_stack.enter_async_context(response_context)
             if response.status_code < 200 or response.status_code >= 300:
-                try:
-                    await response.aread()
-                finally:
-                    await response.aclose()
+                await response.aread()
                 self.request_handler.raise_for_status(response)
         except BaseException:
-            self._concurrency_limit.release()
+            await exit_stack.aclose()
             raise
 
         self.node_manager.set_node_health(node, is_healthy=True)
-        return AsyncSearchStream(response, self._concurrency_limit.release)
+        return AsyncSearchStream(response, exit_stack)
 
     def _prepare_request_params(
         self,
