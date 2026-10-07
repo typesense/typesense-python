@@ -10,7 +10,11 @@ sys.path.insert(1, os.path.join(repo_root, "src"))
 
 import typesense
 
-from typesense.types.document import MessageChunk, StreamConfigBuilder
+from typesense.types.document import (
+    MessageChunk,
+    SearchResponse,
+    StreamConfigBuilder,
+)
 
 
 def require_env(name: str) -> str:
@@ -107,24 +111,32 @@ async def main() -> None:
         }
         documents = client.collections[documents_collection].documents
 
-        @stream.on_chunk
+        # Iterate over the answer as it is generated, then read the search response.
+        async with await documents.search_stream(search_parameters) as answer_stream:
+            async for chunk in answer_stream:
+                print(chunk["message"], end="", flush=True)
+            response = await answer_stream.get_final_response()
+        print("\n---\nFound", response["found"], "documents")
+
+        # Or pass callbacks to search(), which returns the search response at the end.
+        stream_config: StreamConfigBuilder[SearchResponse[typing.Any]] = (
+            StreamConfigBuilder()
+        )
+
+        @stream_config.on_chunk
         def on_chunk(chunk: MessageChunk) -> None:
             print(chunk["message"], end="", flush=True)
 
-        @stream.on_complete
-        def on_complete(response: dict) -> None:
+        @stream_config.on_complete
+        def on_complete(response: SearchResponse[typing.Any]) -> None:
             print("\n---\nComplete response keys:", response.keys())
 
-        await client.collections["streaming_docs"].documents.search(
+        await documents.search(
             {
-                "q": "What is this document about?",
-                "query_by": "embedding",
-                "exclude_fields": "embedding",
+                **search_parameters,
                 "conversation": True,
-                "prefix": False,
                 "conversation_stream": True,
-                "conversation_model_id": conversation_model["id"],
-                "stream_config": stream,
+                "stream_config": stream_config,
             }
         )
     finally:

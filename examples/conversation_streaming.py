@@ -1,4 +1,3 @@
-from operator import truediv
 import os
 import sys
 import typing
@@ -10,7 +9,11 @@ sys.path.insert(1, os.path.join(repo_root, "src"))
 
 import typesense
 
-from typesense.types.document import MessageChunk, StreamConfigBuilder
+from typesense.types.document import (
+    MessageChunk,
+    SearchResponse,
+    StreamConfigBuilder,
+)
 
 
 def require_env(name: str) -> str:
@@ -117,25 +120,21 @@ print("\n---\nFound", response["found"], "documents")
 stream_config: StreamConfigBuilder[SearchResponse[typing.Any]] = StreamConfigBuilder()
 
 
-@stream.on_chunk
+@stream_config.on_chunk
 def on_chunk(chunk: MessageChunk) -> None:
     print(chunk["message"], end="", flush=True)
 
 
-@stream.on_complete
-def on_complete(response: dict) -> None:
+@stream_config.on_complete
+def on_complete(response: SearchResponse[typing.Any]) -> None:
     print("\n---\nComplete response keys:", response.keys())
 
 
 client.collections[documents_collection].documents.search(
     {
-        "q": "What is this document about?",
-        "query_by": "embedding",
-        "exclude_fields": "embedding",
+        **search_parameters,
         "conversation": True,
-        "prefix": False,
         "conversation_stream": True,
-        "conversation_model_id": conversation_model["id"],
-        "stream_config": stream,
+        "stream_config": stream_config,
     }
 )
