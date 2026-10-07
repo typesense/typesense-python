@@ -92,6 +92,11 @@ def test_get_exception() -> None:
     assert RequestHandler._get_exception(422) == exceptions.ObjectUnprocessable
     assert RequestHandler._get_exception(500) == exceptions.ServerError
     assert RequestHandler._get_exception(503) == exceptions.ServiceUnavailable
+    assert RequestHandler._get_exception(501) == exceptions.ServerError
+    assert RequestHandler._get_exception(502) == exceptions.ServerError
+    assert RequestHandler._get_exception(504) == exceptions.ServerError
+    assert RequestHandler._get_exception(599) == exceptions.ServerError
+    assert RequestHandler._get_exception(418) == exceptions.TypesenseClientError
     assert RequestHandler._get_exception(999) == exceptions.TypesenseClientError
 
 
@@ -481,6 +486,33 @@ def test_client_errors_do_not_mark_nodes_unhealthy(
 
     assert node.healthy is True
     make_request.assert_called_once()
+
+
+@pytest.mark.parametrize("status_code", [500, 502, 503, 504])
+def test_selects_next_available_node_on_5xx(
+    fake_api_call: ApiCall,
+    status_code: int,
+) -> None:
+    """Test that a 5xx response marks the node unhealthy and retries on the next one."""
+    with respx.mock:
+        respx.get("http://nearest:8108/test").mock(
+            return_value=httpx.Response(status_code, text="Bad Gateway")
+        )
+        respx.get("http://node0:8108/test").mock(
+            return_value=httpx.Response(200, json={"key": "value"})
+        )
+
+        response = fake_api_call.get(
+            "/test",
+            as_json=True,
+            entity_type=typing.Dict[str, str],
+        )
+
+        assert response == {"key": "value"}
+        assert respx.calls[0].request.url == "http://nearest:8108/test"
+        assert respx.calls[1].request.url == "http://node0:8108/test"
+        assert len(respx.calls) == 2
+        assert fake_api_call.config.nearest_node.healthy is False
 
 
 def test_get_node_no_healthy_nodes(
