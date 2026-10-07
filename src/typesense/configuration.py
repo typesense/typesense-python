@@ -14,6 +14,7 @@ Exceptions:
     - ConfigError: Custom exception for configuration-related errors.
 """
 
+import ssl
 import sys
 import time
 
@@ -108,7 +109,7 @@ class ConfigDict(typing.TypedDict):
     retry_interval_seconds: typing.NotRequired[float]
     interval_seconds: typing.NotRequired[int]  # deprecated alias
     healthcheck_interval_seconds: typing.NotRequired[int]
-    verify: typing.NotRequired[typing.Union[bool, str]]
+    verify: typing.NotRequired[typing.Union[bool, str, ssl.SSLContext]]
     timeout_seconds: typing.NotRequired[int]  # deprecated
     master_node: typing.NotRequired[typing.Union[str, NodeConfigDict]]  # deprecated
     additional_headers: typing.NotRequired[typing.Dict[str, str]]

@@ -41,6 +41,17 @@ async def test_verification_mode(fake_config, api_call_class, verify):
         await close_api_call(api_call)
 
 
+async def test_ssl_context(fake_config, api_call_class):
+    """A configured SSL context must be used as is."""
+    context = ssl.create_default_context()
+    fake_config.verify = context
+    api_call = api_call_class(fake_config)
+    try:
+        assert api_call._client._transport._pool._ssl_context is context
+    finally:
+        await close_api_call(api_call)
+
+
 async def test_custom_ca_bundle(
     fake_config: Configuration,
     api_call_class,
