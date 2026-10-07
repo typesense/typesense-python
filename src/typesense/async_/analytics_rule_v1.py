@@ -74,11 +74,9 @@ class AsyncAnalyticsRuleV1:
             Union[RuleSchemaForQueries, RuleSchemaForCounters]:
               The schema containing the rule details.
         """
-        response: typing.Union[
-            RuleSchemaForQueries, RuleSchemaForCounters
-        ] = await self.api_call.get(
+        response = await self.api_call.get(
             self._endpoint_path,
-            entity_type=dict,
+            entity_type=typing.Dict[str, typing.Any],
             as_json=True,
         )
         return typing.cast(
@@ -101,7 +99,7 @@ class AsyncAnalyticsRuleV1:
         return response
 
     @property
-    @warn_deprecation(  # type: ignore[untyped-decorator]
+    @warn_deprecation(
         "AsyncAnalyticsRuleV1 is deprecated on v30+. Use client.analytics.rules[rule_id] instead.",
         flag_name="analytics_rules_v1_deprecation",
     )

@@ -60,8 +60,10 @@ class Operations:
         """
         self.api_call = api_call
 
+    # The generic ``str`` overload below also matches "schema_changes"; overloads are
+    # tried in order, so this one wins.
     @typing.overload
-    def perform(
+    def perform(  # type: ignore[overload-overlap]
         self,
         operation_name: typing.Literal["schema_changes"],
         query_params: None = None,
@@ -132,6 +134,23 @@ class Operations:
     @typing.overload
     def perform(
         self,
+        operation_name: typing.Literal["snapshot"],
+        query_params: SnapshotParameters,
+    ) -> OperationResponse:
+        """
+        Perform a snapshot operation.
+
+        Args:
+            operation_name (Literal["snapshot"]): The name of the operation.
+            query_params (SnapshotParameters): Query parameters for the snapshot operation.
+
+        Returns:
+            OperationResponse: The response from the snapshot operation.
+        """
+
+    @typing.overload
+    def perform(
+        self,
         operation_name: str,
         query_params: typing.Union[typing.Dict[str, str], None] = None,
     ) -> OperationResponse:
@@ -145,23 +164,6 @@ class Operations:
 
         Returns:
             OperationResponse: The response from the operation.
-        """
-
-    @typing.overload
-    def perform(
-        self,
-        operation_name: typing.Literal["snapshot"],
-        query_params: SnapshotParameters,
-    ) -> OperationResponse:
-        """
-        Perform a snapshot operation.
-
-        Args:
-            operation_name (Literal["snapshot"]): The name of the operation.
-            query_params (SnapshotParameters): Query parameters for the snapshot operation.
-
-        Returns:
-            OperationResponse: The response from the snapshot operation.
         """
 
     def perform(
@@ -181,7 +183,7 @@ class Operations:
             typing.Dict[str, str],
             None,
         ] = None,
-    ) -> OperationResponse:
+    ) -> typing.Union[OperationResponse, typing.List[SchemaChangesResponse]]:
         """
         Perform an operation on the Typesense API.
 
@@ -202,13 +204,16 @@ class Operations:
             >>> response = await operations.perform("vote")
             >>> health = await operations.is_healthy()
         """
-        response: OperationResponse = self.api_call.post(
+        response = self.api_call.post(
             self._endpoint_path(operation_name),
             params=query_params,
             as_json=True,
-            entity_type=OperationResponse,
+            entity_type=object,
         )
-        return response
+        return typing.cast(
+            typing.Union[OperationResponse, typing.List[SchemaChangesResponse]],
+            response,
+        )
 
     def is_healthy(self) -> bool:
         """
@@ -222,16 +227,14 @@ class Operations:
             >>> healthy = await operations.is_healthy()
             >>> print(healthy)
         """
-        call_resp: HealthCheckResponse = self.api_call.get(
+        call_resp: object = self.api_call.get(
             Operations.health_path,
             as_json=True,
             entity_type=HealthCheckResponse,
         )
-        if isinstance(call_resp, typing.Dict):
-            is_ok: bool = call_resp.get("ok", False)
-        else:
-            is_ok = False
-        return is_ok
+        if isinstance(call_resp, dict):
+            return bool(call_resp.get("ok", False))
+        return False
 
     def toggle_slow_request_log(
         self,

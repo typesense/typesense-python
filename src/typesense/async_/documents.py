@@ -61,6 +61,17 @@ _ImportParameters = typing.Union[
     None,
 ]
 
+# One line of an import response. ``ImportResponse`` is a union of lists, one per
+# return mode, so the helpers below build a list of these and ``import_`` casts it
+# to the list type its overloads promise.
+_ImportResponseItem = typing.Union[
+    ImportResponseWithDoc[TDoc],
+    ImportResponseWithId,
+    ImportResponseWithDocAndId[TDoc],
+    ImportResponseSuccess,
+    ImportResponseFail[TDoc],
+]
+
 
 class AsyncDocuments(typing.Generic[TDoc]):
     """
@@ -125,12 +136,14 @@ class AsyncDocuments(typing.Generic[TDoc]):
         Returns:
             TDoc: The created document.
         """
-        dirty_values_parameters = dirty_values_parameters or {}
-        dirty_values_parameters["action"] = "create"
+        write_parameters: typing.Dict[str, object] = {
+            **(dirty_values_parameters or {}),
+            "action": "create",
+        }
         response = await self.api_call.post(
             self._endpoint_path(),
             body=document,
-            params=dirty_values_parameters,
+            params=write_parameters,
             as_json=True,
             entity_type=typing.Dict[str, str],
         )
@@ -154,7 +167,14 @@ class AsyncDocuments(typing.Generic[TDoc]):
                 The list of import responses.
         """
         logger.warn("`create_many` is deprecated: please use `import_`.")
-        return await self.import_(documents, dirty_values_parameters)
+        # Dirty values parameters are a subset of the write parameters.
+        return await self.import_(
+            documents,
+            typing.cast(
+                typing.Optional[DocumentWriteParameters],
+                dirty_values_parameters,
+            ),
+        )
 
     async def upsert(
         self,
@@ -172,12 +192,14 @@ class AsyncDocuments(typing.Generic[TDoc]):
         Returns:
             TDoc: The upserted document.
         """
-        dirty_values_parameters = dirty_values_parameters or {}
-        dirty_values_parameters["action"] = "upsert"
+        write_parameters: typing.Dict[str, object] = {
+            **(dirty_values_parameters or {}),
+            "action": "upsert",
+        }
         response = await self.api_call.post(
             self._endpoint_path(),
             body=document,
-            params=dirty_values_parameters,
+            params=write_parameters,
             as_json=True,
             entity_type=typing.Dict[str, str],
         )
@@ -199,12 +221,14 @@ class AsyncDocuments(typing.Generic[TDoc]):
         Returns:
             UpdateByFilterResponse: The response containing information about the update.
         """
-        dirty_values_parameters = dirty_values_parameters or {}
-        dirty_values_parameters["action"] = "update"
+        update_parameters: typing.Dict[str, object] = {
+            **(dirty_values_parameters or {}),
+            "action": "update",
+        }
         response: UpdateByFilterResponse = await self.api_call.patch(
             self._endpoint_path(),
             body=document,
-            params=dirty_values_parameters,
+            params=update_parameters,
             entity_type=UpdateByFilterResponse,
         )
         return response
@@ -301,9 +325,14 @@ class AsyncDocuments(typing.Generic[TDoc]):
             return await self._import_raw(documents, import_parameters)
 
         if batch_size:
-            return await self._batch_import(documents, import_parameters, batch_size)
-
-        return await self._bulk_import(documents, import_parameters)
+            response_objs = await self._batch_import(
+                documents,
+                import_parameters,
+                batch_size,
+            )
+        else:
+            response_objs = await self._bulk_import(documents, import_parameters)
+        return typing.cast(ImportResponse[TDoc], response_objs)
 
     async def export(
         self,
@@ -410,9 +439,9 @@ class AsyncDocuments(typing.Generic[TDoc]):
         documents: typing.List[TDoc],
         import_parameters: _ImportParameters,
         batch_size: int,
-    ) -> ImportResponse[TDoc]:
+    ) -> typing.List[_ImportResponseItem[TDoc]]:
         """Import documents in batches."""
-        response_objs: ImportResponse[TDoc] = []
+        response_objs: typing.List[_ImportResponseItem[TDoc]] = []
         for batch_index in range(0, len(documents), batch_size):
             batch = documents[batch_index : batch_index + batch_size]
             api_response = await self._bulk_import(batch, import_parameters)
@@ -423,7 +452,7 @@ class AsyncDocuments(typing.Generic[TDoc]):
         self,
         documents: typing.List[TDoc],
         import_parameters: _ImportParameters,
-    ) -> ImportResponse[TDoc]:
+    ) -> typing.List[_ImportResponseItem[TDoc]]:
         """Import a list of documents in bulk."""
         document_strs = [json.dumps(doc) for doc in documents]
         if not document_strs:
@@ -439,9 +468,12 @@ class AsyncDocuments(typing.Generic[TDoc]):
         )
         return self._parse_import_response(res)
 
-    def _parse_import_response(self, response: str) -> ImportResponse[TDoc]:
+    def _parse_import_response(
+        self,
+        response: str,
+    ) -> typing.List[_ImportResponseItem[TDoc]]:
         """Parse the import response string into a list of response objects."""
-        response_objs: typing.List[ImportResponse] = []
+        response_objs: typing.List[_ImportResponseItem[TDoc]] = []
         for res_obj_str in response.split("\n"):
             try:
                 res_obj_json = json.loads(res_obj_str)

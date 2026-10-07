@@ -51,6 +51,7 @@ from typesense.exceptions import (
     ServiceUnavailable,
     TypesenseClientError,
 )
+from typesense.http_backend import CLIENT_TYPES, SyncClientType, backend_errors
 from typesense.node_manager import NodeManager
 from typesense.request_handler import RequestHandler
 
@@ -60,7 +61,7 @@ else:
     import typing_extensions as typing
 
 TEntityDict = typing.TypeVar("TEntityDict")
-TParams = typing.TypeVar("TParams", bound=typing.Dict[str, typing.Any])
+TParams = typing.TypeVar("TParams", bound=typing.Mapping[str, object])
 TBody = typing.TypeVar(
     "TBody", bound=typing.Union[str, bytes, typing.Mapping[str, typing.Any]]
 )
@@ -95,7 +96,7 @@ class SessionFunctionKwargs(typing.Generic[TParams, TBody], typing.TypedDict):
 
     params: typing.NotRequired[typing.Union[TParams, None]]
     data: typing.NotRequired[typing.Union[TBody, None]]
-    content: typing.NotRequired[typing.Union[TBody, str, None]]
+    content: typing.NotRequired[typing.Union[str, bytes, None]]
     headers: typing.NotRequired[typing.Dict[str, str]]
     timeout: typing.NotRequired[float]
 
@@ -116,38 +117,23 @@ _ERROR_CODE_MAP: typing.Final[
     },
 )
 
-_SERVER_ERRORS: typing.Final[
-    typing.Tuple[
-        typing.Type[httpx.TimeoutException],
-        typing.Type[httpx.ConnectError],
-        typing.Type[httpx.HTTPError],
-        typing.Type[httpx.RequestError],
-        typing.Type[HTTPStatus0Error],
-        typing.Type[ServerError],
-        typing.Type[ServiceUnavailable],
-    ]
-] = (
-    httpx.TimeoutException,
-    httpx.ConnectError,
-    httpx.HTTPError,
-    httpx.RequestError,
+_SERVER_ERRORS: typing.Final[typing.Tuple[typing.Type[Exception], ...]] = (
+    *backend_errors("TimeoutException"),
+    *backend_errors("ConnectError"),
+    *backend_errors("HTTPError"),
+    *backend_errors("RequestError"),
     HTTPStatus0Error,
     ServerError,
     ServiceUnavailable,
 )
 
-_CLIENT_ERRORS: typing.Final[
-    typing.Tuple[
-        typing.Type[httpx.PoolTimeout],
-        typing.Type[httpx.LocalProtocolError],
-        typing.Type[httpx.DecodingError],
-        typing.Type[httpx.TooManyRedirects],
-    ]
-] = (
-    httpx.PoolTimeout,
-    httpx.LocalProtocolError,
-    httpx.DecodingError,
-    httpx.TooManyRedirects,
+# Raised by httpx inside the client, so they say nothing about the node's
+# health. They subclass entries of _SERVER_ERRORS and must be caught first.
+_CLIENT_ERRORS: typing.Final[typing.Tuple[typing.Type[Exception], ...]] = (
+    *backend_errors("PoolTimeout"),
+    *backend_errors("LocalProtocolError"),
+    *backend_errors("DecodingError"),
+    *backend_errors("TooManyRedirects"),
 )
 
 
@@ -161,19 +147,42 @@ class ApiCall:
     Attributes:
         config (Configuration): The configuration object for the Typesense client.
         node_manager (NodeManager): Manages the nodes in the Typesense cluster.
-        _client (httpx.Client): The httpx async client for making requests.
+        _client (httpx.Client | httpx2.Client): The async client for
+            making requests.
     """
 
-    def __init__(self, config: Configuration):
+    def __init__(
+        self,
+        config: Configuration,
+        http_client: typing.Optional[SyncClientType] = None,
+    ):
         """
         Initialize the ApiCall instance.
 
         Args:
             config (Configuration): The configuration object for the Typesense client.
+            http_client (httpx.Client | httpx2.Client, optional): A client
+                to send requests with instead of the default httpx client. The
+                connection pool settings in ``config`` are not applied to it, and it
+                is not closed by ``close``.
+
+        Raises:
+            TypeError: If ``http_client`` is not an httpx or httpx2 async client.
         """
         self.config = config
         self.node_manager = NodeManager(config)
         self.request_handler = RequestHandler(config)
+        self._concurrency_limit = ConcurrencyLimit(
+            config.max_concurrent_requests,
+        )
+        self._owns_client = http_client is None
+        if http_client is not None:
+            if not isinstance(http_client, CLIENT_TYPES):
+                raise TypeError(
+                    "`http_client` must be an httpx.Client or httpx2.Client.",
+                )
+            self._client: SyncClientType = http_client
+            return
         self._client = httpx.Client(
             timeout=httpx.Timeout(
                 config.connection_timeout_seconds,
@@ -183,9 +192,6 @@ class ApiCall:
                 max_connections=config.max_connections,
                 max_keepalive_connections=config.max_keepalive_connections,
             ),
-        )
-        self._concurrency_limit = ConcurrencyLimit(
-            config.max_concurrent_requests,
         )
 
     def __enter__(self) -> "ApiCall":
@@ -199,11 +205,12 @@ class ApiCall:
         exc_tb: typing.Optional[TracebackType],
     ) -> None:
         """Async context manager exit."""
-        self._client.close()
+        self.close()
 
     def close(self) -> None:
-        """Close the httpx client."""
-        self._client.close()
+        """Close the httpx client, unless it was passed in by the caller."""
+        if self._owns_client:
+            self._client.close()
 
     @typing.overload
     def get(
