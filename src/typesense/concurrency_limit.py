@@ -37,13 +37,22 @@ class AsyncConcurrencyLimit:
         # semaphore binds to the loop that is current when it is constructed.
         self._semaphore: typing.Optional[asyncio.Semaphore] = None
 
-    async def __aenter__(self) -> None:
-        """Wait for a free slot."""
+    async def acquire(self) -> None:
+        """Wait for a free slot. Streams hold it until ``release`` is called."""
         if self._max_concurrent_requests is None:
             return
         if self._semaphore is None:
             self._semaphore = asyncio.Semaphore(self._max_concurrent_requests)
         await self._semaphore.acquire()
+
+    def release(self) -> None:
+        """Release a slot taken with ``acquire``."""
+        if self._semaphore is not None:
+            self._semaphore.release()
+
+    async def __aenter__(self) -> None:
+        """Wait for a free slot."""
+        await self.acquire()
 
     async def __aexit__(
         self,
@@ -52,8 +61,7 @@ class AsyncConcurrencyLimit:
         exc_tb: typing.Optional[TracebackType],
     ) -> None:
         """Release the slot."""
-        if self._semaphore is not None:
-            self._semaphore.release()
+        self.release()
 
 
 class ConcurrencyLimit:
@@ -73,10 +81,19 @@ class ConcurrencyLimit:
             else threading.Semaphore(max_concurrent_requests)
         )
 
-    def __enter__(self) -> None:
-        """Wait for a free slot."""
+    def acquire(self) -> None:
+        """Wait for a free slot. Streams hold it until ``release`` is called."""
         if self._semaphore is not None:
             self._semaphore.acquire()
+
+    def release(self) -> None:
+        """Release a slot taken with ``acquire``."""
+        if self._semaphore is not None:
+            self._semaphore.release()
+
+    def __enter__(self) -> None:
+        """Wait for a free slot."""
+        self.acquire()
 
     def __exit__(
         self,
@@ -85,5 +102,4 @@ class ConcurrencyLimit:
         exc_tb: typing.Optional[TracebackType],
     ) -> None:
         """Release the slot."""
-        if self._semaphore is not None:
-            self._semaphore.release()
+        self.release()
