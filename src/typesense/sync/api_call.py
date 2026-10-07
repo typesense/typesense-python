@@ -51,7 +51,12 @@ from typesense.exceptions import (
     ServiceUnavailable,
     TypesenseClientError,
 )
-from typesense.http_backend import CLIENT_TYPES, SyncClientType, backend_errors
+from typesense.http_backend import (
+    CLIENT_TYPES,
+    SyncClientType,
+    backend_errors,
+    verify_option,
+)
 from typesense.node_manager import NodeManager
 from typesense.request_handler import RequestHandler
 
@@ -192,7 +197,7 @@ class ApiCall:
                 max_connections=config.max_connections,
                 max_keepalive_connections=config.max_keepalive_connections,
             ),
-            verify=config.verify,
+            verify=verify_option(config.verify),
         )
 
     def __enter__(self) -> "ApiCall":

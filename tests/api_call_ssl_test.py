@@ -1,7 +1,6 @@
 """Regression tests for TLS configuration in both HTTP clients."""
 
 import ssl
-import warnings
 from pathlib import Path
 
 import certifi
@@ -64,11 +63,7 @@ async def test_custom_ca_bundle(
     fake_config.verify = str(ca_bundle)
     create_context = mocker.spy(ssl, "create_default_context")
 
-    with warnings.catch_warnings():
-        warnings.filterwarnings(
-            "ignore", message="`verify=<str>`", category=DeprecationWarning
-        )
-        api_call = api_call_class(fake_config)
+    api_call = api_call_class(fake_config)
     try:
         create_context.assert_any_call(cafile=str(ca_bundle))
     finally:
@@ -78,9 +73,5 @@ async def test_custom_ca_bundle(
 async def test_missing_ca_bundle(fake_config, api_call_class, tmp_path):
     """An invalid CA path must fail instead of silently using default trust roots."""
     fake_config.verify = str(tmp_path / "missing-ca.pem")
-    with warnings.catch_warnings():
-        warnings.filterwarnings(
-            "ignore", message="`verify=<str>`", category=DeprecationWarning
-        )
-        with pytest.raises(FileNotFoundError):
-            api_call_class(fake_config)
+    with pytest.raises(FileNotFoundError):
+        api_call_class(fake_config)
