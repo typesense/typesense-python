@@ -135,6 +135,20 @@ _SERVER_ERRORS: typing.Final[
     ServiceUnavailable,
 )
 
+_CLIENT_ERRORS: typing.Final[
+    typing.Tuple[
+        typing.Type[httpx.PoolTimeout],
+        typing.Type[httpx.LocalProtocolError],
+        typing.Type[httpx.DecodingError],
+        typing.Type[httpx.TooManyRedirects],
+    ]
+] = (
+    httpx.PoolTimeout,
+    httpx.LocalProtocolError,
+    httpx.DecodingError,
+    httpx.TooManyRedirects,
+)
+
 
 class ApiCall:
     """
@@ -478,6 +492,8 @@ class ApiCall:
                 as_json,
                 **request_kwargs,
             )
+        except _CLIENT_ERRORS:
+            raise
         except _SERVER_ERRORS as server_error:
             self.node_manager.set_node_health(node, is_healthy=False)
             if num_retries < self.config.num_retries:

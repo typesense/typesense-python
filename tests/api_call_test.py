@@ -461,6 +461,25 @@ def test_selects_next_available_node_on_timeout(
         assert len(respx.calls) == 3
 
 
+def test_client_errors_do_not_mark_nodes_unhealthy(
+    fake_api_call: ApiCall,
+    mocker: MockerFixture,
+) -> None:
+    """Pool exhaustion is local to the client and must not trigger failover."""
+    node = fake_api_call.node_manager.get_node()
+    make_request = mocker.patch.object(
+        fake_api_call.request_handler,
+        "make_request",
+        side_effect=httpx.PoolTimeout("No connection available"),
+    )
+
+    with pytest.raises(httpx.PoolTimeout):
+        fake_api_call.get("/test", as_json=True, entity_type=typing.Dict[str, str])
+
+    assert node.healthy is True
+    make_request.assert_called_once()
+
+
 def test_get_node_no_healthy_nodes(
     fake_api_call: ApiCall,
     mocker: MockFixture,
@@ -665,3 +684,61 @@ async def test_async_sleeps_retry_interval_between_retries(
         assert sleep_call == mocker.call(
             fake_async_api_call.config.retry_interval_seconds,
         )
+
+
+@pytest.mark.parametrize(
+    "client_side_error",
+    [
+        httpx.PoolTimeout("Pool timeout"),
+        httpx.LocalProtocolError("Local protocol error"),
+        httpx.DecodingError("Decoding error"),
+        httpx.TooManyRedirects("Too many redirects"),
+    ],
+)
+def test_client_side_error_does_not_mark_node_unhealthy(
+    fake_api_call: ApiCall,
+    client_side_error: httpx.HTTPError,
+) -> None:
+    """Test that client-side httpx errors propagate without failing over."""
+    with respx.mock:
+        respx.get("http://nearest:8108/").mock(side_effect=client_side_error)
+        node0_route = respx.get("http://node0:8108/").mock(
+            return_value=httpx.Response(200, json={"key": "value"}),
+        )
+
+        with pytest.raises(type(client_side_error)):
+            fake_api_call.get("/", entity_type=typing.Dict[str, str])
+
+        assert len(respx.calls) == 1
+        assert not node0_route.called
+
+    assert fake_api_call.config.nearest_node.healthy is True
+
+
+@pytest.mark.parametrize(
+    "client_side_error",
+    [
+        httpx.PoolTimeout("Pool timeout"),
+        httpx.LocalProtocolError("Local protocol error"),
+        httpx.DecodingError("Decoding error"),
+        httpx.TooManyRedirects("Too many redirects"),
+    ],
+)
+async def test_async_client_side_error_does_not_mark_node_unhealthy(
+    fake_async_api_call: AsyncApiCall,
+    client_side_error: httpx.HTTPError,
+) -> None:
+    """Test that client-side httpx errors propagate without failing over (async)."""
+    with respx.mock:
+        respx.get("http://nearest:8108/").mock(side_effect=client_side_error)
+        node0_route = respx.get("http://node0:8108/").mock(
+            return_value=httpx.Response(200, json={"key": "value"}),
+        )
+
+        with pytest.raises(type(client_side_error)):
+            await fake_async_api_call.get("/", entity_type=typing.Dict[str, str])
+
+        assert len(respx.calls) == 1
+        assert not node0_route.called
+
+    assert fake_async_api_call.config.nearest_node.healthy is True
