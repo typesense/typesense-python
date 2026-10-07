@@ -214,7 +214,7 @@ class Configuration:
         self.api_key = config_dict.get("api_key", " ")
         self.connection_timeout_seconds = config_dict.get(
             "connection_timeout_seconds",
-            3.0,
+            config_dict.get("timeout_seconds", 3.0),
         )
         self.num_retries = config_dict.get("num_retries", 3)
         # ``interval_seconds`` is the historically documented key; ``retry_interval_seconds``

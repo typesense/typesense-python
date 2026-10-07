@@ -89,6 +89,29 @@ def test_configuration_explicit() -> None:
     assert_to_contain_object(configuration, expected)
 
 
+def test_configuration_deprecated_timeout_seconds() -> None:
+    """Test that the deprecated timeout key still sets the connection timeout."""
+    config: ConfigDict = {
+        "nodes": [DEFAULT_NODE],
+        "api_key": "xyz",
+        "timeout_seconds": 30,
+    }
+
+    assert Configuration(config).connection_timeout_seconds == 30
+
+
+def test_configuration_new_timeout_takes_precedence() -> None:
+    """Test that the current timeout key wins when both keys are provided."""
+    config: ConfigDict = {
+        "nodes": [DEFAULT_NODE],
+        "api_key": "xyz",
+        "timeout_seconds": 30,
+        "connection_timeout_seconds": 5.0,
+    }
+
+    assert Configuration(config).connection_timeout_seconds == 5.0
+
+
 def test_configuration_no_nearest_node() -> None:
     """Test the Configuration constructor with no nearest node."""
     config: ConfigDict = {
