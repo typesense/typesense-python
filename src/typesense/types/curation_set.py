@@ -33,13 +33,34 @@ class CurationRuleTagsSchema(typing.TypedDict):
     tags: typing.List[str]
 
 
-class CurationRuleQuerySchema(typing.TypedDict):
+class CurationRuleQueryBaseSchema(typing.TypedDict):
     """
-    Schema for a curation rule using query and match.
+    Schema for the base of a curation rule using query and match.
     """
 
     query: str
     match: typing.Literal["exact", "contains"]
+
+
+class CurationRuleQueryCreateSchema(CurationRuleQueryBaseSchema):
+    """
+    Schema for creating a curation rule using query and match.
+    """
+
+    stem: typing.NotRequired[bool]
+    synonyms: typing.NotRequired[bool]
+
+
+class CurationRuleQuerySchema(CurationRuleQueryBaseSchema):
+    """
+    Schema for retrieving a curation rule using query and match.
+    """
+
+    stem: typing.NotRequired[
+        bool
+    ]  # TODO: This is a bug in Typesense server upstream, so until 31.0 is
+    # released, this is staying as notrequired.
+    synonyms: typing.NotRequired[bool]
 
 
 class CurationRuleFilterBySchema(typing.TypedDict):
@@ -85,20 +106,45 @@ class CurationItemSchema(typing.TypedDict):
     metadata: typing.NotRequired[typing.Dict[str, typing.Any]]
 
 
+class CurationItemUpsertSchema(typing.TypedDict):
+    """
+    Schema for creating or updating a single curation item.
+    """
+
+    id: str
+    rule: typing.Union[
+        CurationRuleTagsSchema,
+        CurationRuleQueryCreateSchema,
+        CurationRuleFilterBySchema,
+    ]
+    includes: typing.NotRequired[typing.List[CurationIncludeSchema]]
+    excludes: typing.NotRequired[typing.List[CurationExcludeSchema]]
+    filter_by: typing.NotRequired[str]
+    sort_by: typing.NotRequired[str]
+    replace_query: typing.NotRequired[str]
+    remove_matched_tokens: typing.NotRequired[bool]
+    filter_curated_hits: typing.NotRequired[bool]
+    stop_processing: typing.NotRequired[bool]
+    effective_from_ts: typing.NotRequired[int]
+    effective_to_ts: typing.NotRequired[int]
+    metadata: typing.NotRequired[typing.Dict[str, typing.Any]]
+
+
 class CurationSetUpsertSchema(typing.TypedDict):
     """
     Payload schema to create or replace a curation set.
     """
 
-    items: typing.List[CurationItemSchema]
+    items: typing.List[CurationItemUpsertSchema]
 
 
-class CurationSetSchema(CurationSetUpsertSchema, total=False):
+class CurationSetSchema(typing.TypedDict):
     """
     Response schema for a curation set.
     """
 
-    name: typing.NotRequired[str]
+    items: typing.List[CurationItemSchema]
+    name: str
 
 
 class CurationSetsListEntrySchema(typing.TypedDict):
