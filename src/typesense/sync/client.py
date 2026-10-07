@@ -102,8 +102,8 @@ class Client:
             http_client (httpx.Client | httpx2.Client, optional):
                 A client to send requests with instead of the default httpx client,
                 e.g. an ``httpx2.Client`` (``pip install typesense[httpx2]``).
-                The connection pool settings in ``config_dict`` are not applied to
-                it, and the Typesense client does not close it.
+                The connection pool and ``verify`` settings in ``config_dict`` are
+                not applied to it, and the Typesense client does not close it.
 
         Example:
             >>> config = {

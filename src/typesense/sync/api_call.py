@@ -168,8 +168,8 @@ class ApiCall:
             config (Configuration): The configuration object for the Typesense client.
             http_client (httpx.Client | httpx2.Client, optional): A client
                 to send requests with instead of the default httpx client. The
-                connection pool settings in ``config`` are not applied to it, and it
-                is not closed by ``close``.
+                connection pool and ``verify`` settings in ``config`` are not
+                applied to it, and it is not closed by ``close``.
 
         Raises:
             TypeError: If ``http_client`` is not an httpx or httpx2 async client.
