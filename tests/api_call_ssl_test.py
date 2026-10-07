@@ -18,6 +18,14 @@ def api_call_class(request):
     return request.param
 
 
+def pool_ssl_context(api_call) -> ssl.SSLContext:
+    """Return the SSL context of the client's connection pool.
+
+    This reads private httpx 0.28 attributes and may need updating on upgrades.
+    """
+    return api_call._client._transport._pool._ssl_context
+
+
 async def close_api_call(api_call):
     if isinstance(api_call, AsyncApiCall):
         await api_call.aclose()
@@ -31,7 +39,7 @@ async def test_verification_mode(fake_config, api_call_class, verify):
     fake_config.verify = verify
     api_call = api_call_class(fake_config)
     try:
-        ssl_context = api_call._client._transport._pool._ssl_context
+        ssl_context = pool_ssl_context(api_call)
         assert ssl_context.verify_mode == (
             ssl.CERT_REQUIRED if verify else ssl.CERT_NONE
         )
@@ -46,7 +54,7 @@ async def test_ssl_context(fake_config, api_call_class):
     fake_config.verify = context
     api_call = api_call_class(fake_config)
     try:
-        assert api_call._client._transport._pool._ssl_context is context
+        assert pool_ssl_context(api_call) is context
     finally:
         await close_api_call(api_call)
 
