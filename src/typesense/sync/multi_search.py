@@ -20,8 +20,14 @@ import sys
 
 from .api_call import ApiCall
 from typesense.preprocess import stringify_search_params
-from typesense.types.document import MultiSearchCommonParameters
-from typesense.types.multi_search import MultiSearchRequestSchema, MultiSearchResponse
+from typesense.types.document import MultiSearchCommonParameters, SearchResponse
+from typesense.types.multi_search import (
+    MultiSearchRequestSchema,
+    MultiSearchRequestSchemaMulti,
+    MultiSearchRequestSchemaUnion,
+    MultiSearchResponse,
+    MultiSearchResponseSchema,
+)
 
 if sys.version_info >= (3, 11):
     import typing
@@ -51,11 +57,27 @@ class MultiSearch:
         """
         self.api_call = api_call
 
+    @typing.overload
+    def perform(
+        self,
+        search_queries: MultiSearchRequestSchemaUnion,
+        common_params: typing.Union[MultiSearchCommonParameters, None] = None,
+    ) -> SearchResponse[typing.Any]:
+        """Perform a union multi-search operation."""
+
+    @typing.overload
+    def perform( # type: ignore[overload-cannot-match]
+        self,
+        search_queries: MultiSearchRequestSchemaMulti,
+        common_params: typing.Union[MultiSearchCommonParameters, None] = None,
+    ) -> MultiSearchResponse:
+        """Perform a standard multi-search operation."""
+
     def perform(
         self,
         search_queries: MultiSearchRequestSchema,
         common_params: typing.Union[MultiSearchCommonParameters, None] = None,
-    ) -> MultiSearchResponse:
+    ) -> MultiSearchResponseSchema:
         """
         Perform a multi-search operation.
 
@@ -72,9 +94,9 @@ class MultiSearch:
                 Common parameters to apply to all search queries. Defaults to None.
 
         Returns:
-            MultiSearchResponse:
-                The response from the multi-search operation, containing
-                the results of all search queries.
+            MultiSearchResponseSchema:
+                A standard multi-search response for non-union requests,
+                or a search response when ``union=True``.
 
         Example:
             >>> multi_search = MultiSearch(async_api_call)
@@ -98,11 +120,17 @@ class MultiSearch:
             "searches": stringified_search_params,
             "union": search_queries.get("union", False),
         }
-        response: MultiSearchResponse = self.api_call.post(
+        entity_type: typing.Type[typing.Any]
+        if search_body["union"]:
+            entity_type = SearchResponse
+        else:
+            entity_type = MultiSearchResponse
+
+        response: MultiSearchResponseSchema = self.api_call.post(
             MultiSearch.resource_path,
             body=search_body,
             params=common_params,
             as_json=True,
-            entity_type=MultiSearchResponse,
+            entity_type=entity_type,
         )
         return response

@@ -21,13 +21,35 @@ class MultiSearchResponse(typing.TypedDict):
     results: typing.List[SearchResponse[typing.Any]]  # noqa: WPS110
 
 
-class MultiSearchRequestSchema(typing.TypedDict):
+class MultiSearchRequestSchemaUnion(typing.TypedDict):
     """
-    Schema for multi-search request.
+    Schema for union multi-search request.
 
     Attributes:
         searches (list[MultiSearchParameters]): The search parameters.
     """
 
-    union: typing.NotRequired[typing.Literal[True]]
+    union: typing.Literal[True]
     searches: typing.List[MultiSearchParameters]
+
+
+class MultiSearchRequestSchemaMulti(typing.TypedDict):
+    """
+    Schema for standard multi-search request.
+
+    Attributes:
+        searches (list[MultiSearchParameters]): The search parameters.
+    """
+
+    union: typing.NotRequired[typing.Literal[False]]
+    searches: typing.List[MultiSearchParameters]
+
+
+MultiSearchRequestSchema = typing.Union[
+    MultiSearchRequestSchemaUnion,
+    MultiSearchRequestSchemaMulti,
+]
+MultiSearchResponseSchema = typing.Union[
+    MultiSearchResponse,
+    SearchResponse[typing.Any],
+]
