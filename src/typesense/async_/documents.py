@@ -21,6 +21,12 @@ import sys
 
 from .api_call import AsyncApiCall
 from .document import AsyncDocument
+from .stream import (
+    AsyncSearchStream,
+    consume_stream,
+    notify_error,
+    resolve_stream_config,
+)
 from typesense.exceptions import TypesenseClientError
 from typesense.logger import logger
 from typesense.preprocess import stringify_search_params
@@ -43,7 +49,6 @@ from typesense.types.document import (
     ImportResponseWithId,
     SearchParameters,
     SearchResponse,
-    StreamConfigBuilder,
     UpdateByFilterParameters,
     UpdateByFilterResponse,
 )
@@ -361,29 +366,85 @@ class AsyncDocuments(typing.Generic[TDoc]):
         """
         Search for documents in the collection.
 
+        With ``conversation_stream`` enabled, the LLM's answer is streamed and the
+        callbacks in ``stream_config`` run as it arrives. To iterate over the answer
+        instead, use ``search_stream``.
+
         Args:
             search_parameters (SearchParameters): The search parameters.
-                Use conversation_stream=True and optionally stream_config (on_chunk,
-                on_complete, on_error) for conversational search streaming.
 
         Returns:
             SearchResponse[TDoc]: The search response containing matching documents.
         """
-        params_for_api = dict(search_parameters)
-        stream_config = params_for_api.pop("stream_config", None)
-        if isinstance(stream_config, StreamConfigBuilder):
-            stream_config = stream_config.build()
-        conversation_stream = params_for_api.get("conversation_stream") is True
-        stringified_search_params = stringify_search_params(params_for_api)
+        if search_parameters.get("conversation_stream"):
+            stream_config = resolve_stream_config(
+                search_parameters.get("stream_config"),
+            )
+            try:
+                search_stream = await self._open_search_stream(search_parameters)
+                streamed_response: SearchResponse[TDoc] = await consume_stream(
+                    search_stream,
+                    stream_config,
+                )
+            except Exception as error:
+                notify_error(stream_config, error)
+                raise
+            return streamed_response
+
+        stringified_search_params = stringify_search_params(
+            {
+                param: param_value
+                for param, param_value in search_parameters.items()
+                if param != "stream_config"
+            },
+        )
         response: SearchResponse[TDoc] = await self.api_call.get(
             self._endpoint_path("search"),
             params=stringified_search_params,
             entity_type=SearchResponse,
             as_json=True,
-            stream_config=stream_config,
-            is_streaming_request=conversation_stream,
         )
         return response
+
+    async def search_stream(
+        self,
+        search_parameters: SearchParameters,
+    ) -> AsyncSearchStream[SearchResponse[TDoc]]:
+        """
+        Search, streaming the LLM's answer as it is generated.
+
+        Iterate over the returned stream for the pieces of the answer, then call
+        its ``get_final_response`` for the search response. Use the stream as a
+        context manager so the connection is released if you stop early.
+
+        ``conversation`` and ``conversation_stream`` are enabled for you; pass the
+        ``conversation_model_id`` to answer with. ``stream_config`` is ignored.
+
+        Args:
+            search_parameters (SearchParameters): The search parameters.
+
+        Returns:
+            AsyncSearchStream[SearchResponse[TDoc]]: The open stream.
+        """
+        return await self._open_search_stream(search_parameters)
+
+    async def _open_search_stream(
+        self,
+        search_parameters: SearchParameters,
+    ) -> AsyncSearchStream[SearchResponse[TDoc]]:
+        """Open the search request as a stream."""
+        stream_params: typing.Dict[str, object] = {
+            "conversation": True,
+            **search_parameters,
+            "conversation_stream": True,
+        }
+        stream_params.pop("stream_config", None)
+        return await self.api_call.stream(
+            "GET",
+            self._endpoint_path("search"),
+            entity_type=SearchResponse,
+            params=stringify_search_params(stream_params),
+        )
 
     async def delete(
         self,

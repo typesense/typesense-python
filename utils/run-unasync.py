@@ -31,8 +31,13 @@ def collect_class_replacements(source_dir: Path) -> dict[str, str]:
     replacements["AsyncConcurrencyLimit"] = "ConcurrencyLimit"
     # Defined in the shared ``typesense.http_backend`` module, outside async_.
     replacements["ASYNC_CLIENT_TYPES"] = "CLIENT_TYPES"
-    replacements["aiter_lines"] = "iter_lines"
     replacements["aread"] = "read"
+    # Defined in the shared ``typesense.sse`` module, outside async_.
+    replacements["aiter_events"] = "iter_events"
+    replacements["aiter_bytes"] = "iter_bytes"
+    # ``AsyncGenerator`` takes two type arguments, but ``Generator`` needs three
+    # before Python 3.13.
+    replacements["Generator[MessageChunk, None]"] = "Generator[MessageChunk, None, None]"
     return replacements
 
 

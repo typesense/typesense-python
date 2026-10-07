@@ -586,47 +586,67 @@ class NLLanguageParameters(typing.TypedDict):
     nl_query_debug: typing.NotRequired[bool]
 
 
-class MessageChunk(typing.TypedDict):
+TFinal = typing.TypeVar("TFinal")
+
+
+class ConversationParameters(typing.TypedDict):
     """
-    A single chunk from a conversation stream response.
+    Parameters for [conversational search](https://typesense.org/docs/29.0/api/conversational-search-rag.html).
 
     Attributes:
-      conversation_id (str): ID of the conversation.
-      message (str): Message content for this chunk.
+      conversation (bool): Whether to answer the query with an LLM.
+      conversation_model_id (str): The ID of the conversation model to answer with.
+      conversation_id (str): The ID of an earlier conversation to continue.
+      conversation_stream (bool): Whether to stream the answer as server-sent
+        events. Use ``search_stream`` to iterate over the answer as it arrives.
+      stream_config (StreamConfig | StreamConfigBuilder): Callbacks to run while
+        a ``conversation_stream`` search streams. Not sent to the server.
+    """
+
+    conversation: typing.NotRequired[bool]
+    conversation_model_id: typing.NotRequired[str]
+    conversation_id: typing.NotRequired[str]
+    conversation_stream: typing.NotRequired[bool]
+    stream_config: typing.NotRequired[
+        typing.Union["StreamConfig[typing.Any]", "StreamConfigBuilder[typing.Any]"]
+    ]
+
+
+class MessageChunk(typing.TypedDict):
+    """
+    A piece of a streamed conversation answer.
+
+    Attributes:
+      conversation_id (str): The ID of the conversation.
+      message (str): The next piece of the answer.
     """
 
     conversation_id: str
     message: str
 
 
-class StreamConfig(typing.Generic[TDoc], typing.TypedDict, total=False):
-    """
-    Configuration for streaming conversation search responses.
-
-    Attributes:
-      on_chunk: Callback invoked for each streamed chunk (conversation_id, message).
-      on_complete: Callback invoked when the stream completes with the full search response.
-      on_error: Callback invoked if an error occurs during streaming.
-    """
-
-    on_chunk: typing.Callable[[MessageChunk], None]
-    on_complete: "OnCompleteCallback[TDoc]"
-    on_error: typing.Callable[[BaseException], None]
-
-
 OnChunkCallback = typing.Callable[[MessageChunk], None]
-
-
-class OnCompleteCallback(typing.Protocol[TDoc]):
-    def __call__(self, response: "SearchResponse[TDoc]") -> None: ...
-
-
 OnErrorCallback = typing.Callable[[BaseException], None]
 
 
-class StreamConfigBuilder(typing.Generic[TDoc]):
+class StreamConfig(typing.Generic[TFinal], typing.TypedDict, total=False):
     """
-    Builder for StreamConfig using decorators.
+    Callbacks for a streamed conversation search.
+
+    Attributes:
+      on_chunk: Called with each piece of the answer.
+      on_complete: Called with the full search response once the stream ends.
+      on_error: Called with the error if the search fails; the error is then raised.
+    """
+
+    on_chunk: OnChunkCallback
+    on_complete: typing.Callable[[TFinal], None]
+    on_error: OnErrorCallback
+
+
+class StreamConfigBuilder(typing.Generic[TFinal]):
+    """
+    Build a ``StreamConfig`` by registering callbacks with decorators.
 
     Example:
         >>> stream = StreamConfigBuilder()
@@ -635,111 +655,43 @@ class StreamConfigBuilder(typing.Generic[TDoc]):
         ... def handle_chunk(chunk: MessageChunk) -> None:
         ...     print(chunk["message"], end="", flush=True)
         >>>
-        >>> @stream.on_complete
-        ... def handle_complete(response: dict) -> None:
-        ...     print(f"Done! Found {response.get('found', 0)}")
-        >>>
-        >>> response = await client.collections["docs"].documents.search({
-        ...     "q": "query",
-        ...     "query_by": "content",
-        ...     "conversation_stream": True,
-        ...     "stream_config": stream,
-        ... })
+        >>> response = client.collections["docs"].documents.search(
+        ...     {
+        ...         "q": "query",
+        ...         "query_by": "content",
+        ...         "conversation": True,
+        ...         "conversation_model_id": "conv-model",
+        ...         "conversation_stream": True,
+        ...         "stream_config": stream,
+        ...     }
+        ... )
     """
 
     def __init__(self) -> None:
-        """Initialize an empty StreamConfigBuilder."""
-        self._on_chunk: OnChunkCallback | None = None
-        self._on_complete: OnCompleteCallback[TDoc] | None = None
-        self._on_error: OnErrorCallback | None = None
+        """Initialize a builder with no callbacks."""
+        self._config: StreamConfig[TFinal] = {}
 
     def on_chunk(self, func: OnChunkCallback) -> OnChunkCallback:
-        """
-        Decorator to register an on_chunk callback.
-
-        Args:
-            func: Callback invoked for each streamed message chunk.
-
-        Returns:
-            The original function (unmodified).
-        """
-        self._on_chunk = func
+        """Register ``func`` to be called with each piece of the answer."""
+        self._config["on_chunk"] = func
         return func
 
-    def on_complete(self, func: OnCompleteCallback[TDoc]) -> OnCompleteCallback[TDoc]:
-        """
-        Decorator to register an on_complete callback.
-
-        Args:
-            func: Callback invoked when streaming completes with the full response.
-
-        Returns:
-            The original function (unmodified).
-        """
-        self._on_complete = func
+    def on_complete(
+        self,
+        func: typing.Callable[[TFinal], None],
+    ) -> typing.Callable[[TFinal], None]:
+        """Register ``func`` to be called with the full search response."""
+        self._config["on_complete"] = func
         return func
 
     def on_error(self, func: OnErrorCallback) -> OnErrorCallback:
-        """
-        Decorator to register an on_error callback.
-
-        Args:
-            func: Callback invoked if an error occurs during streaming.
-
-        Returns:
-            The original function (unmodified).
-        """
-        self._on_error = func
+        """Register ``func`` to be called with the error if the search fails."""
+        self._config["on_error"] = func
         return func
 
-    def build(self) -> StreamConfig[TDoc]:
-        """
-        Build the StreamConfig dictionary.
-
-        Returns:
-            A StreamConfig with the registered callbacks.
-        """
-        config: StreamConfig[TDoc] = {}
-        if self._on_chunk is not None:
-            config["on_chunk"] = self._on_chunk
-        if self._on_complete is not None:
-            config["on_complete"] = self._on_complete
-        if self._on_error is not None:
-            config["on_error"] = self._on_error
-        return config
-
-    def get(
-        self,
-        key: typing.Literal["on_chunk", "on_complete", "on_error"],
-        default: typing.Callable[..., None] | None = None,
-    ) -> typing.Callable[..., None] | None:
-        """
-        Get a callback by key (for compatibility with dict-like access).
-
-        Args:
-            key: The callback name ('on_chunk', 'on_complete', or 'on_error').
-            default: Default value if the callback is not set.
-
-        Returns:
-            The callback function or the default value.
-        """
-        return self.build().get(key, default)
-
-
-class ConversationStreamParameters(typing.Generic[TDoc], typing.TypedDict):
-    """
-    Parameters for conversational search streaming.
-
-    Attributes:
-      conversation_stream (bool): When true, the search response is streamed (SSE).
-      stream_config: Callbacks for stream events. Not sent to the API.
-        Can be a StreamConfig dict or a StreamConfigBuilder instance.
-    """
-
-    conversation_stream: typing.NotRequired[bool]
-    stream_config: typing.NotRequired[
-        typing.Union[StreamConfig[TDoc], StreamConfigBuilder[TDoc]]
-    ]
+    def build(self) -> StreamConfig[TFinal]:
+        """Return the registered callbacks as a ``StreamConfig``."""
+        return self._config.copy()
 
 
 class SearchParameters(
@@ -754,13 +706,12 @@ class SearchParameters(
     TypoToleranceParameters,
     CachingParameters,
     NLLanguageParameters,
-    ConversationStreamParameters[TDoc],
-    typing.Generic[TDoc],
+    ConversationParameters,
 ):
     """Parameters for searching documents."""
 
 
-class MultiSearchParameters(SearchParameters[TDoc], typing.Generic[TDoc]):
+class MultiSearchParameters(SearchParameters):
     """
     Parameters for performing a [Federated/Multi-Search](https://typesense.org/docs/26.0/api/federated-multi-search.html#federated-multi-search).
 
@@ -784,6 +735,7 @@ class MultiSearchCommonParameters(
     ResultsParameters,
     TypoToleranceParameters,
     CachingParameters,
+    ConversationParameters,
 ):
     """
     [Query parameters](https://typesense.org/docs/26.0/api/federated-multi-search.html#multi-search-parameters) for multi-search.
@@ -1025,7 +977,7 @@ class LLMResponse(typing.TypedDict):
     model: str
 
 
-class ParsedNLQuery(typing.Generic[TDoc], typing.TypedDict):
+class ParsedNLQuery(typing.TypedDict):
     """
     Schema for a parsed natural language query.
 
@@ -1037,8 +989,8 @@ class ParsedNLQuery(typing.Generic[TDoc], typing.TypedDict):
     """
 
     parse_time_ms: int
-    generated_params: SearchParameters[TDoc]
-    augmented_params: SearchParameters[TDoc]
+    generated_params: SearchParameters
+    augmented_params: SearchParameters
     llm_response: typing.NotRequired[LLMResponse]
 
 
@@ -1070,7 +1022,7 @@ class SearchResponse(typing.Generic[TDoc], typing.TypedDict):
     hits: typing.List[Hit[TDoc]]
     grouped_hits: typing.NotRequired[typing.List[GroupedHit[TDoc]]]
     conversation: typing.NotRequired[Conversation]
-    parsed_nl_query: typing.NotRequired[ParsedNLQuery[TDoc]]
+    parsed_nl_query: typing.NotRequired[ParsedNLQuery]
 
 
 class DeleteSingleDocumentParameters(typing.TypedDict):
