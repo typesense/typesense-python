@@ -31,6 +31,7 @@ Note: This module is part of the Typesense Python client library and is used int
 by other components of the library.
 """
 
+import time
 import sys
 from types import MappingProxyType, TracebackType
 
@@ -479,6 +480,8 @@ class ApiCall:
             )
         except _SERVER_ERRORS as server_error:
             self.node_manager.set_node_health(node, is_healthy=False)
+            if num_retries < self.config.num_retries:
+                time.sleep(self.config.retry_interval_seconds)
             return self._execute_request(
                 method,
                 endpoint,

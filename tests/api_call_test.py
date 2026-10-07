@@ -19,6 +19,7 @@ from pytest_mock import MockerFixture
 from tests.utils.object_assertions import assert_match_object, assert_object_lists_match
 from typesense import exceptions
 from typesense.sync.api_call import ApiCall, RequestHandler
+from typesense.async_.api_call import AsyncApiCall
 from typesense.configuration import Configuration, Node
 from typesense.logger import logger
 
@@ -614,4 +615,53 @@ def test_max_retries_no_last_exception(fake_api_call: ApiCall) -> None:
             entity_type=typing.Dict[str, str],
             num_retries=10,
             last_exception=None,
+        )
+
+
+def test_sleeps_retry_interval_between_retries(
+    fake_api_call: ApiCall,
+    mocker: MockerFixture,
+) -> None:
+    """Test that it waits ``retry_interval_seconds`` between failed attempts."""
+    sleep_mock = mocker.patch("typesense.sync.api_call.time.sleep")
+
+    with respx.mock:
+        for host in ("nearest", "node0", "node1", "node2"):
+            respx.get(f"http://{host}:8108/").mock(
+                return_value=httpx.Response(503, json={"message": "unavailable"}),
+            )
+
+        with pytest.raises(exceptions.ServiceUnavailable):
+            fake_api_call.get("/", entity_type=typing.Dict[str, str])
+
+    # ``num_retries`` gaps for ``num_retries + 1`` attempts, and each gap must be
+    # ``retry_interval_seconds`` long (regression: the delay was dropped entirely).
+    assert sleep_mock.call_count == fake_api_call.config.num_retries
+    for sleep_call in sleep_mock.call_args_list:
+        assert sleep_call == mocker.call(fake_api_call.config.retry_interval_seconds)
+
+
+async def test_async_sleeps_retry_interval_between_retries(
+    fake_async_api_call: AsyncApiCall,
+    mocker: MockerFixture,
+) -> None:
+    """Test that the async client waits ``retry_interval_seconds`` between attempts."""
+    sleep_mock = mocker.patch(
+        "typesense.async_.api_call.asyncio.sleep",
+        new_callable=mocker.AsyncMock,
+    )
+
+    with respx.mock:
+        for host in ("nearest", "node0", "node1", "node2"):
+            respx.get(f"http://{host}:8108/").mock(
+                return_value=httpx.Response(503, json={"message": "unavailable"}),
+            )
+
+        with pytest.raises(exceptions.ServiceUnavailable):
+            await fake_async_api_call.get("/", entity_type=typing.Dict[str, str])
+
+    assert sleep_mock.call_count == fake_async_api_call.config.num_retries
+    for sleep_call in sleep_mock.call_args_list:
+        assert sleep_call == mocker.call(
+            fake_async_api_call.config.retry_interval_seconds,
         )
