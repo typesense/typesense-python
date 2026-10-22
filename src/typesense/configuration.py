@@ -203,7 +203,11 @@ class Node:
         Returns:
             str: The URL of the node
         """
-        return f"{self.protocol}://{self.host}:{self.port}{self.path}"
+        host = str(self.host)
+        if ":" in host and not host.startswith("["):
+            # IPv6 literals must be enclosed in brackets in a URL.
+            host = f"[{host}]"
+        return f"{self.protocol}://{host}:{self.port}{self.path}"
 
 
 class Configuration:

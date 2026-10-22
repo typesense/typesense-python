@@ -63,3 +63,21 @@ def test_node_url() -> None:
     """Test the URL method of the Node class."""
     node = Node(host="localhost", port=8108, path="/path", protocol="http")
     assert node.url() == "http://localhost:8108/path"
+
+
+def test_node_url_ipv6_host() -> None:
+    """Test that the URL method encloses an IPv6 host in brackets."""
+    node = Node(host="::1", port=8108, path="/path", protocol="http")
+    assert node.url() == "http://[::1]:8108/path"
+
+
+def test_node_url_bracketed_ipv6_host() -> None:
+    """Test that the URL method keeps an already bracketed IPv6 host as is."""
+    node = Node(host="[::1]", port=8108, path="/path", protocol="http")
+    assert node.url() == "http://[::1]:8108/path"
+
+
+def test_node_from_url_ipv6() -> None:
+    """Test that a node built from an IPv6 URL generates the same URL."""
+    node = Node.from_url("http://[::1]:8108/path")
+    assert node.url() == "http://[::1]:8108/path"

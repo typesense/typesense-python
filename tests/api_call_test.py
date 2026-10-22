@@ -23,7 +23,7 @@ from tests.utils.object_assertions import assert_match_object, assert_object_lis
 from typesense import exceptions
 from typesense.sync.api_call import ApiCall, RequestHandler
 from typesense.async_.api_call import AsyncApiCall
-from typesense.configuration import Configuration, Node
+from typesense.configuration import Configuration, Node, NodeConfigDict
 from typesense.logger import logger
 
 
@@ -388,6 +388,23 @@ def test_delete_as_json(
 
         response = fake_api_call.delete("/test", entity_type=typing.Dict[str, str])
         assert response == {"key": "value"}
+
+
+@pytest.mark.parametrize(
+    "node",
+    ["http://[::1]:8108", {"host": "::1", "port": 8108, "protocol": "http"}],
+)
+def test_request_to_ipv6_node(node: typing.Union[str, NodeConfigDict]) -> None:
+    """Test that a request to an IPv6 node is sent to the bracketed host."""
+    api_call = ApiCall(Configuration({"api_key": "xyz", "nodes": [node]}))
+    with respx.mock:
+        route = respx.get("http://[::1]:8108/test").mock(
+            return_value=httpx.Response(200, json={"key": "value"}),
+        )
+
+        response = api_call.get("/test", entity_type=typing.Dict[str, str])
+        assert response == {"key": "value"}
+        assert route.called
 
 
 def test_raise_custom_exception_with_header(
