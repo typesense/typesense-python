@@ -203,7 +203,7 @@ class Node:
         Returns:
             str: The URL of the node
         """
-        host = self.host
+        host = str(self.host)
         if ":" in host and not host.startswith("["):
             # IPv6 literals must be enclosed in brackets in a URL.
             host = f"[{host}]"
