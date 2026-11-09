@@ -10,12 +10,11 @@ else:
     import typing_extensions as typing
 
 
-class SynonymItemSchema(typing.TypedDict):
+class SynonymItemUpsertSchema(typing.TypedDict):
     """
-    Schema representing an individual synonym item inside a synonym set.
+    Schema for creating or updating a synonym item through its own endpoint.
 
     Attributes:
-        id (str): Unique identifier for the synonym item.
         synonyms (list[str]): The synonyms array.
         root (str, optional): For 1-way synonyms, indicates the root word that words in
             the synonyms parameter map to.
@@ -23,11 +22,21 @@ class SynonymItemSchema(typing.TypedDict):
         symbols_to_index (list[str], optional): Symbols to index as-is in synonyms.
     """
 
-    id: str
     synonyms: typing.List[str]
     root: typing.NotRequired[str]
     locale: typing.NotRequired[Locales]
     symbols_to_index: typing.NotRequired[typing.List[str]]
+
+
+class SynonymItemSchema(SynonymItemUpsertSchema):
+    """
+    Schema representing an individual synonym item inside a synonym set.
+
+    Attributes:
+        id (str): Unique identifier for the synonym item.
+    """
+
+    id: str
 
 
 class SynonymItemDeleteSchema(typing.TypedDict):
