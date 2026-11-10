@@ -106,12 +106,11 @@ class CurationItemSchema(typing.TypedDict):
     metadata: typing.NotRequired[typing.Dict[str, typing.Any]]
 
 
-class CurationItemUpsertSchema(typing.TypedDict):
+class CurationItemCreateSchema(typing.TypedDict):
     """
-    Schema for creating or updating a single curation item.
+    Schema for creating or updating a single curation item through its own endpoint.
     """
 
-    id: str
     rule: typing.Union[
         CurationRuleTagsSchema,
         CurationRuleQueryCreateSchema,
@@ -128,6 +127,14 @@ class CurationItemUpsertSchema(typing.TypedDict):
     effective_from_ts: typing.NotRequired[int]
     effective_to_ts: typing.NotRequired[int]
     metadata: typing.NotRequired[typing.Dict[str, typing.Any]]
+
+
+class CurationItemUpsertSchema(CurationItemCreateSchema):
+    """
+    Schema for a curation item inside a curation set upsert payload.
+    """
+
+    id: str
 
 
 class CurationSetUpsertSchema(typing.TypedDict):

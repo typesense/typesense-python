@@ -22,7 +22,9 @@ else:
     import typing_extensions as typing
 
 from .api_call import AsyncApiCall
+from .curation_set_items import AsyncCurationSetItems
 from typesense.types.curation_set import (
+    CurationItemCreateSchema,
     CurationItemDeleteSchema,
     CurationItemSchema,
     CurationSetDeleteSchema,
@@ -42,6 +44,7 @@ class AsyncCurationSet:
     Attributes:
         api_call (AsyncApiCall): The AsyncApiCall instance for making async API requests.
         name (str): The name of the curation set.
+        items (AsyncCurationSetItems): The items of the curation set.
     """
 
     def __init__(self, api_call: AsyncApiCall, name: str) -> None:
@@ -54,6 +57,7 @@ class AsyncCurationSet:
         """
         self.api_call = api_call
         self.name = name
+        self.items = AsyncCurationSetItems(api_call, name)
 
     @property
     def _endpoint_path(self) -> str:
@@ -114,17 +118,6 @@ class AsyncCurationSet:
         )
         return response
 
-    # Items sub-resource
-    @property
-    def _items_path(self) -> str:
-        """
-        Get the API endpoint path for items in this curation set.
-
-        Returns:
-            str: The full endpoint path for items (e.g., /curation_sets/{name}/items).
-        """
-        return "/".join([self._endpoint_path, "items"])
-
     async def list_items(
         self,
         *,
@@ -141,21 +134,7 @@ class AsyncCurationSet:
         Returns:
             CurationSetListItemResponseSchema: The list of items in the curation set.
         """
-        params: typing.Dict[str, typing.Union[int, None]] = {
-            "limit": limit,
-            "offset": offset,
-        }
-        # Filter out None values to avoid sending them
-        clean_params: typing.Dict[str, int] = {
-            k: v for k, v in params.items() if v is not None
-        }
-        response: CurationSetListItemResponseSchema = await self.api_call.get(
-            self._items_path,
-            as_json=True,
-            entity_type=CurationSetListItemResponseSchema,
-            params=clean_params or None,
-        )
-        return response
+        return await self.items.retrieve(limit=limit, offset=offset)
 
     async def get_item(self, item_id: str) -> CurationItemSchema:
         """
@@ -167,32 +146,24 @@ class AsyncCurationSet:
         Returns:
             CurationItemSchema: The item schema.
         """
-        response: CurationItemSchema = await self.api_call.get(
-            "/".join([self._items_path, item_id]),
-            as_json=True,
-            entity_type=CurationItemSchema,
-        )
-        return response
+        return await self.items[item_id].retrieve()
 
     async def upsert_item(
-        self, item_id: str, item: CurationItemSchema
+        self,
+        item_id: str,
+        item: typing.Union[CurationItemSchema, CurationItemCreateSchema],
     ) -> CurationItemSchema:
         """
         Create or update an item in this curation set.
 
         Args:
             item_id (str): The ID of the item.
-            item (CurationItemSchema): The item schema.
+            item (Union[CurationItemSchema, CurationItemCreateSchema]): The item schema.
 
         Returns:
             CurationItemSchema: The created or updated item.
         """
-        response: CurationItemSchema = await self.api_call.put(
-            "/".join([self._items_path, item_id]),
-            body=item,
-            entity_type=CurationItemSchema,
-        )
-        return response
+        return await self.items[item_id].upsert(item)
 
     async def delete_item(self, item_id: str) -> CurationItemDeleteSchema:
         """
@@ -204,8 +175,4 @@ class AsyncCurationSet:
         Returns:
             CurationItemDeleteSchema: The deletion response.
         """
-        response: CurationItemDeleteSchema = await self.api_call.delete(
-            "/".join([self._items_path, item_id]),
-            entity_type=CurationItemDeleteSchema,
-        )
-        return response
+        return await self.items[item_id].delete()
