@@ -42,6 +42,40 @@ if __name__ == "__main__":
 
 See `examples/async_collection_operations.py` for a fuller async walkthrough.
 
+## Streaming document exports
+
+`documents.export()` loads the whole export into memory. `documents.export_stream()` reads it as it arrives:
+
+```python
+with client.collections["books"].documents.export_stream({"batch_size": 500}) as stream:
+    for line in stream:  # str, without the line feed
+        document = json.loads(line)
+
+with client.collections["books"].documents.export_stream() as stream, open("books.jsonl", "wb") as file:
+    for chunk in stream.iter_bytes():  # decoded bytes
+        file.write(chunk)
+```
+
+With `AsyncClient`, await the call and use `async with` and `async for`, with `stream.aiter_bytes()` for the bytes:
+
+```python
+async with await client.collections["books"].documents.export_stream() as stream:
+    async for line in stream:
+        document = json.loads(line)
+```
+
+A stream can be read once, either as lines or as bytes. Keep these in mind:
+
+- **Always close the stream**, ideally with a context manager. With `max_concurrent_requests` set, a stream that is abandoned before its end permanently uses up one of the open export places below.
+- **A failed export has to be restarted.** Nodes are only retried until the response headers arrive. After that, errors such as `httpx.RemoteProtocolError` or `httpx.ReadTimeout` are raised as they are, and exports cannot resume from where they stopped.
+- **Keep reading.** If your code stops reading for about 60 seconds, the server drops the connection. `stream_read_timeout_seconds` (default 60) separately limits how long the client waits for the server's next chunk.
+- **Lines are raw.** They are not parsed, and the server could write an error message into the body after a successful status, so a line is not guaranteed to be a document.
+- **Exports are uncompressed by default.** The server compresses on the thread that handles all other requests, which delays them, especially with a large `batch_size`. Pass `compress=True` if bandwidth matters more. An `Accept-Encoding` in `additional_headers` is always respected.
+
+With `max_concurrent_requests`, an export only takes a slot while it opens, so requests made while reading an export do not wait for it. To keep connections free for those requests, at most `max_connections - max_concurrent_requests` exports can be open at once. If that is not positive, one export is still allowed, and it can leave a request short of a connection, so keep `max_concurrent_requests` below `max_connections`. Further exports wait for a place, so opening an export inside another one can wait forever when no place is free. The limit does not apply to an `http_client` you pass in, because its pool size is unknown.
+
+If your application cancels many requests, prefer [httpx2](#using-httpx2), which fixes a connection pool leak that cancellation can trigger in httpx.
+
 ## Using httpx2
 
 The client sends requests with [httpx](https://www.python-httpx.org/) by default. On Python 3.10+ you can pass an [httpx2](https://github.com/pydantic/httpx2) client instead. httpx2 is Pydantic's maintained continuation of httpx, and it fixes a connection pool leak in httpcore ([encode/httpcore#1093](https://github.com/encode/httpcore/issues/1093)) that can leave an `AsyncClient` failing every request with `PoolTimeout` under load.
