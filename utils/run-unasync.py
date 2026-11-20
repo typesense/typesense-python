@@ -41,6 +41,8 @@ def collect_class_replacements(source_dir: Path) -> dict[str, str]:
     # ``AsyncGenerator`` takes two type arguments, but ``Generator`` needs three
     # before Python 3.13.
     replacements["Generator[MessageChunk, None]"] = "Generator[MessageChunk, None, None]"
+    # Sync stream openers return the stream itself.
+    replacements["typing.Awaitable[TStream]"] = "TStream"
     return replacements
 
 

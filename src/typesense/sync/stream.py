@@ -1,5 +1,5 @@
 """
-Streamed conversational search responses.
+Streamed conversational search responses and document exports.
 
 With ``conversation_stream`` enabled, Typesense sends the LLM's answer as
 server-sent events while it is generated, then the full search response:
@@ -11,14 +11,19 @@ server-sent events while it is generated, then the full search response:
 
 ``SearchStream`` yields the answer pieces as ``MessageChunk`` dicts and keeps
 the final event as the search response, returned by ``get_final_response``.
+
+``ExportStream`` reads a document export, one JSONL line or one chunk of bytes
+at a time, so that a large collection never has to fit in memory.
 """
 
 import sys
+from collections import deque
 from contextlib import ExitStack
 from types import TracebackType
 
 from typesense.exceptions import TypesenseClientError
 from typesense.http_backend import ResponseType
+from typesense.jsonl import JSONLSplitter
 from typesense.sse import SSEDecoder, ServerSentEvent, iter_events
 from typesense.types.document import MessageChunk, StreamConfig, StreamConfigBuilder
 
@@ -30,6 +35,12 @@ else:
 TFinal = typing.TypeVar("TFinal")
 
 _DONE = "[DONE]"
+
+_EXPORT_CLOSED = "This export stream is closed."
+_EXPORT_FAILED = "This export stream failed while reading. Start a new export."
+_EXPORT_CLAIMED = (
+    "This export stream is already being read. Read its lines or its bytes, not both."
+)
 
 
 class SearchStream(typing.Generic[TFinal]):
@@ -166,6 +177,191 @@ class SearchStream(typing.Generic[TFinal]):
         message = "The stream ended before the search response arrived."
         remainder = self._decoder.remainder.strip()
         return f"{message} {remainder}" if remainder else message
+
+
+class ExportChunks:
+    """
+    The decoded bytes of an export, returned by ``ExportStream.iter_bytes``.
+
+    An httpx iterator simply ends once it has been closed or has failed, which would
+    make a partial export look complete. Reading from this one raises instead.
+    """
+
+    def __init__(
+        self,
+        chunks: typing.Iterator[bytes],
+        exit_stack: ExitStack,
+    ) -> None:
+        """
+        Initialize the iterator.
+
+        Args:
+            chunks: The response's decoded bytes. Holding on to this iterator
+                matters, because dropping it closes the connection.
+            exit_stack (ExitStack): Closes the response and gives up the
+                export's place once the body has ended or failed.
+        """
+        self._chunks = chunks
+        self._exit_stack = exit_stack
+        self._unreadable: typing.Optional[str] = None
+
+    def __iter__(self) -> typing.Self:
+        """Return the iterator itself; it can be iterated only once."""
+        return self
+
+    def __next__(self) -> bytes:
+        """Return the next chunk of the body."""
+        self._raise_if_unreadable()
+        try:
+            return self._chunks.__next__()
+        except BaseException as error:
+            if isinstance(error, Exception):
+                # Closing the stream ends or breaks a read that is in progress.
+                self._raise_if_unreadable()
+            if isinstance(error, StopIteration):
+                self._exit_stack.close()
+            else:
+                self._fail()
+            raise
+
+    def _fail(self) -> None:
+        """Make further reads raise, and give up the export's place."""
+        self._unreadable = self._unreadable or _EXPORT_FAILED
+        self._exit_stack.close()
+
+    def _mark_closed(self) -> None:
+        """Make further reads raise."""
+        self._unreadable = _EXPORT_CLOSED
+
+    def _raise_if_unreadable(self) -> None:
+        """Raise if the stream was closed or a read has failed."""
+        if self._unreadable is not None:
+            raise TypesenseClientError(self._unreadable)
+
+
+class ExportStream:
+    """
+    An open document export.
+
+    Iterate over it for the raw JSONL lines, as ``str`` without the line feed, or
+    call ``iter_bytes`` for the decoded bytes. An export can be read only one of
+    these ways, and only once. Use it as a context manager, or call ``close``:
+    a stream abandoned before its end keeps its place among the open exports.
+
+    Errors while reading are raised as they are, from httpx or httpx2, and nothing
+    is retried. A failed export has to be started again.
+
+    Attributes:
+        response (httpx.Response | httpx2.Response): The underlying response.
+    """
+
+    def __init__(
+        self,
+        response: ResponseType,
+        exit_stack: ExitStack,
+    ) -> None:
+        """
+        Initialize the stream.
+
+        Args:
+            response (httpx.Response | httpx2.Response): A successful response
+                opened with ``stream=True``.
+            exit_stack (ExitStack): Closes the response and gives up the
+                export's place when the stream is closed.
+        """
+        self.response = response
+        self._exit_stack = exit_stack
+        self._closed = False
+        self._chunks: typing.Optional[ExportChunks] = None
+        self._line_chunks: typing.Optional[ExportChunks] = None
+        self._splitter = JSONLSplitter()
+        self._lines: typing.Deque[bytes] = deque()
+
+    def __iter__(self) -> typing.Self:
+        """Start reading lines, or carry on from the last line read."""
+        self._claim_lines()
+        return self
+
+    def __next__(self) -> str:
+        """Return the next line, without its line feed."""
+        chunks = self._claim_lines()
+        while not self._lines:
+            try:
+                chunk = chunks.__next__()
+            except StopIteration:
+                # Only a complete body gets here, so this is a whole last line.
+                self._lines.extend(self._splitter.flush())
+                if not self._lines:
+                    raise
+            else:
+                self._lines.extend(self._splitter.feed(chunk))
+        line = self._lines.popleft()
+        try:
+            return line.decode("utf-8")
+        except UnicodeDecodeError:
+            # Dropping the lines already read makes every further read raise.
+            self._lines.clear()
+            chunks._fail()
+            raise
+
+    def __enter__(self) -> typing.Self:
+        """Enter the context manager."""
+        return self
+
+    def __exit__(
+        self,
+        exc_type: typing.Optional[typing.Type[BaseException]],
+        exc_val: typing.Optional[BaseException],
+        exc_tb: typing.Optional[TracebackType],
+    ) -> None:
+        """Close the stream."""
+        self.close()
+
+    def iter_bytes(
+        self,
+        chunk_size: typing.Optional[int] = None,
+    ) -> ExportChunks:
+        """
+        Read the export as bytes, for example to write it to a file.
+
+        Args:
+            chunk_size (int | None): The size of each chunk. Defaults to the sizes
+                the data arrives in.
+
+        Returns:
+            ExportChunks: The decoded bytes of the export.
+
+        Raises:
+            TypesenseClientError: If the stream is closed or already being read.
+        """
+        return self._claim_chunks(chunk_size)
+
+    def close(self) -> None:
+        """Close the response without reading the rest of it. Safe to call twice."""
+        self._closed = True
+        if self._chunks is not None:
+            self._chunks._mark_closed()
+        self._exit_stack.close()
+
+    def _claim_lines(self) -> ExportChunks:
+        """Return the chunks that lines are read from."""
+        if self._closed:
+            raise TypesenseClientError(_EXPORT_CLOSED)
+        if self._line_chunks is None:
+            self._line_chunks = self._claim_chunks(None)
+        return self._line_chunks
+
+    def _claim_chunks(self, chunk_size: typing.Optional[int]) -> ExportChunks:
+        """Start reading the body, which can be done only once."""
+        if self._closed:
+            raise TypesenseClientError(_EXPORT_CLOSED)
+        if self._chunks is not None:
+            raise TypesenseClientError(_EXPORT_CLAIMED)
+        self._chunks = ExportChunks(
+            self.response.iter_bytes(chunk_size),
+            self._exit_stack,
+        )
+        return self._chunks
 
 
 def resolve_stream_config(

@@ -14,6 +14,10 @@ else:
 
 SEARCH_URL: typing.Final = "http://nearest:8108/collections/books/documents/search"
 MULTI_SEARCH_URL: typing.Final = "http://nearest:8108/multi_search"
+COLLECTION_PATH: typing.Final = "/collections/books"
+COLLECTION_URL: typing.Final = f"http://nearest:8108{COLLECTION_PATH}"
+EXPORT_PATH: typing.Final = "/collections/books/documents/export"
+EXPORT_URL: typing.Final = f"http://nearest:8108{EXPORT_PATH}"
 
 CONVERSATION_ID: typing.Final = "6f1c0e5a"
 
