@@ -316,11 +316,13 @@ class DocumentExportParameters(typing.TypedDict):
       filter_by (str): Filter to apply to documents.
       include_fields (str): Fields to include in the exported documents.
       exclude_fields (str): Fields to exclude from the exported documents.
+      batch_size (int): How many documents the server reads at a time.
     """
 
     filter_by: typing.NotRequired[str]
     include_fields: typing.NotRequired[str]
     exclude_fields: typing.NotRequired[str]
+    batch_size: typing.NotRequired[int]
 
 
 class RequiredSearchParameters(typing.TypedDict):

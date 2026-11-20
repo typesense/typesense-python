@@ -22,6 +22,7 @@ import sys
 from .api_call import ApiCall
 from .document import Document
 from .stream import (
+    ExportStream,
     SearchStream,
     consume_stream,
     notify_error,
@@ -361,6 +362,39 @@ class Documents(typing.Generic[TDoc]):
             entity_type=str,
         )
         return api_response
+
+    def export_stream(
+        self,
+        export_parameters: typing.Union[DocumentExportParameters, None] = None,
+        *,
+        compress: bool = False,
+    ) -> ExportStream:
+        """
+        Export documents from the collection without loading them all into memory.
+
+        Iterate over the returned stream for the raw JSONL lines, or call its
+        ``iter_bytes`` for the bytes. Use the stream as a context manager so the
+        connection is released if you stop early.
+
+        Failing nodes are retried only until the response headers arrive. After
+        that, errors are raised from httpx or httpx2 while reading, and the export
+        has to be started again.
+
+        Args:
+            export_parameters (Union[DocumentExportParameters, None], optional):
+                Parameters for the export operation.
+            compress (bool): Whether to let the server compress the response. This
+                saves bandwidth, but the server compresses on the thread that
+                handles all other requests, which delays them. Defaults to False.
+
+        Returns:
+            ExportStream: The open stream.
+        """
+        return self.api_call.export_stream(
+            self._endpoint_path("export"),
+            params=export_parameters,
+            compress=compress,
+        )
 
     def search(self, search_parameters: SearchParameters) -> SearchResponse[TDoc]:
         """

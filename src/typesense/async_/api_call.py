@@ -59,7 +59,7 @@ from typesense.http_backend import (
     backend_errors,
     verify_option,
 )
-from .stream import AsyncSearchStream
+from .stream import AsyncExportStream, AsyncSearchStream
 from typesense.node_manager import NodeManager
 from typesense.request_handler import RequestHandler, _QueryParams
 
@@ -69,6 +69,7 @@ else:
     import typing_extensions as typing
 
 TEntityDict = typing.TypeVar("TEntityDict")
+TStream = typing.TypeVar("TStream")
 TParams = typing.TypeVar("TParams", bound=typing.Mapping[str, object])
 TBody = typing.TypeVar(
     "TBody", bound=typing.Union[str, bytes, typing.Mapping[str, typing.Any]]
@@ -184,6 +185,7 @@ class AsyncApiCall:
             config.max_concurrent_requests,
         )
         self._owns_client = http_client is None
+        self._export_limit = AsyncConcurrencyLimit(self._max_open_exports(config))
         if http_client is not None:
             if not isinstance(http_client, ASYNC_CLIENT_TYPES):
                 raise TypeError(
@@ -202,6 +204,25 @@ class AsyncApiCall:
             ),
             verify=verify_option(config.verify),
         )
+
+    def _max_open_exports(self, config: Configuration) -> typing.Optional[int]:
+        """
+        Return how many exports may be open at once, or ``None`` for no limit.
+
+        An open export keeps a connection but not a concurrency slot, so exports
+        get the connections the slots cannot use. There is no limit without
+        ``max_concurrent_requests``, or when the pool is unlimited or belongs to a
+        client passed in by the caller. When the slots alone can fill the pool, one
+        export at a time is still allowed, which can leave a request short of a
+        connection.
+        """
+        max_concurrent_requests = config.max_concurrent_requests
+        max_connections = config.max_connections
+        if max_concurrent_requests is None or max_connections is None:
+            return None
+        if not self._owns_client:
+            return None
+        return max(max_connections - max_concurrent_requests, 1)
 
     async def __aenter__(self) -> "AsyncApiCall":
         """Async context manager entry."""
@@ -588,22 +609,62 @@ class AsyncApiCall:
             AsyncSearchStream[TEntityDict]: The open stream.
         """
         return await self._execute_stream_request(
-            method,
             endpoint,
-            entity_type,
+            lambda node, url, request_kwargs: self._open_search_stream(
+                method,
+                node,
+                url,
+                entity_type,
+                **request_kwargs,
+            ),
             params=params,
             data=body,
         )
 
+    async def export_stream(
+        self,
+        endpoint: str,
+        params: typing.Union[TParams, None] = None,
+        *,
+        compress: bool = False,
+    ) -> AsyncExportStream:
+        """
+        Open a document export as a stream.
+
+        Failing nodes are retried like any other request until the response
+        headers arrive. Errors after that are raised while reading the stream and
+        are not retried, since part of the export has already been read.
+
+        Args:
+            endpoint (str): The export endpoint to call.
+            params (Union[TParams, None], optional): Query parameters for the request.
+            compress (bool): Whether to let the server compress the response.
+
+        Returns:
+            AsyncExportStream: The open stream.
+        """
+        return await self._execute_stream_request(
+            endpoint,
+            lambda node, url, request_kwargs: self._open_export_stream(
+                node,
+                url,
+                compress,
+                **request_kwargs,
+            ),
+            params=params,
+        )
+
     async def _execute_stream_request(
         self,
-        method: str,
         endpoint: str,
-        entity_type: typing.Type[TEntityDict],
+        open_stream: typing.Callable[
+            [Node, str, SessionFunctionKwargs[TParams, TBody]],
+            typing.Awaitable[TStream],
+        ],
         last_exception: typing.Union[None, Exception] = None,
         num_retries: int = 0,
         **kwargs: typing.Unpack[SessionFunctionKwargs[TParams, TBody]],
-    ) -> AsyncSearchStream[TEntityDict]:
+    ) -> TStream:
         """Open a streaming request, failing over to other nodes like ``_execute_request``."""
         if num_retries > self.config.num_retries:
             if last_exception:
@@ -613,9 +674,7 @@ class AsyncApiCall:
         node, url, request_kwargs = self._prepare_request_params(endpoint, **kwargs)
 
         try:
-            return await self._open_stream(
-                method, node, url, entity_type, **request_kwargs
-            )
+            return await open_stream(node, url, request_kwargs)
         except _CLIENT_ERRORS:
             raise
         except _SERVER_ERRORS as server_error:
@@ -623,15 +682,14 @@ class AsyncApiCall:
             if num_retries < self.config.num_retries:
                 await asyncio.sleep(self.config.retry_interval_seconds)
             return await self._execute_stream_request(
-                method,
                 endpoint,
-                entity_type,
+                open_stream,
                 last_exception=server_error,
                 num_retries=num_retries + 1,
                 **kwargs,
             )
 
-    async def _open_stream(
+    async def _open_search_stream(
         self,
         method: str,
         node: Node,
@@ -640,15 +698,79 @@ class AsyncApiCall:
         **kwargs: typing.Unpack[SessionFunctionKwargs[TParams, TBody]],
     ) -> AsyncSearchStream[TEntityDict]:
         """
-        Send a streaming request to `node` and return the stream once headers arrive.
+        Send a streaming search to `node` and return the stream once headers arrive.
 
         The stream holds a concurrency slot until it is closed. Reads use
         ``stream_read_timeout_seconds``, since the first piece of an answer only
         arrives once the LLM starts generating it.
         """
         request_kwargs = self.request_handler.build_request_kwargs(**kwargs)
-        headers = request_kwargs.get("headers", {})
-        headers["Accept"] = "text/event-stream"
+        request_kwargs.setdefault("headers", {})["Accept"] = "text/event-stream"
+        response_context = self._stream_context(method, url, request_kwargs)
+
+        # Owns the concurrency slot and the response until the stream is closed.
+        exit_stack = AsyncExitStack()
+        await self._concurrency_limit.acquire()
+        exit_stack.callback(self._concurrency_limit.release)
+        try:
+            response = await self._enter_stream(exit_stack, response_context)
+        except BaseException:
+            await exit_stack.aclose()
+            raise
+
+        self.node_manager.set_node_health(node, is_healthy=True)
+        return AsyncSearchStream(response, exit_stack)
+
+    async def _open_export_stream(
+        self,
+        node: Node,
+        url: str,
+        compress: bool,
+        **kwargs: typing.Unpack[SessionFunctionKwargs[TParams, TBody]],
+    ) -> AsyncExportStream:
+        """
+        Send an export request to `node` and return the stream once headers arrive.
+
+        The concurrency slot is held only while opening, so that a request made
+        while reading the export does not have to wait for the export to finish.
+        The stream keeps its place among the open exports until it is closed.
+
+        Unless ``compress`` is set the export is requested uncompressed, because
+        the server compresses on the thread that handles every other request. An
+        ``Accept-Encoding`` in ``additional_headers`` is left as it is.
+        """
+        request_kwargs = self.request_handler.build_request_kwargs(**kwargs)
+        headers = request_kwargs.setdefault("headers", {})
+        if not compress and "accept-encoding" not in map(str.lower, headers):
+            headers["Accept-Encoding"] = "identity"
+        response_context = self._stream_context("GET", url, request_kwargs)
+
+        # Closes the response, then gives back the export's place.
+        export = AsyncExitStack()
+        await self._export_limit.acquire()
+        export.callback(self._export_limit.release)
+        try:
+            async with self._concurrency_limit:
+                response = await self._enter_stream(export, response_context)
+        except BaseException:
+            await export.aclose()
+            raise
+
+        # A single entry, so that a second close cannot give back the place while
+        # the first is still closing the response.
+        exit_stack = AsyncExitStack()
+        await exit_stack.enter_async_context(export)
+
+        self.node_manager.set_node_health(node, is_healthy=True)
+        return AsyncExportStream(response, exit_stack)
+
+    def _stream_context(
+        self,
+        method: str,
+        url: str,
+        request_kwargs: SessionFunctionKwargs[TParams, TBody],
+    ) -> typing.AsyncContextManager[ResponseType]:
+        """Return the context manager that sends a streaming request."""
         timeout = self._client.timeout
         # Annotated so httpx and httpx2 responses unify as ``ResponseType``.
         response_context: typing.AsyncContextManager[ResponseType] = (
@@ -660,7 +782,7 @@ class AsyncApiCall:
                     request_kwargs.get("params"),
                 ),
                 content=request_kwargs.get("content"),
-                headers=headers,
+                headers=request_kwargs.get("headers"),
                 timeout=(
                     timeout.connect,
                     self.config.stream_read_timeout_seconds,
@@ -669,22 +791,19 @@ class AsyncApiCall:
                 ),
             )
         )
+        return response_context
 
-        # Owns the concurrency slot and the response until the stream is closed.
-        exit_stack = AsyncExitStack()
-        await self._concurrency_limit.acquire()
-        exit_stack.callback(self._concurrency_limit.release)
-        try:
-            response = await exit_stack.enter_async_context(response_context)
-            if response.status_code < 200 or response.status_code >= 300:
-                await response.aread()
-                self.request_handler.raise_for_status(response)
-        except BaseException:
-            await exit_stack.aclose()
-            raise
-
-        self.node_manager.set_node_health(node, is_healthy=True)
-        return AsyncSearchStream(response, exit_stack)
+    async def _enter_stream(
+        self,
+        exit_stack: AsyncExitStack,
+        response_context: typing.AsyncContextManager[ResponseType],
+    ) -> ResponseType:
+        """Send the request, raising the matching error for a non-2xx response."""
+        response = await exit_stack.enter_async_context(response_context)
+        if response.status_code < 200 or response.status_code >= 300:
+            await response.aread()
+            self.request_handler.raise_for_status(response)
+        return response
 
     def _prepare_request_params(
         self,
