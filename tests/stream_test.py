@@ -2,6 +2,7 @@
 
 import json
 import sys
+import threading
 
 import httpx
 import pytest
@@ -262,6 +263,33 @@ def test_closing_early_releases_the_connection_and_slot(
     assert stream.response.is_closed
     with pytest.raises(TypesenseClientError, match="closed before"):
         stream.get_final_response()
+
+
+def test_search_stream_holds_its_slot_until_closed(
+    fake_config: Configuration,
+) -> None:
+    """Test that a request waits for an open search stream at the limit."""
+    fake_config.max_concurrent_requests = 1
+    api_call = ApiCall(fake_config)
+    documents = Documents(api_call, "books")
+    finished = threading.Event()
+
+    def request() -> None:
+        api_call.get("/collections/books", dict)
+        finished.set()
+
+    with respx.mock:
+        respx.get(SEARCH_URL).mock(return_value=sse_response())
+        respx.get("http://nearest:8108/collections/books").mock(
+            return_value=httpx.Response(200, json={"name": "books"}),
+        )
+
+        stream = documents.search_stream(SEARCH_PARAMS)
+        threading.Thread(target=request, daemon=True).start()
+        assert not finished.wait(0.05)
+
+        stream.close()
+        assert finished.wait(2)
 
 
 def test_multi_search_stream_sends_conversation_params_in_query(

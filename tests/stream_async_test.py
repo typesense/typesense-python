@@ -1,5 +1,6 @@
 """Tests for streamed conversational search with the async client."""
 
+import asyncio
 import json
 import sys
 
@@ -280,6 +281,29 @@ async def test_closing_early_releases_the_connection_and_slot(
     assert stream.response.is_closed
     with pytest.raises(TypesenseClientError, match="closed before"):
         await stream.get_final_response()
+
+
+async def test_search_stream_holds_its_slot_until_closed(
+    fake_config: Configuration,
+) -> None:
+    """Test that a request waits for an open search stream at the limit."""
+    fake_config.max_concurrent_requests = 1
+    api_call = AsyncApiCall(fake_config)
+    documents = AsyncDocuments(api_call, "books")
+
+    with respx.mock:
+        respx.get(SEARCH_URL).mock(return_value=sse_response())
+        respx.get("http://nearest:8108/collections/books").mock(
+            return_value=httpx.Response(200, json={"name": "books"}),
+        )
+
+        stream = await documents.search_stream(SEARCH_PARAMS)
+        request = asyncio.ensure_future(api_call.get("/collections/books", dict))
+        await asyncio.sleep(0.02)
+        assert not request.done()
+
+        await stream.aclose()
+        assert await asyncio.wait_for(request, 1) == {"name": "books"}
 
 
 async def test_multi_search_stream_sends_conversation_params_in_query(
