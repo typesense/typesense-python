@@ -735,6 +735,55 @@ def test_an_export_waiting_for_a_place_holds_no_slot(
         waiting.result().close()
 
 
+def test_an_export_picks_its_node_after_waiting_for_a_place(
+    fake_config: Configuration,
+) -> None:
+    """Test that a node marked unhealthy during the wait is not used."""
+    hosts: typing.List[str] = []
+
+    def respond(request: httpx.Request) -> httpx.Response:
+        hosts.append(request.url.host)
+        return httpx.Response(200, content=BODY)
+
+    documents = limited_documents(fake_config, 2, 1)
+    assert fake_config.nearest_node is not None
+
+    with respx.mock:
+        respx.get(path=EXPORT_PATH).mock(side_effect=respond)
+        first = open_export(documents)
+        waiting = Background(documents.export_stream)
+        waiting.assert_waiting()
+
+        documents.api_call.node_manager.set_node_health(
+            fake_config.nearest_node,
+            is_healthy=False,
+        )
+        first.close()
+        waiting.result().close()
+
+    assert hosts == ["nearest", "node0"]
+
+
+def test_failing_over_keeps_the_place(fake_config: Configuration) -> None:
+    """Test that an export retrying another node is not overtaken by a later one."""
+    documents = limited_documents(fake_config, 2, 1)
+    later: typing.List[Background[ExportStream]] = []
+
+    def respond(request: httpx.Request) -> httpx.Response:
+        if not later:
+            later.append(Background(documents.export_stream))
+            return httpx.Response(503, text="Down")
+        return httpx.Response(200, content=BODY)
+
+    with respx.mock:
+        respx.get(path=EXPORT_PATH).mock(side_effect=respond)
+        stream = open_export(documents)
+        later[0].assert_waiting()
+
+        stream.close()
+        later[0].result().close()
+
+
 def test_closing_twice_gives_back_one_place(fake_config: Configuration) -> None:
     """Test that a second close cannot raise the limit."""
     documents = limited_documents(fake_config, 3, 2)
@@ -901,6 +950,42 @@ def test_a_failed_open_gives_back_its_slot_and_place(
 
         mock_export()
         open_export(documents).close()
+
+
+def test_a_failed_attempt_closes_its_response(fake_config: Configuration) -> None:
+    """Test that a response which broke off while opening is not kept by the export."""
+    bodies: typing.List["BrokenBody"] = []
+
+    class BrokenBody(httpx.SyncByteStream):
+        """An error body that breaks off while it is being read."""
+
+        def __init__(self) -> None:
+            """Start open."""
+            self.closed = False
+
+        def __iter__(self) -> typing.Iterator[bytes]:
+            """Send part of the body, then fail."""
+            yield b"Do"
+            raise httpx.ReadError("connection reset")
+
+        def close(self) -> None:
+            """Remember that the response was closed."""
+            self.closed = True
+
+    def respond(request: httpx.Request) -> httpx.Response:
+        if bodies:
+            return httpx.Response(200, content=BODY)
+        bodies.append(BrokenBody())
+        return httpx.Response(503, stream=bodies[0])
+
+    documents = limited_documents(fake_config, 2, 1)
+
+    with respx.mock:
+        respx.get(path=EXPORT_PATH).mock(side_effect=respond)
+        stream = open_export(documents)
+
+        assert bodies[0].closed
+        stream.close()
 
 
 def test_export_stream_through_the_default_client(

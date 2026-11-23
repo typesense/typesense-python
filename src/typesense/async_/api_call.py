@@ -631,9 +631,11 @@ class AsyncApiCall:
         """
         Open a document export as a stream.
 
-        Failing nodes are retried like any other request until the response
-        headers arrive. Errors after that are raised while reading the stream and
-        are not retried, since part of the export has already been read.
+        The export takes its place among the open exports before a node is chosen,
+        and keeps it until the stream is closed or its body ends or fails. Failing
+        nodes are retried like any other request until the response headers
+        arrive. Errors after that are raised while reading the stream and are not
+        retried, since part of the export has already been read.
 
         Args:
             endpoint (str): The export endpoint to call.
@@ -643,16 +645,31 @@ class AsyncApiCall:
         Returns:
             AsyncExportStream: The open stream.
         """
-        return await self._execute_stream_request(
-            endpoint,
-            lambda node, url, request_kwargs: self._open_export_stream(
-                node,
-                url,
-                compress,
-                **request_kwargs,
-            ),
-            params=params,
-        )
+        # Closes the response, then gives back the export's place.
+        export = AsyncExitStack()
+        await self._export_limit.acquire()
+        export.callback(self._export_limit.release)
+        try:
+            response = await self._execute_stream_request(
+                endpoint,
+                lambda node, url, request_kwargs: self._open_export_stream(
+                    export,
+                    node,
+                    url,
+                    compress,
+                    **request_kwargs,
+                ),
+                params=params,
+            )
+        except BaseException:
+            await export.aclose()
+            raise
+
+        # A single entry, so that a second close cannot give back the place while
+        # the first is still closing the response.
+        exit_stack = AsyncExitStack()
+        await exit_stack.enter_async_context(export)
+        return AsyncExportStream(response, exit_stack)
 
     async def _execute_stream_request(
         self,
@@ -723,17 +740,18 @@ class AsyncApiCall:
 
     async def _open_export_stream(
         self,
+        export: AsyncExitStack,
         node: Node,
         url: str,
         compress: bool,
         **kwargs: typing.Unpack[SessionFunctionKwargs[TParams, TBody]],
-    ) -> AsyncExportStream:
+    ) -> ResponseType:
         """
-        Send an export request to `node` and return the stream once headers arrive.
+        Send an export request to `node` and return the response once headers arrive.
 
-        The concurrency slot is held only while opening, so that a request made
-        while reading the export does not have to wait for the export to finish.
-        The stream keeps its place among the open exports until it is closed.
+        The response is added to ``export``, which holds the export's place. The
+        concurrency slot is held only while opening, so that a request made while
+        reading the export does not have to wait for the export to finish.
 
         Unless ``compress`` is set the export is requested uncompressed, because
         the server compresses on the thread that handles every other request. An
@@ -745,24 +763,19 @@ class AsyncApiCall:
             headers["Accept-Encoding"] = "identity"
         response_context = self._stream_context("GET", url, request_kwargs)
 
-        # Closes the response, then gives back the export's place.
-        export = AsyncExitStack()
-        await self._export_limit.acquire()
-        export.callback(self._export_limit.release)
+        # Kept apart from ``export`` until the request succeeds, so that a failed
+        # attempt closes its response without giving back the place.
+        response_stack = AsyncExitStack()
         try:
             async with self._concurrency_limit:
-                response = await self._enter_stream(export, response_context)
+                response = await self._enter_stream(response_stack, response_context)
         except BaseException:
-            await export.aclose()
+            await response_stack.aclose()
             raise
-
-        # A single entry, so that a second close cannot give back the place while
-        # the first is still closing the response.
-        exit_stack = AsyncExitStack()
-        await exit_stack.enter_async_context(export)
+        await export.enter_async_context(response_stack)
 
         self.node_manager.set_node_health(node, is_healthy=True)
-        return AsyncExportStream(response, exit_stack)
+        return response
 
     def _stream_context(
         self,

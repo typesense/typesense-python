@@ -939,6 +939,44 @@ async def test_a_failed_open_gives_back_its_slot_and_place(
         await (await open_export(documents)).aclose()
 
 
+async def test_a_failed_attempt_closes_its_response(
+    fake_config: Configuration,
+) -> None:
+    """Test that a response which broke off while opening is not kept by the export."""
+    bodies: typing.List["BrokenBody"] = []
+
+    class BrokenBody(httpx.AsyncByteStream):
+        """An error body that breaks off while it is being read."""
+
+        def __init__(self) -> None:
+            """Start open."""
+            self.closed = False
+
+        async def __aiter__(self) -> typing.AsyncIterator[bytes]:
+            """Send part of the body, then fail."""
+            yield b"Do"
+            raise httpx.ReadError("connection reset")
+
+        async def aclose(self) -> None:
+            """Remember that the response was closed."""
+            self.closed = True
+
+    def respond(request: httpx.Request) -> httpx.Response:
+        if bodies:
+            return httpx.Response(200, content=BODY)
+        bodies.append(BrokenBody())
+        return httpx.Response(503, stream=bodies[0])
+
+    documents = limited_documents(fake_config, 2, 1)
+
+    with respx.mock:
+        respx.get(path=EXPORT_PATH).mock(side_effect=respond)
+        stream = await open_export(documents)
+
+        assert bodies[0].closed
+        await stream.aclose()
+
+
 async def test_cancelling_while_waiting_for_a_place(
     fake_config: Configuration,
 ) -> None:
@@ -981,6 +1019,57 @@ async def test_an_export_waiting_for_a_place_holds_no_slot(
 
         await stream.aclose()
         await (await asyncio.wait_for(waiting, WAIT_SECONDS)).aclose()
+
+
+async def test_an_export_picks_its_node_after_waiting_for_a_place(
+    fake_config: Configuration,
+) -> None:
+    """Test that a node marked unhealthy during the wait is not used."""
+    hosts: typing.List[str] = []
+
+    def respond(request: httpx.Request) -> httpx.Response:
+        hosts.append(request.url.host)
+        return httpx.Response(200, content=BODY)
+
+    documents = limited_documents(fake_config, 2, 1)
+    assert fake_config.nearest_node is not None
+
+    with respx.mock:
+        respx.get(path=EXPORT_PATH).mock(side_effect=respond)
+        first = await open_export(documents)
+        waiting = asyncio.ensure_future(documents.export_stream())
+        await assert_waiting(waiting)
+
+        documents.api_call.node_manager.set_node_health(
+            fake_config.nearest_node,
+            is_healthy=False,
+        )
+        await first.aclose()
+        await (await asyncio.wait_for(waiting, WAIT_SECONDS)).aclose()
+
+    assert hosts == ["nearest", "node0"]
+
+
+async def test_failing_over_keeps_the_place(
+    fake_config: Configuration,
+) -> None:
+    """Test that an export retrying another node is not overtaken by a later one."""
+    documents = limited_documents(fake_config, 2, 1)
+    later: typing.List["asyncio.Future[AsyncExportStream]"] = []
+
+    def respond(request: httpx.Request) -> httpx.Response:
+        if not later:
+            later.append(asyncio.ensure_future(documents.export_stream()))
+            return httpx.Response(503, text="Down")
+        return httpx.Response(200, content=BODY)
+
+    with respx.mock:
+        respx.get(path=EXPORT_PATH).mock(side_effect=respond)
+        stream = await open_export(documents)
+        await assert_waiting(later[0])
+
+        await stream.aclose()
+        await (await asyncio.wait_for(later[0], WAIT_SECONDS)).aclose()
 
 
 async def test_cancelling_while_waiting_for_a_slot_gives_back_the_place(

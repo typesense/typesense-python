@@ -267,7 +267,7 @@ class ExportStream:
             response (httpx.Response | httpx2.Response): A successful response
                 opened with ``stream=True``.
             exit_stack (ExitStack): Closes the response and gives up the
-                export's place when the stream is closed.
+                export's place when the stream is closed or its body ends or fails.
         """
         self.response = response
         self._exit_stack = exit_stack
