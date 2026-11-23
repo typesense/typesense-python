@@ -211,10 +211,9 @@ class AsyncApiCall:
 
         An open export keeps a connection but not a concurrency slot, so exports
         get the connections the slots cannot use. There is no limit without
-        ``max_concurrent_requests``, or when the pool is unlimited or belongs to a
-        client passed in by the caller. When the slots alone can fill the pool, one
-        export at a time is still allowed, which can leave a request short of a
-        connection.
+        ``max_concurrent_requests``, when the pool is unlimited or belongs to a
+        client passed in by the caller, or when the slots alone can fill the pool,
+        which leaves no connection to keep free.
         """
         max_concurrent_requests = config.max_concurrent_requests
         max_connections = config.max_connections
@@ -222,7 +221,8 @@ class AsyncApiCall:
             return None
         if not self._owns_client:
             return None
-        return max(max_connections - max_concurrent_requests, 1)
+        spare_connections = max_connections - max_concurrent_requests
+        return spare_connections if spare_connections > 0 else None
 
     async def __aenter__(self) -> "AsyncApiCall":
         """Async context manager entry."""

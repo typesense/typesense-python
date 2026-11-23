@@ -742,7 +742,7 @@ async def test_chunks_arriving_during_close_are_the_last_ones(
 
 @pytest.mark.parametrize(
     ("max_connections", "max_concurrent_requests", "places"),
-    [(3, 2, 1), (5, 2, 3), (2, 2, 1), (1, 5, 1)],
+    [(3, 2, 1), (5, 2, 3)],
 )
 async def test_open_exports_are_limited(
     fake_config: Configuration,
@@ -750,7 +750,7 @@ async def test_open_exports_are_limited(
     max_concurrent_requests: int,
     places: int,
 ) -> None:
-    """Test the limit, including when the slots leave no room in the pool."""
+    """Test that open exports are limited to the connections the slots leave."""
     documents = limited_documents(fake_config, max_connections, max_concurrent_requests)
 
     with respx.mock:
@@ -828,6 +828,25 @@ async def test_exports_are_not_limited_without_a_concurrency_limit(
 ) -> None:
     """Test that the limit needs ``max_concurrent_requests``."""
     documents = limited_documents(fake_config, 1, None)
+
+    with respx.mock:
+        mock_export()
+        streams = [await open_export(documents) for _ in range(3)]
+        for stream in streams:
+            await stream.aclose()
+
+
+@pytest.mark.parametrize(
+    ("max_connections", "max_concurrent_requests"),
+    [(2, 2), (1, 5)],
+)
+async def test_exports_are_not_limited_when_the_slots_fill_the_pool(
+    fake_config: Configuration,
+    max_connections: int,
+    max_concurrent_requests: int,
+) -> None:
+    """Test that a limit that could keep no connection free is not applied."""
+    documents = limited_documents(fake_config, max_connections, max_concurrent_requests)
 
     with respx.mock:
         mock_export()
