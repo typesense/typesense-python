@@ -66,7 +66,7 @@ async with await client.collections["books"].documents.export_stream() as stream
 
 A stream can be read once, either as lines or as bytes. Keep these in mind:
 
-- **Always close the stream**, ideally with a context manager. With `max_concurrent_requests` set, a stream that is abandoned before its end permanently uses up one of the open export places below.
+- **Always close the stream**, ideally with a context manager. With `max_concurrent_requests` set, a stream that is abandoned before its end permanently uses up one of the open export places below. With the sync client, closing a stream from another thread does not interrupt a read in progress there: that read raises once `stream_read_timeout_seconds` runs out.
 - **A failed export has to be restarted.** Nodes are only retried until the response headers arrive. After that, errors such as `httpx.RemoteProtocolError` or `httpx.ReadTimeout` are raised as they are, and exports cannot resume from where they stopped.
 - **Keep reading.** If your code stops reading for about 60 seconds, the server drops the connection. `stream_read_timeout_seconds` (default 60) separately limits how long the client waits for the server's next chunk.
 - **Lines are raw.** They are not parsed, and the server could write an error message into the body after a successful status, so a line is not guaranteed to be a document.
