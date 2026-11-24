@@ -99,6 +99,22 @@ class DocumentWriteParameters(DirtyValuesParameters):
     action: typing.NotRequired[typing.Literal["create", "update", "upsert", "emplace"]]
 
 
+class DocumentImportWriteParameters(DocumentWriteParameters):
+    """
+    Parameters for [importing documents](https://typesense.org/docs/latest/api/documents.html#index-multiple-documents).
+
+    Attributes:
+      batch_size (int): How many documents the server processes at a time
+        (sent as the ``batch_size`` query parameter). The ``batch_size`` argument
+        of ``import_`` is different: it sets how many documents the client sends
+        in each request.
+      action (str): Action to perform on each document (see `DocumentWriteParameters`).
+      dirty_values (str): Handling of dirty values (see `DocumentWriteParameters`).
+    """
+
+    batch_size: typing.NotRequired[int]
+
+
 class UpdateByFilterParameters(typing.TypedDict):
     """
     Parameters for updating documents by filter.
@@ -198,7 +214,7 @@ ImportResponse: typing.TypeAlias = typing.Union[
 """Set of all possible responses after an import operation."""
 
 
-class DocumentImportParametersReturnId(DocumentWriteParameters):
+class DocumentImportParametersReturnId(DocumentImportWriteParameters):
     """
     Parameters for importing documents with return ID.
 
@@ -231,7 +247,7 @@ class DocumentImportParametersReturnId(DocumentWriteParameters):
     return_id: typing.Literal[True]
 
 
-class DocumentImportParametersReturnDoc(DocumentWriteParameters):
+class DocumentImportParametersReturnDoc(DocumentImportWriteParameters):
     """
     Parameters for importing documents with return document.
 
@@ -264,7 +280,7 @@ class DocumentImportParametersReturnDoc(DocumentWriteParameters):
     return_doc: typing.Literal[True]
 
 
-class DocumentImportParametersReturnDocAndId(DocumentWriteParameters):
+class DocumentImportParametersReturnDocAndId(DocumentImportWriteParameters):
     """
     Parameters for importing documents with return document and ID.
 
@@ -300,7 +316,7 @@ class DocumentImportParametersReturnDocAndId(DocumentWriteParameters):
 
 
 DocumentImportParameters: typing.TypeAlias = typing.Union[
-    DocumentWriteParameters,
+    DocumentImportWriteParameters,
     DocumentImportParametersReturnId,
     DocumentImportParametersReturnDoc,
     DocumentImportParametersReturnDocAndId,
