@@ -2,10 +2,10 @@
 HTTP backends the Typesense client can send requests with.
 
 The client builds an ``httpx`` client by default. Users can pass their own client
-instead, either from ``httpx`` or from ``httpx2`` (install ``typesense[httpx2]``,
-Python 3.10+). ``httpx2`` is Pydantic's maintained continuation of ``httpx``. It
-fixes a connection pool leak in ``httpcore`` (encode/httpcore#1093) that can leave
-an async client failing every request with ``PoolTimeout``.
+instead, either from ``httpx`` or from ``httpx2`` (install ``typesense[httpx2]``).
+``httpx2`` is Pydantic's maintained continuation of ``httpx``. It fixes a connection
+pool leak in ``httpcore`` (encode/httpcore#1093) that can leave an async client
+failing every request with ``PoolTimeout``.
 
 ``httpx2`` has the same API as ``httpx`` but its own classes, so every
 ``isinstance`` check and ``except`` clause has to cover both packages. This module
@@ -31,7 +31,7 @@ if typing.TYPE_CHECKING:
 def _import_httpx2() -> typing.Optional[ModuleType]:
     """Return the ``httpx2`` module, or ``None`` when it is not installed."""
     # ``import_module`` is typed as returning a module whether or not httpx2 is
-    # installed; a plain ``import`` is ``Any`` to mypy when it is missing (Python 3.9).
+    # installed; a plain ``import`` is ``Any`` to mypy when it is missing.
     try:
         return importlib.import_module("httpx2")
     except ImportError:
