@@ -211,10 +211,9 @@ class ApiCall:
 
         An open export keeps a connection but not a concurrency slot, so exports
         get the connections the slots cannot use. There is no limit without
-        ``max_concurrent_requests``, or when the pool is unlimited or belongs to a
-        client passed in by the caller. When the slots alone can fill the pool, one
-        export at a time is still allowed, which can leave a request short of a
-        connection.
+        ``max_concurrent_requests``, when the pool is unlimited or belongs to a
+        client passed in by the caller, or when the slots alone can fill the pool,
+        which leaves no connection to keep free.
         """
         max_concurrent_requests = config.max_concurrent_requests
         max_connections = config.max_connections
@@ -222,7 +221,8 @@ class ApiCall:
             return None
         if not self._owns_client:
             return None
-        return max(max_connections - max_concurrent_requests, 1)
+        spare_connections = max_connections - max_concurrent_requests
+        return spare_connections if spare_connections > 0 else None
 
     def __enter__(self) -> "ApiCall":
         """Async context manager entry."""
@@ -631,9 +631,11 @@ class ApiCall:
         """
         Open a document export as a stream.
 
-        Failing nodes are retried like any other request until the response
-        headers arrive. Errors after that are raised while reading the stream and
-        are not retried, since part of the export has already been read.
+        The export takes its place among the open exports before a node is chosen,
+        and keeps it until the stream is closed or its body ends or fails. Failing
+        nodes are retried like any other request until the response headers
+        arrive. Errors after that are raised while reading the stream and are not
+        retried, since part of the export has already been read.
 
         Args:
             endpoint (str): The export endpoint to call.
@@ -643,16 +645,31 @@ class ApiCall:
         Returns:
             ExportStream: The open stream.
         """
-        return self._execute_stream_request(
-            endpoint,
-            lambda node, url, request_kwargs: self._open_export_stream(
-                node,
-                url,
-                compress,
-                **request_kwargs,
-            ),
-            params=params,
-        )
+        # Closes the response, then gives back the export's place.
+        export = ExitStack()
+        self._export_limit.acquire()
+        export.callback(self._export_limit.release)
+        try:
+            response = self._execute_stream_request(
+                endpoint,
+                lambda node, url, request_kwargs: self._open_export_stream(
+                    export,
+                    node,
+                    url,
+                    compress,
+                    **request_kwargs,
+                ),
+                params=params,
+            )
+        except BaseException:
+            export.close()
+            raise
+
+        # A single entry, so that a second close cannot give back the place while
+        # the first is still closing the response.
+        exit_stack = ExitStack()
+        exit_stack.enter_context(export)
+        return ExportStream(response, exit_stack)
 
     def _execute_stream_request(
         self,
@@ -723,17 +740,18 @@ class ApiCall:
 
     def _open_export_stream(
         self,
+        export: ExitStack,
         node: Node,
         url: str,
         compress: bool,
         **kwargs: typing.Unpack[SessionFunctionKwargs[TParams, TBody]],
-    ) -> ExportStream:
+    ) -> ResponseType:
         """
-        Send an export request to `node` and return the stream once headers arrive.
+        Send an export request to `node` and return the response once headers arrive.
 
-        The concurrency slot is held only while opening, so that a request made
-        while reading the export does not have to wait for the export to finish.
-        The stream keeps its place among the open exports until it is closed.
+        The response is added to ``export``, which holds the export's place. The
+        concurrency slot is held only while opening, so that a request made while
+        reading the export does not have to wait for the export to finish.
 
         Unless ``compress`` is set the export is requested uncompressed, because
         the server compresses on the thread that handles every other request. An
@@ -745,24 +763,19 @@ class ApiCall:
             headers["Accept-Encoding"] = "identity"
         response_context = self._stream_context("GET", url, request_kwargs)
 
-        # Closes the response, then gives back the export's place.
-        export = ExitStack()
-        self._export_limit.acquire()
-        export.callback(self._export_limit.release)
+        # Kept apart from ``export`` until the request succeeds, so that a failed
+        # attempt closes its response without giving back the place.
+        response_stack = ExitStack()
         try:
             with self._concurrency_limit:
-                response = self._enter_stream(export, response_context)
+                response = self._enter_stream(response_stack, response_context)
         except BaseException:
-            export.close()
+            response_stack.close()
             raise
-
-        # A single entry, so that a second close cannot give back the place while
-        # the first is still closing the response.
-        exit_stack = ExitStack()
-        exit_stack.enter_context(export)
+        export.enter_context(response_stack)
 
         self.node_manager.set_node_health(node, is_healthy=True)
-        return ExportStream(response, exit_stack)
+        return response
 
     def _stream_context(
         self,

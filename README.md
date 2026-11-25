@@ -66,13 +66,13 @@ async with await client.collections["books"].documents.export_stream() as stream
 
 A stream can be read once, either as lines or as bytes. Keep these in mind:
 
-- **Always close the stream**, ideally with a context manager. With `max_concurrent_requests` set, a stream that is abandoned before its end permanently uses up one of the open export places below.
+- **Always close the stream**, ideally with a context manager. With `max_concurrent_requests` set, a stream that is abandoned before its end permanently uses up one of the open export places below. With the sync client, closing a stream from another thread does not interrupt a read in progress there: that read raises once `stream_read_timeout_seconds` runs out.
 - **A failed export has to be restarted.** Nodes are only retried until the response headers arrive. After that, errors such as `httpx.RemoteProtocolError` or `httpx.ReadTimeout` are raised as they are, and exports cannot resume from where they stopped.
 - **Keep reading.** If your code stops reading for about 60 seconds, the server drops the connection. `stream_read_timeout_seconds` (default 60) separately limits how long the client waits for the server's next chunk.
 - **Lines are raw.** They are not parsed, and the server could write an error message into the body after a successful status, so a line is not guaranteed to be a document.
 - **Exports are uncompressed by default.** The server compresses on the thread that handles all other requests, which delays them, especially with a large `batch_size`. Pass `compress=True` if bandwidth matters more. An `Accept-Encoding` in `additional_headers` is always respected.
 
-With `max_concurrent_requests`, an export only takes a slot while it opens, so requests made while reading an export do not wait for it. To keep connections free for those requests, at most `max_connections - max_concurrent_requests` exports can be open at once. If that is not positive, one export is still allowed, and it can leave a request short of a connection, so keep `max_concurrent_requests` below `max_connections`. Further exports wait for a place, so opening an export inside another one can wait forever when no place is free. The limit does not apply to an `http_client` you pass in, because its pool size is unknown.
+With `max_concurrent_requests`, an export only takes a slot while it opens, so requests made while reading an export do not wait for it. To keep connections free for those requests, at most `max_connections - max_concurrent_requests` exports can be open at once. Further exports wait for one to close, with no timeout, so an export opened inside another needs a second free place or it waits forever. If `max_concurrent_requests` is not below `max_connections`, no connection can be kept free, so exports are not limited. The limit does not apply to an `http_client` you pass in, because its pool size is unknown.
 
 If your application cancels many requests, prefer [httpx2](#using-httpx2), which fixes a connection pool leak that cancellation can trigger in httpx.
 

@@ -92,11 +92,11 @@ class ConfigDict(typing.TypedDict):
             ``connection_timeout_seconds`` makes the httpcore connection leak
             (encode/httpcore#1093) more likely under load.
 
-        max_connections (int): The maximum number of connections in the pool. With
-            ``max_concurrent_requests``, it also limits open streaming exports to
-            ``max_connections - max_concurrent_requests``, or one if that is not
-            positive, when an open export can leave a request short of a connection.
-            Further exports wait for one to close. Defaults to 100.
+        max_connections (int | None): The maximum number of connections in the
+            pool, or ``None`` for no limit. With a lower ``max_concurrent_requests``,
+            it also limits open streaming exports to ``max_connections -
+            max_concurrent_requests``, so that exports cannot take the connections
+            requests need. Further exports wait for one to close. Defaults to 100.
 
         max_keepalive_connections (int): The maximum number of idle connections
             kept alive in the pool. Defaults to 20.
@@ -133,7 +133,7 @@ class ConfigDict(typing.TypedDict):
     connection_timeout_seconds: typing.NotRequired[float]
     suppress_deprecation_warnings: typing.NotRequired[bool]
     pool_timeout_seconds: typing.NotRequired[float]
-    max_connections: typing.NotRequired[int]
+    max_connections: typing.NotRequired[typing.Optional[int]]
     max_keepalive_connections: typing.NotRequired[int]
     max_concurrent_requests: typing.NotRequired[int]
     stream_read_timeout_seconds: typing.NotRequired[float]
@@ -230,7 +230,7 @@ class Configuration:
         healthcheck_interval_seconds (int): The interval in seconds between health checks.
         verify (bool | str | ssl.SSLContext): Whether to verify the SSL certificate.
         pool_timeout_seconds (float): How long to wait for a free pooled connection.
-        max_connections (int): The maximum number of connections in the pool.
+        max_connections (int | None): The maximum number of pooled connections.
         max_keepalive_connections (int): The maximum number of idle pooled connections.
         max_concurrent_requests (int | None): The maximum number of requests in flight.
         stream_read_timeout_seconds (float): How long a stream waits for its next chunk.
