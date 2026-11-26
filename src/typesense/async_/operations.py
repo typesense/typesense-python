@@ -204,14 +204,27 @@ class AsyncOperations:
             >>> response = await operations.perform("vote")
             >>> health = await operations.is_healthy()
         """
+        endpoint = self._endpoint_path(operation_name)
+        if operation_name == "schema_changes":
+            schema_changes_response = await self.api_call.get(
+                endpoint,
+                params=query_params,
+                as_json=True,
+                entity_type=object,
+            )
+            return typing.cast(
+                typing.List[SchemaChangesResponse],
+                schema_changes_response,
+            )
+
         response = await self.api_call.post(
-            self._endpoint_path(operation_name),
+            endpoint,
             params=query_params,
             as_json=True,
             entity_type=object,
         )
         return typing.cast(
-            typing.Union[OperationResponse, typing.List[SchemaChangesResponse]],
+            OperationResponse,
             response,
         )
 
