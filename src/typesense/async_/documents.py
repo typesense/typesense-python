@@ -40,8 +40,8 @@ from typesense.types.document import (
     DocumentImportParametersReturnDoc,
     DocumentImportParametersReturnDocAndId,
     DocumentImportParametersReturnId,
+    DocumentImportWriteParameters,
     DocumentSchema,
-    DocumentWriteParameters,
     ImportResponse,
     ImportResponseFail,
     ImportResponseSuccess,
@@ -178,7 +178,7 @@ class AsyncDocuments(typing.Generic[TDoc]):
         return await self.import_(
             documents,
             typing.cast(
-                typing.Optional[DocumentWriteParameters],
+                typing.Optional[DocumentImportWriteParameters],
                 dirty_values_parameters,
             ),
         )
@@ -275,7 +275,7 @@ class AsyncDocuments(typing.Generic[TDoc]):
     async def import_(
         self,
         documents: typing.List[TDoc],
-        import_parameters: typing.Union[DocumentWriteParameters, None] = None,
+        import_parameters: typing.Union[DocumentImportWriteParameters, None] = None,
         batch_size: typing.Union[int, None] = None,
     ) -> typing.List[typing.Union[ImportResponseSuccess, ImportResponseFail[TDoc]]]: ...
 
@@ -319,8 +319,11 @@ class AsyncDocuments(typing.Generic[TDoc]):
 
         Args:
             documents: The documents to import.
-            import_parameters: Parameters for the import operation.
-            batch_size: The size of each batch for batch imports.
+            import_parameters: Parameters for the import operation. To set the
+                server's ``batch_size`` query parameter, put it here.
+            batch_size: How many documents the client sends in each request. The
+                list is split into requests of this size; the value is not sent
+                to the server.
 
         Returns:
             The import response, which can be a list of responses or a string.
