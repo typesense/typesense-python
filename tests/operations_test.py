@@ -1,7 +1,9 @@
 """Tests for the Operations class."""
 
 
+import httpx
 import pytest
+import respx
 
 from tests.utils.object_assertions import assert_match_object, assert_object_lists_match
 from typesense.sync.api_call import ApiCall
@@ -45,6 +47,58 @@ def test_init_async(fake_async_api_call: AsyncApiCall) -> None:
     assert (
         operations._endpoint_path("resource") == "/operations/resource"  # noqa: WPS437
     )
+
+
+def test_schema_changes_uses_get(fake_operations: Operations) -> None:
+    """Test that performing schema_changes sends a GET request."""
+    expected = [{"collection": "companies", "validated_docs": 10, "altered_docs": 5}]
+    with respx.mock:
+        route = respx.get("http://nearest:8108/operations/schema_changes").mock(
+            return_value=httpx.Response(200, json=expected),
+        )
+        response = fake_operations.perform("schema_changes")
+
+    assert route.called
+    assert response == expected
+
+
+async def test_schema_changes_uses_get_async(
+    fake_async_operations: AsyncOperations,
+) -> None:
+    """Test that performing schema_changes sends a GET request (async)."""
+    expected = [{"collection": "companies", "validated_docs": 10, "altered_docs": 5}]
+    with respx.mock:
+        route = respx.get("http://nearest:8108/operations/schema_changes").mock(
+            return_value=httpx.Response(200, json=expected),
+        )
+        response = await fake_async_operations.perform("schema_changes")
+
+    assert route.called
+    assert response == expected
+
+
+def test_vote_uses_post(fake_operations: Operations) -> None:
+    """Test that non-GET operations still send a POST request."""
+    with respx.mock:
+        route = respx.post("http://nearest:8108/operations/vote").mock(
+            return_value=httpx.Response(200, json={"success": True}),
+        )
+        response = fake_operations.perform("vote")
+
+    assert route.called
+    assert response == {"success": True}
+
+
+async def test_vote_uses_post_async(fake_async_operations: AsyncOperations) -> None:
+    """Test that non-GET operations still send a POST request (async)."""
+    with respx.mock:
+        route = respx.post("http://nearest:8108/operations/vote").mock(
+            return_value=httpx.Response(200, json={"success": True}),
+        )
+        response = await fake_async_operations.perform("vote")
+
+    assert route.called
+    assert response == {"success": True}
 
 
 def test_vote(actual_operations: Operations) -> None:
@@ -155,3 +209,17 @@ async def test_invalid_operation_async(actual_async_operations: AsyncOperations)
     """Test that the AsyncOperations object throws an error for an invalid operation."""
     with pytest.raises(ObjectNotFound):
         await actual_async_operations.perform("invalid")
+
+
+def test_schema_changes(actual_operations: Operations) -> None:
+    """Test that the Operations object can retrieve schema changes."""
+    response = actual_operations.perform("schema_changes")
+
+    assert isinstance(response, list)
+
+
+async def test_schema_changes_async(actual_async_operations: AsyncOperations) -> None:
+    """Test that the AsyncOperations object can retrieve schema changes."""
+    response = await actual_async_operations.perform("schema_changes")
+
+    assert isinstance(response, list)
