@@ -33,7 +33,7 @@ async def main() -> None:
     documents_collection = f"streaming_docs_{run_id}"
     model_id = f"streaming_model_{run_id}"
 
-    client = typesense.AsyncClient(
+    async with typesense.AsyncClient(
         {
             "api_key": typesense_api_key,
             "nodes": [
@@ -45,9 +45,7 @@ async def main() -> None:
             ],
             "connection_timeout_seconds": 10,
         }
-    )
-
-    try:
+    ) as client:
         await client.collections.create(
             {
                 "name": history_collection,
@@ -139,8 +137,6 @@ async def main() -> None:
                 "stream_config": stream_config,
             }
         )
-    finally:
-        await client.api_call.aclose()
 
 
 if __name__ == "__main__":

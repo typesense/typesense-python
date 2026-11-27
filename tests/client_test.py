@@ -1,7 +1,10 @@
 """Tests for the Client class."""
 
+import httpx
+
 from tests.fixtures.document_fixtures import Companies
 from tests.utils.object_assertions import assert_match_object, assert_object_lists_match
+from typesense.async_.client import AsyncClient
 from typesense.sync.client import Client
 from typesense.configuration import ConfigDict
 
@@ -72,3 +75,59 @@ def test_retrieve_collection_actual_no_name(
     collection = actual_client.typed_collection(model=Companies)
 
     assert collection is not None
+
+
+def test_client_close(fake_config_dict: ConfigDict) -> None:
+    """Test that Client.close closes an owned HTTP client."""
+    client = Client(fake_config_dict)
+    assert client.api_call._client.is_closed is False
+    client.close()
+    assert client.api_call._client.is_closed is True
+
+
+def test_client_context_manager(fake_config_dict: ConfigDict) -> None:
+    """Test that Client closes its HTTP client when used as a context manager."""
+    with Client(fake_config_dict) as client:
+        assert client.api_call._client.is_closed is False
+    assert client.api_call._client.is_closed is True
+
+
+def test_client_does_not_close_external_http_client(
+    fake_config_dict: ConfigDict,
+) -> None:
+    """Test that Client.close does not close a caller-supplied http_client."""
+    external_client = httpx.Client()
+    try:
+        with Client(fake_config_dict, http_client=external_client) as client:
+            assert client.api_call._client is external_client
+        assert external_client.is_closed is False
+    finally:
+        external_client.close()
+
+
+async def test_async_client_aclose(fake_config_dict: ConfigDict) -> None:
+    """Test that AsyncClient.aclose closes an owned HTTP client."""
+    client = AsyncClient(fake_config_dict)
+    assert client.api_call._client.is_closed is False
+    await client.aclose()
+    assert client.api_call._client.is_closed is True
+
+
+async def test_async_client_context_manager(fake_config_dict: ConfigDict) -> None:
+    """Test that AsyncClient closes its HTTP client when used as an async context manager."""
+    async with AsyncClient(fake_config_dict) as client:
+        assert client.api_call._client.is_closed is False
+    assert client.api_call._client.is_closed is True
+
+
+async def test_async_client_does_not_close_external_http_client(
+    fake_config_dict: ConfigDict,
+) -> None:
+    """Test that AsyncClient.aclose does not close a caller-supplied http_client."""
+    external_client = httpx.AsyncClient()
+    try:
+        async with AsyncClient(fake_config_dict, http_client=external_client) as client:
+            assert client.api_call._client is external_client
+        assert external_client.is_closed is False
+    finally:
+        await external_client.aclose()

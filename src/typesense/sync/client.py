@@ -27,6 +27,7 @@ Note: This module uses conditional imports to support both Python 3.11+ and earl
 """
 
 import sys
+from types import TracebackType
 
 from typing_extensions import deprecated
 
@@ -134,6 +135,23 @@ class Client:
         self.metrics = Metrics(self.api_call)
         self.conversations_models = ConversationsModels(self.api_call)
         self.nl_search_models = NLSearchModels(self.api_call)
+
+    def __enter__(self) -> typing.Self:
+        """Enter the context manager."""
+        return self
+
+    def __exit__(
+        self,
+        exc_type: typing.Optional[typing.Type[BaseException]],
+        exc_val: typing.Optional[BaseException],
+        exc_tb: typing.Optional[TracebackType],
+    ) -> None:
+        """Exit the context manager and close the HTTP client."""
+        self.close()
+
+    def close(self) -> None:
+        """Close the underlying HTTP client, unless it was passed in by the caller."""
+        self.api_call.close()
 
     @property
     @deprecated(

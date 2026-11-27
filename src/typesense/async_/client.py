@@ -27,6 +27,7 @@ Note: This module uses conditional imports to support both Python 3.11+ and earl
 """
 
 import sys
+from types import TracebackType
 
 from typing_extensions import deprecated
 
@@ -134,6 +135,23 @@ class AsyncClient:
         self.metrics = AsyncMetrics(self.api_call)
         self.conversations_models = AsyncConversationsModels(self.api_call)
         self.nl_search_models = AsyncNLSearchModels(self.api_call)
+
+    async def __aenter__(self) -> typing.Self:
+        """Enter the context manager."""
+        return self
+
+    async def __aexit__(
+        self,
+        exc_type: typing.Optional[typing.Type[BaseException]],
+        exc_val: typing.Optional[BaseException],
+        exc_tb: typing.Optional[TracebackType],
+    ) -> None:
+        """Exit the context manager and close the HTTP client."""
+        await self.aclose()
+
+    async def aclose(self) -> None:
+        """Close the underlying HTTP client, unless it was passed in by the caller."""
+        await self.api_call.aclose()
 
     @property
     @deprecated(

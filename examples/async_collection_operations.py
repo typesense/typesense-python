@@ -12,7 +12,7 @@ from typesense.exceptions import TypesenseClientError
 
 
 async def main() -> None:
-    client = typesense.AsyncClient(
+    async with typesense.AsyncClient(
         {
             "api_key": "xyz",
             "nodes": [
@@ -24,9 +24,7 @@ async def main() -> None:
             ],
             "connection_timeout_seconds": 2,
         }
-    )
-
-    try:
+    ) as client:
         # Drop pre-existing collection if any
         try:
             await client.collections["books"].delete()
@@ -188,8 +186,6 @@ async def main() -> None:
         # Drop the collection
         drop_response = await client.collections["books"].delete()
         print(drop_response)
-    finally:
-        await client.api_call.aclose()
 
 
 if __name__ == "__main__":
