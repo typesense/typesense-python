@@ -206,27 +206,21 @@ class Operations:
         """
         endpoint = self._endpoint_path(operation_name)
         if operation_name == "schema_changes":
-            schema_changes_response = self.api_call.get(
+            changes: typing.List[SchemaChangesResponse] = self.api_call.get(
                 endpoint,
                 params=query_params,
                 as_json=True,
-                entity_type=object,
+                entity_type=typing.List[SchemaChangesResponse],
             )
-            return typing.cast(
-                typing.List[SchemaChangesResponse],
-                schema_changes_response,
-            )
+            return changes
 
-        response = self.api_call.post(
+        response: OperationResponse = self.api_call.post(
             endpoint,
             params=query_params,
             as_json=True,
-            entity_type=object,
+            entity_type=OperationResponse,
         )
-        return typing.cast(
-            OperationResponse,
-            response,
-        )
+        return response
 
     def is_healthy(self) -> bool:
         """
