@@ -318,7 +318,7 @@ class RequestHandler:
             self.normalize_params(params)
             request_kwargs["params"] = params
 
-        if body := kwargs.get("data"):
+        if (body := kwargs.get("data")) is not None:
             request_kwargs["content"] = (
                 body if isinstance(body, (str, bytes)) else json.dumps(body)
             )
