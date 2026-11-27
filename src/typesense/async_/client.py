@@ -136,7 +136,7 @@ class AsyncClient:
         self.conversations_models = AsyncConversationsModels(self.api_call)
         self.nl_search_models = AsyncNLSearchModels(self.api_call)
 
-    async def __aenter__(self) -> "AsyncClient":
+    async def __aenter__(self) -> typing.Self:
         """Enter the context manager."""
         return self
 

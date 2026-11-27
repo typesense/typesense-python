@@ -26,21 +26,19 @@ import typesense
 
 
 async def main() -> None:
-    client = typesense.AsyncClient({
+    async with typesense.AsyncClient({
         "api_key": "abcd",
         "nodes": [{"host": "localhost", "port": "8108", "protocol": "http"}],
         "connection_timeout_seconds": 2,
-    })
-
-    print(await client.collections.retrieve())
-    await client.api_call.aclose()
+    }) as client:
+        print(await client.collections.retrieve())
 
 
 if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-See `examples/async_collection_operations.py` for a fuller async walkthrough.
+See `examples/async_collection_operations.py` for a fuller async walkthrough. Note that if you pass a caller-supplied `http_client`, `AsyncClient` (and `Client`) leaves it open when exiting the context manager or calling `aclose()`/`close()`, so you are responsible for closing it.
 
 ## Streaming document exports
 

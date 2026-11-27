@@ -13,48 +13,46 @@ COLLECTION = "async_export_streaming_books"
 
 
 async def main() -> None:
-    client = typesense.AsyncClient(
+    async with typesense.AsyncClient(
         {
             "api_key": os.environ.get("TYPESENSE_API_KEY", "xyz"),
             "nodes": [{"host": "localhost", "port": "8108", "protocol": "http"}],
             "connection_timeout_seconds": 10,
         }
-    )
-
-    await client.collections.create(
-        {
-            "name": COLLECTION,
-            "fields": [
-                {"name": "title", "type": "string"},
-                {"name": "year", "type": "int32"},
-            ],
-        }
-    )
-
-    try:
-        documents = client.collections[COLLECTION].documents
-        await documents.import_(
-            [{"id": str(year), "title": f"Book {year}", "year": year} for year in range(2000, 2010)],
-            {"action": "create"},
+    ) as client:
+        await client.collections.create(
+            {
+                "name": COLLECTION,
+                "fields": [
+                    {"name": "title", "type": "string"},
+                    {"name": "year", "type": "int32"},
+                ],
+            }
         )
 
-        # Read one document at a time. The stream is closed when the block ends,
-        # even if the loop stops early.
-        async with await documents.export_stream(
-            {"filter_by": "year:>=2005", "batch_size": 100},
-        ) as stream:
-            async for line in stream:
-                print(json.loads(line)["title"])
+        try:
+            documents = client.collections[COLLECTION].documents
+            await documents.import_(
+                [{"id": str(year), "title": f"Book {year}", "year": year} for year in range(2000, 2010)],
+                {"action": "create"},
+            )
 
-        # Count the bytes without keeping the export in memory.
-        size = 0
-        async with await documents.export_stream() as stream:
-            async for chunk in stream.aiter_bytes():
-                size += len(chunk)
-        print(f"Read {size} bytes")
-    finally:
-        await client.collections[COLLECTION].delete()
-        await client.api_call.aclose()
+            # Read one document at a time. The stream is closed when the block ends,
+            # even if the loop stops early.
+            async with await documents.export_stream(
+                {"filter_by": "year:>=2005", "batch_size": 100},
+            ) as stream:
+                async for line in stream:
+                    print(json.loads(line)["title"])
+
+            # Count the bytes without keeping the export in memory.
+            size = 0
+            async with await documents.export_stream() as stream:
+                async for chunk in stream.aiter_bytes():
+                    size += len(chunk)
+            print(f"Read {size} bytes")
+        finally:
+            await client.collections[COLLECTION].delete()
 
 
 if __name__ == "__main__":

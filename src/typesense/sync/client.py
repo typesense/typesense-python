@@ -136,7 +136,7 @@ class Client:
         self.conversations_models = ConversationsModels(self.api_call)
         self.nl_search_models = NLSearchModels(self.api_call)
 
-    def __enter__(self) -> "Client":
+    def __enter__(self) -> typing.Self:
         """Enter the context manager."""
         return self
 
