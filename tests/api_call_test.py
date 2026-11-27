@@ -179,6 +179,32 @@ def test_normalize_params_with_no_booleans() -> None:
     assert parameter_dict == {"key1": "value", "key2": 123}
 
 
+@pytest.mark.parametrize(
+    ("data", "expected_content"),
+    [
+        ({}, "{}"),
+        ("", ""),
+        (b"", b""),
+    ],
+)
+def test_build_request_kwargs_preserves_empty_body(
+    fake_config: Configuration,
+    data: typing.Union[typing.Dict[str, typing.Any], str, bytes],
+    expected_content: typing.Union[str, bytes],
+) -> None:
+    """Test that falsy non-None bodies such as {} and '' are preserved."""
+    handler = RequestHandler(fake_config)
+    request_kwargs = handler.build_request_kwargs(data=data)
+    assert request_kwargs["content"] == expected_content
+
+
+def test_build_request_kwargs_omits_none_body(fake_config: Configuration) -> None:
+    """Test that a None body does not set content."""
+    handler = RequestHandler(fake_config)
+    request_kwargs = handler.build_request_kwargs(data=None)
+    assert "content" not in request_kwargs
+
+
 def test_additional_headers(fake_api_call: ApiCall) -> None:
     """Test the `make_request` method with additional headers from the config."""
     api_call = ApiCall(
@@ -345,6 +371,23 @@ def test_post_as_text(
             entity_type=typing.Dict[str, str],
         )
         assert post_result == "response text"
+
+
+def test_post_with_empty_dict_body(fake_api_call: ApiCall) -> None:
+    """Test that POST sends '{}' when body={} is passed."""
+    with respx.mock:
+        route = respx.post("http://nearest:8108/analytics/flush").mock(
+            return_value=httpx.Response(200, json={"ok": True}),
+        )
+        result = fake_api_call.post(
+            "/analytics/flush",
+            body={},
+            as_json=True,
+            entity_type=typing.Dict[str, bool],
+        )
+
+    assert result == {"ok": True}
+    assert route.calls.last.request.content == b"{}"
 
 
 def test_put_as_json(
